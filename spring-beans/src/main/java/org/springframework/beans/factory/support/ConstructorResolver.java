@@ -394,11 +394,16 @@ class ConstructorResolver {
 
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
+			// 定义方法的 factory bean name 一定不能跟 bean name 相同
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
 			}
+
+			// 加载 factory bean
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
+
+			// 接下来将会创建单例了，但是需要检查是否容器中已经存在单例
 			if (mbd.isSingleton() && this.beanFactory.containsSingleton(beanName)) {
 				throw new ImplicitlyAppearedSingletonException();
 			}

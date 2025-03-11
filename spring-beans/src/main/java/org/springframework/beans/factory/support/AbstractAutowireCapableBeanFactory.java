@@ -1179,18 +1179,23 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
 		// Make sure bean class is actually resolved at this point.
+		// 如果是从 doCreateBean 那边调用过来的，这里一定解析好了
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
 
+		// 如果 beanClass 不是 public 且不允许访问非 public，则报错
+		// 默认是可以访问非 public 的
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
 			throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
 		}
 
+		// 是否定义了 Supplier
 		Supplier<?> instanceSupplier = mbd.getInstanceSupplier();
 		if (instanceSupplier != null) {
 			return obtainFromSupplier(instanceSupplier, beanName);
 		}
 
+		// 工厂方法实例化
 		if (mbd.getFactoryMethodName() != null) {
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
 		}
@@ -1548,9 +1553,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected String[] unsatisfiedNonSimpleProperties(AbstractBeanDefinition mbd, BeanWrapper bw) {
 		Set<String> result = new TreeSet<>();
+
+		// bean definition 现在拥有的素材
+		// 此时，这里面的属性可能来固有属性；或者在某些处理器阶段，手工赋予的吧
+		// 总之，这些属性一定都是开发者自己有意添加的
 		PropertyValues pvs = mbd.getPropertyValues();
+
+		// bean 所有的属性描述器，需要满足这些属性的填充
 		PropertyDescriptor[] pds = bw.getPropertyDescriptors();
 		for (PropertyDescriptor pd : pds) {
+			// 1. 必须有 setter 方法，否则都无法赋值
+			// 2. 不能被排除
+			// 3. bean definition 的素材中还没有这个，因为我们不能覆盖人工设置的
+			// 4. 必须是非简单属性
 			if (pd.getWriteMethod() != null && !isExcludedFromDependencyCheck(pd) && !pvs.contains(pd.getName()) &&
 					!BeanUtils.isSimpleProperty(pd.getPropertyType())) {
 				result.add(pd.getName());

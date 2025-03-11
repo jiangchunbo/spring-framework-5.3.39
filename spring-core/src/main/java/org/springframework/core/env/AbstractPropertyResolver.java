@@ -54,8 +54,14 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 
 	private boolean ignoreUnresolvableNestedPlaceholders = false;
 
+	/**
+	 * 占位符的前缀默认是 ${
+	 */
 	private String placeholderPrefix = SystemPropertyUtils.PLACEHOLDER_PREFIX;
 
+	/**
+	 * 占位符的后缀默认是 }
+	 */
 	private String placeholderSuffix = SystemPropertyUtils.PLACEHOLDER_SUFFIX;
 
 	@Nullable

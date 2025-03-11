@@ -1538,9 +1538,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws CannotLoadBeanClassException {
 
 		try {
+			// 判断是否进行过类解析
+			// 如果已经解析过了，直接返回解析的 Class
 			if (mbd.hasBeanClass()) {
 				return mbd.getBeanClass();
 			}
+
+			// doResolveBeanClass: 真正执行解析
 			if (System.getSecurityManager() != null) {
 				return AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>>)
 						() -> doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
