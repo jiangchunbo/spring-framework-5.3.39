@@ -130,6 +130,7 @@ public class StandardServletMultipartResolver implements MultipartResolver {
 			// but only actual file parts (for Resin compatibility)
 			try {
 				for (Part part : request.getParts()) {
+					// 如果是一个文件
 					if (request.getFile(part.getName()) != null) {
 						part.delete();
 					}

@@ -394,6 +394,8 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 		if (produces == null) {
 			return null;
 		}
+
+		// 这个解析更丰富的 path
 		PathPatternsRequestCondition pathPatterns = null;
 		if (this.pathPatternsCondition != null) {
 			pathPatterns = this.pathPatternsCondition.getMatchingCondition(request);
@@ -401,6 +403,8 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 				return null;
 			}
 		}
+
+		// 这个解析 ant
 		PatternsRequestCondition patterns = null;
 		if (this.patternsCondition != null) {
 			patterns = this.patternsCondition.getMatchingCondition(request);

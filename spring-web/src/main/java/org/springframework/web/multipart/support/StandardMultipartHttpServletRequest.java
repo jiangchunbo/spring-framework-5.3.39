@@ -92,11 +92,17 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 
 	private void parseRequest(HttpServletRequest request) {
 		try {
+			// 获取 Servlet 定义的 Parts
 			Collection<Part> parts = request.getParts();
+			// 初始化用于存储 multipart 参数名的 set
 			this.multipartParameterNames = new LinkedHashSet<>(parts.size());
+			// 初始化用于存储 MultipartFile 的 map
 			MultiValueMap<String, MultipartFile> files = new LinkedMultiValueMap<>(parts.size());
+
 			for (Part part : parts) {
+				// 每个部分都有 header
 				String headerValue = part.getHeader(HttpHeaders.CONTENT_DISPOSITION);
+				// 分析 content disposition，从中提取 filename 字段
 				ContentDisposition disposition = ContentDisposition.parse(headerValue);
 				String filename = disposition.getFilename();
 				if (filename != null) {
@@ -129,6 +135,7 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 
 	@Override
 	protected void initializeMultipart() {
+		// 解析请求
 		parseRequest(getRequest());
 	}
 
