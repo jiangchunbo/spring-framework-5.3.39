@@ -262,6 +262,9 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 		this.injectionMetadataCache.remove(beanName);
 	}
 
+	/**
+	 * 推断构造器
+	 */
 	@Override
 	@Nullable
 	public Constructor<?>[] determineCandidateConstructors(Class<?> beanClass, final String beanName)
@@ -302,12 +305,14 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 		}
 
 		// Quick check on the concurrent map first, with minimal locking.
+		// 缓存，Spring 老套路
 		Constructor<?>[] candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 		if (candidateConstructors == null) {
 			// Fully synchronized resolution now...
 			synchronized (this.candidateConstructorsCache) {
 				candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 				if (candidateConstructors == null) {
+					// 拿到所有构造器
 					Constructor<?>[] rawCandidates;
 					try {
 						rawCandidates = beanClass.getDeclaredConstructors();
@@ -323,19 +328,29 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 					Constructor<?> primaryConstructor = BeanUtils.findPrimaryConstructor(beanClass);
 					int nonSyntheticConstructors = 0;
 					for (Constructor<?> candidate : rawCandidates) {
+						// 检查是否是编译器生成的构造器
 						if (!candidate.isSynthetic()) {
+							// 统计用户提供的构造器数量
 							nonSyntheticConstructors++;
 						}
 						else if (primaryConstructor != null) {
 							continue;
 						}
+
+						// 寻找 @Autowired
 						MergedAnnotation<?> ann = findAutowiredAnnotation(candidate);
+
+						// 1. 确定构造器到底有没有 @Autowired 注解
+						// 没有 @Autowired
+						// 不过也许这是一个代理类，我们试试寻找它的 UserClass 有没有加 @Autowired
 						if (ann == null) {
+							// 拿到具体的用户代理类， unwrap CGLIB
 							Class<?> userClass = ClassUtils.getUserClass(beanClass);
 							if (userClass != beanClass) {
 								try {
 									Constructor<?> superCtor =
 											userClass.getDeclaredConstructor(candidate.getParameterTypes());
+									// 看看有没有 @Autowired 构造器
 									ann = findAutowiredAnnotation(superCtor);
 								}
 								catch (NoSuchMethodException ex) {
@@ -343,15 +358,34 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 								}
 							}
 						}
+
+						// 2. 根据是否有 @Autowired 执行不同逻辑
+						// 理解两个概念：最佳候选人、普通候选人
+
+						// 下面的逻辑拆接下来：
+						// - 存在 @Autowired
+						//		- 已经找到 “最佳候选人”，不应该出现两个最佳候选人。
+						//				"最佳候选人" 与 "最佳候选人" 不能共存。
+						//		- 发现 "最佳候选人"，但是 candidates 已经有候选人(最佳or普通)，抛异常。
+						//				"最佳候选人" 与 "候选人" 不能共存。
+						//		- 添加到候选人列表
+						// - 不存在 @Autowired
+						// 		- 无参构造器，记为 defaultConstructor
 						if (ann != null) {
+							// 有 @Autowired 注解，那就添加到 candidates 里面（这一步后面 🥑🥑🥑🥑🥑🥑🥑🥑）
+
+							// 发现已经找到了一个 “最好的候选人”，那么不应该这么定义
 							if (requiredConstructor != null) {
 								throw new BeanCreationException(beanName,
 										"Invalid autowire-marked constructor: " + candidate +
 										". Found constructor with 'required' Autowired annotation already: " +
 										requiredConstructor);
 							}
+
+							// 是否是 required，如果是 true，意味着这是 “最好的候选人”
 							boolean required = determineRequiredStatus(ann);
 							if (required) {
+								// 最好的候选人，但是还存在其他候选人，这也不对
 								if (!candidates.isEmpty()) {
 									throw new BeanCreationException(beanName,
 											"Invalid autowire-marked constructors: " + candidates +
@@ -360,14 +394,21 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 								}
 								requiredConstructor = candidate;
 							}
+
+							// 添加到 candidates 🥑🥑🥑🥑🥑🥑🥑🥑
 							candidates.add(candidate);
 						}
 						else if (candidate.getParameterCount() == 0) {
+							// 如果没有 @Autowired，但是无参构造器，赋值到 defaultConstructor
 							defaultConstructor = candidate;
 						}
 					}
+
+					// 如果发现候选人了
 					if (!candidates.isEmpty()) {
 						// Add default constructor to list of optional constructors, as fallback.
+						// 如果没找到 “最佳候选人”，看看有没有无参构造器
+						// 这是怎么回事，全都是 required == false ？？？怎么可能会这么设置
 						if (requiredConstructor == null) {
 							if (defaultConstructor != null) {
 								candidates.add(defaultConstructor);
