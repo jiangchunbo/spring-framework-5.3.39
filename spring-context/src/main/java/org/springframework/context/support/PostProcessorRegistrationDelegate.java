@@ -75,19 +75,25 @@ final class PostProcessorRegistrationDelegate {
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
 		Set<String> processedBeans = new HashSet<>();
 
+		// 优先检查 beanFactory 是不是能够注册一些 bean definition 进来
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
+			// 获取传入的 BeanFactoryPostProcessor
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
+				// 如果能够处理 BeanDefinitionRegistryPostProcessor，则处理之
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
+					// 🥑🥑🥑
 					registryProcessor.postProcessBeanDefinitionRegistry(registry);
+					// 添加到 registryProcessors
 					registryProcessors.add(registryProcessor);
 				}
 				else {
+					// 添加到 regularPostProcessors
 					regularPostProcessors.add(postProcessor);
 				}
 			}
@@ -99,6 +105,9 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+			// 找到所有的 BeanDefinitionRegistryPostProcessor
+			// 筛选出来 PriorityOrdered 高优先级的，接着调用 postProcessBeanDefinitionRegistry 🥑🥑🥑 （和上面一样的方法）
+			// 默认情况，你可以理解，这里就 1 个 —— ConfigurationClassPostProcessor
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
@@ -113,6 +122,8 @@ final class PostProcessorRegistrationDelegate {
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
+			// 找到所有 BeanDefinitionRegistryPostProcessor
+			// 筛选出来 Ordered 但是没有处理过的，接着调用 postProcessBeanDefinitionRegistry 🥑🥑🥑 （和上面一样的方法）
 			postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
 				if (!processedBeans.contains(ppName) && beanFactory.isTypeMatch(ppName, Ordered.class)) {
@@ -129,6 +140,8 @@ final class PostProcessorRegistrationDelegate {
 			boolean reiterate = true;
 			while (reiterate) {
 				reiterate = false;
+				// 找到所有的 BeanDefinitionRegistryPostProcessor
+				// 筛选出来没有使用过的 BeanDefinitionRegistryPostProcessor，接着调用 postProcessBeanDefinitionRegistry 🥑🥑🥑 （和上面一样的方法）
 				postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 				for (String ppName : postProcessorNames) {
 					if (!processedBeans.contains(ppName)) {
@@ -144,6 +157,8 @@ final class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+			// 调用 postProcessBeanFactory
+			// 遵循先 registry ，再 regular
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
