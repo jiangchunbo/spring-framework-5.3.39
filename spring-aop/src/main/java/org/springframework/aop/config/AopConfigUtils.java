@@ -40,8 +40,8 @@ import org.springframework.util.Assert;
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @author Mark Fisher
- * @since 2.5
  * @see AopNamespaceUtils
+ * @since 2.5
  */
 public abstract class AopConfigUtils {
 
@@ -114,15 +114,26 @@ public abstract class AopConfigUtils {
 		}
 	}
 
+	/**
+	 * 注册或者升级 AutoProxyCreator
+	 *
+	 * @param cls      AutoProxyCreator 类型
+	 * @param registry Spring 容器
+	 * @param source   来源对象
+	 * @return BeanDefinition
+	 */
 	@Nullable
 	private static BeanDefinition registerOrEscalateApcAsRequired(
 			Class<?> cls, BeanDefinitionRegistry registry, @Nullable Object source) {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 
+		// 如果容器中注册了 AUTO_PROXY_CREATOR_BEAN_NAME 这个名字的 bean definition
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
 			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+			// 现存的 bean class 与我想要注册的不一样
 			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
+				// 比较优先级，如果需要注册 bean class 优先级更高，那么就替换
 				int currentPriority = findPriorityForClass(apcDefinition.getBeanClassName());
 				int requiredPriority = findPriorityForClass(cls);
 				if (currentPriority < requiredPriority) {
@@ -132,6 +143,7 @@ public abstract class AopConfigUtils {
 			return null;
 		}
 
+		// 如果容器中没有 AUTO_PROXY_CREATOR_BEAN_NAME，那么直接注册
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
 		beanDefinition.setSource(source);
 		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);

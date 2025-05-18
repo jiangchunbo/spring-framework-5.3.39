@@ -97,6 +97,7 @@ public class ForwardedHeaderTransformer implements Function<ServerHttpRequest, S
 	 */
 	@Override
 	public ServerHttpRequest apply(ServerHttpRequest request) {
+		// 是否包含 forwarded 头
 		if (hasForwardedHeaders(request)) {
 			ServerHttpRequest.Builder builder = request.mutate();
 			if (!this.removeOnly) {

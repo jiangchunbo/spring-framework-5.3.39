@@ -69,13 +69,19 @@ public class ResponseBodyEmitter {
 	@Nullable
 	private Handler handler;
 
-	/** Store send data before handler is initialized. */
+	/**
+	 * Store send data before handler is initialized.
+	 */
 	private final Set<DataWithMediaType> earlySendAttempts = new LinkedHashSet<>(8);
 
-	/** Store successful completion before the handler is initialized. */
+	/**
+	 * Store successful completion before the handler is initialized.
+	 */
 	private boolean complete;
 
-	/** Store an error before the handler is initialized. */
+	/**
+	 * Store an error before the handler is initialized.
+	 */
 	@Nullable
 	private Throwable failure;
 
@@ -108,6 +114,7 @@ public class ResponseBodyEmitter {
 	 * <p>By default not set in which case the default configured in the MVC
 	 * Java Config or the MVC namespace is used, or if that's not set, then the
 	 * timeout depends on the default of the underlying server.
+	 *
 	 * @param timeout the timeout value in milliseconds
 	 */
 	public ResponseBodyEmitter(Long timeout) {
@@ -131,20 +138,17 @@ public class ResponseBodyEmitter {
 			for (DataWithMediaType sendAttempt : this.earlySendAttempts) {
 				sendInternal(sendAttempt.getData(), sendAttempt.getMediaType());
 			}
-		}
-		finally {
+		} finally {
 			this.earlySendAttempts.clear();
 		}
 
 		if (this.complete) {
 			if (this.failure != null) {
 				this.handler.completeWithError(this.failure);
-			}
-			else {
+			} else {
 				this.handler.complete();
 			}
-		}
-		else {
+		} else {
 			this.handler.onTimeout(this.timeoutCallback);
 			this.handler.onError(this.errorCallback);
 			this.handler.onCompletion(this.completionCallback);
@@ -176,8 +180,9 @@ public class ResponseBodyEmitter {
 	 * up. Instead the Servlet container creates a notification that results in a
 	 * dispatch where Spring MVC invokes exception resolvers and completes
 	 * processing.
+	 *
 	 * @param object the object to write
-	 * @throws IOException raised when an I/O error occurs
+	 * @throws IOException                     raised when an I/O error occurs
 	 * @throws java.lang.IllegalStateException wraps any other errors
 	 */
 	public void send(Object object) throws IOException {
@@ -187,32 +192,31 @@ public class ResponseBodyEmitter {
 	/**
 	 * Overloaded variant of {@link #send(Object)} that also accepts a MediaType
 	 * hint for how to serialize the given Object.
-	 * @param object the object to write
+	 *
+	 * @param object    the object to write
 	 * @param mediaType a MediaType hint for selecting an HttpMessageConverter
-	 * @throws IOException raised when an I/O error occurs
+	 * @throws IOException                     raised when an I/O error occurs
 	 * @throws java.lang.IllegalStateException wraps any other errors
 	 */
 	public synchronized void send(Object object, @Nullable MediaType mediaType) throws IOException {
 		Assert.state(!this.complete, () -> "ResponseBodyEmitter has already completed" +
-						(this.failure != null ? " with error: " + this.failure : ""));
+				(this.failure != null ? " with error: " + this.failure : ""));
 		sendInternal(object, mediaType);
 	}
 
 	private void sendInternal(Object object, @Nullable MediaType mediaType) throws IOException {
 		if (this.handler != null) {
 			try {
+				// handler 负责发送数据
 				this.handler.send(object, mediaType);
-			}
-			catch (IOException ex) {
+			} catch (IOException ex) {
 				this.sendFailed = true;
 				throw ex;
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				this.sendFailed = true;
 				throw new IllegalStateException("Failed to send " + object, ex);
 			}
-		}
-		else {
+		} else {
 			this.earlySendAttempts.add(new DataWithMediaType(object, mediaType));
 		}
 	}
@@ -224,6 +228,8 @@ public class ResponseBodyEmitter {
 	 * <p><strong>Note:</strong> this method should be called by the application
 	 * to complete request processing. It should not be used after container
 	 * related events such as an error while {@link #send(Object) sending}.
+	 *
+	 * 用户自己调用这个方法，标识请求完成。
 	 */
 	public synchronized void complete() {
 		// Ignore, after send failure
@@ -231,6 +237,8 @@ public class ResponseBodyEmitter {
 			return;
 		}
 		this.complete = true;
+
+		// 如果设置了 handler
 		if (this.handler != null) {
 			this.handler.complete();
 		}
@@ -271,6 +279,7 @@ public class ResponseBodyEmitter {
 	 * Register code to invoke for an error during async request processing.
 	 * This method is called from a container thread when an error occurred
 	 * while processing an async request.
+	 *
 	 * @since 5.0
 	 */
 	public synchronized void onError(Consumer<Throwable> callback) {

@@ -54,6 +54,7 @@ public class SseEmitter extends ResponseBodyEmitter {
 	 * <p>By default not set in which case the default configured in the MVC
 	 * Java Config or the MVC namespace is used, or if that's not set, then the
 	 * timeout depends on the default of the underlying server.
+	 *
 	 * @param timeout the timeout value in milliseconds
 	 * @since 4.2.2
 	 */
@@ -82,8 +83,9 @@ public class SseEmitter extends ResponseBodyEmitter {
 	 * </pre>
 	 * <p>Please, see {@link ResponseBodyEmitter#send(Object) parent Javadoc}
 	 * for important notes on exception handling.
+	 *
 	 * @param object the object to write
-	 * @throws IOException raised when an I/O error occurs
+	 * @throws IOException                     raised when an I/O error occurs
 	 * @throws java.lang.IllegalStateException wraps any other errors
 	 */
 	@Override
@@ -101,7 +103,8 @@ public class SseEmitter extends ResponseBodyEmitter {
 	 * </pre>
 	 * <p>Please, see {@link ResponseBodyEmitter#send(Object) parent Javadoc}
 	 * for important notes on exception handling.
-	 * @param object the object to write
+	 *
+	 * @param object    the object to write
 	 * @param mediaType a MediaType hint for selecting an HttpMessageConverter
 	 * @throws IOException raised when an I/O error occurs
 	 */
@@ -117,6 +120,7 @@ public class SseEmitter extends ResponseBodyEmitter {
 	 * SseEmitter emitter = new SseEmitter();
 	 * emitter.send(event().name("update").id("1").data(myObject));
 	 * </pre>
+	 *
 	 * @param builder a builder for an SSE formatted event.
 	 * @throws IOException raised when an I/O error occurs
 	 */
@@ -135,6 +139,9 @@ public class SseEmitter extends ResponseBodyEmitter {
 	}
 
 
+	/**
+	 * 构造一个事件
+	 */
 	public static SseEventBuilder event() {
 		return new SseEventBuilderImpl();
 	}
@@ -178,6 +185,7 @@ public class SseEmitter extends ResponseBodyEmitter {
 		/**
 		 * Return one or more Object-MediaType pairs to write via
 		 * {@link #send(Object, MediaType)}.
+		 *
 		 * @since 4.2.3
 		 */
 		Set<DataWithMediaType> build();

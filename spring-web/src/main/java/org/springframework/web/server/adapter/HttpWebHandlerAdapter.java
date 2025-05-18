@@ -227,6 +227,7 @@ public class HttpWebHandlerAdapter extends WebHandlerDecorator implements HttpHa
 
 	@Override
 	public Mono<Void> handle(ServerHttpRequest request, ServerHttpResponse response) {
+		// forwarded 头
 		if (this.forwardedHeaderTransformer != null) {
 			try {
 				request = this.forwardedHeaderTransformer.apply(request);

@@ -316,8 +316,13 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 				}
 			}
 			this.key = key;
+
+
+			// 利用 ClassLoaderData 拿到代理类，ClassLoaderData 中有一个 generatedClasses 用来缓存生成好的代理类
+			// this 就是 Enhancer
 			Object obj = data.get(this, getUseCache());
 			if (obj instanceof Class) {
+				// 调用代理类的构造方法生成一个代理对象
 				return firstInstance((Class) obj);
 			}
 			return nextInstance(obj);

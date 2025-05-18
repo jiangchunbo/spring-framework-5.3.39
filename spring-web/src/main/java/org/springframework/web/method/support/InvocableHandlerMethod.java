@@ -159,22 +159,33 @@ public class InvocableHandlerMethod extends HandlerMethod {
 	protected Object[] getMethodArgumentValues(NativeWebRequest request, @Nullable ModelAndViewContainer mavContainer,
 			Object... providedArgs) throws Exception {
 
+		// 获得返回参数. MethodParameter 这个是 Spring 参数自己包装的类
 		MethodParameter[] parameters = getMethodParameters();
+
 		if (ObjectUtils.isEmpty(parameters)) {
+			// 空数组
 			return EMPTY_ARGS;
 		}
 
+		// 先把数组准备好
 		Object[] args = new Object[parameters.length];
+
+		// 遍历每一个 MethodParameter
 		for (int i = 0; i < parameters.length; i++) {
 			MethodParameter parameter = parameters[i];
 			parameter.initParameterNameDiscovery(this.parameterNameDiscoverer);
+
+			// 从 providedArgs 找参数，一般 providedArgs 都没有吧
 			args[i] = findProvidedArgument(parameter, providedArgs);
 			if (args[i] != null) {
 				continue;
 			}
+
+			// 解析器无法处理这个参数
 			if (!this.resolvers.supportsParameter(parameter)) {
 				throw new IllegalStateException(formatArgumentError(parameter, "No suitable resolver"));
 			}
+
 			try {
 				args[i] = this.resolvers.resolveArgument(parameter, mavContainer, request, this.dataBinderFactory);
 			}

@@ -67,6 +67,9 @@ public class MethodParameter {
 
 	private final int parameterIndex;
 
+	/**
+	 * Java 反射里的 parameter
+	 */
 	@Nullable
 	private volatile Parameter parameter;
 
