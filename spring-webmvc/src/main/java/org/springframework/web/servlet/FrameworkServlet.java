@@ -874,12 +874,16 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-
+		// 从字符串格式解析成 HttpMethod 枚举
 		HttpMethod httpMethod = HttpMethod.resolve(request.getMethod());
+
+		// 总之就是要走 processRequest 逻辑
+		// tomcat 还不支持 patch，所以直接走 processRequest 逻辑
 		if (httpMethod == HttpMethod.PATCH || httpMethod == null) {
 			processRequest(request, response);
 		}
 		else {
+			// 底层会 doGet doHead doPost doPut doDelete doOptions doTrace，这些方法都被 FrameworkServlet 重写了，都会走到 processRequest
 			super.service(request, response);
 		}
 	}
@@ -991,15 +995,20 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 		Throwable failureCause = null;
 
+		// 获得之前的 locale
 		LocaleContext previousLocaleContext = LocaleContextHolder.getLocaleContext();
+		// 解析请求的 locale
 		LocaleContext localeContext = buildLocaleContext(request);
 
+		// 获得之前的 request attributes
 		RequestAttributes previousAttributes = RequestContextHolder.getRequestAttributes();
+		// 构件 ServletRequestAttributes
 		ServletRequestAttributes requestAttributes = buildRequestAttributes(request, response, previousAttributes);
 
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
 		asyncManager.registerCallableInterceptor(FrameworkServlet.class.getName(), new RequestBindingInterceptor());
 
+		// 把 localeContext 和 requestAttributes 设置到线程上下文
 		initContextHolders(request, localeContext, requestAttributes);
 
 		try {

@@ -103,10 +103,12 @@ public abstract class DataSourceUtils {
 	public static Connection doGetConnection(DataSource dataSource) throws SQLException {
 		Assert.notNull(dataSource, "No DataSource specified");
 
+		// 从【事务同步器】的【resources】以 DataSource 为 key，获取 ConnectionHolder
 		ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
 		if (conHolder != null && (conHolder.hasConnection() || conHolder.isSynchronizedWithTransaction())) {
 			conHolder.requested();
 			if (!conHolder.hasConnection()) {
+				// 如果里面还没有连接，那么就从 DataSource 获取一个
 				logger.debug("Fetching resumed JDBC Connection from DataSource");
 				conHolder.setConnection(fetchConnection(dataSource));
 			}
@@ -114,13 +116,19 @@ public abstract class DataSourceUtils {
 		}
 		// Else we either got no holder or an empty thread-bound holder here.
 
+		// 或者，我们没有拿到 ConnectionHolder ----> 没有事务？
+		// 或者，我们拿到了一个绑定到上下文，但是是空的 holder，里面连接是空的？？！！
+
 		logger.debug("Fetching JDBC Connection from DataSource");
+		// 从 DataSource 获取连接
 		Connection con = fetchConnection(dataSource);
 
+		// 如果同步是活跃的（意味着注册了什么东西之类的）
 		if (TransactionSynchronizationManager.isSynchronizationActive()) {
 			try {
 				// Use same Connection for further JDBC actions within the transaction.
 				// Thread-bound object will get removed by synchronization at transaction completion.
+				// 确保是一个包含 connection 的 holder
 				ConnectionHolder holderToUse = conHolder;
 				if (holderToUse == null) {
 					holderToUse = new ConnectionHolder(con);
@@ -128,10 +136,16 @@ public abstract class DataSourceUtils {
 				else {
 					holderToUse.setConnection(con);
 				}
+
+				//
 				holderToUse.requested();
+
+				// 注册事务同步
 				TransactionSynchronizationManager.registerSynchronization(
 						new ConnectionSynchronization(holderToUse, dataSource));
 				holderToUse.setSynchronizedWithTransaction(true);
+
+				// 绑定到上下文
 				if (holderToUse != conHolder) {
 					TransactionSynchronizationManager.bindResource(dataSource, holderToUse);
 				}

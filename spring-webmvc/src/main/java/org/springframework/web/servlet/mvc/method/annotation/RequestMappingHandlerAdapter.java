@@ -788,9 +788,12 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {
 
 		ModelAndView mav;
+
+		// 提前检查。比如 http method、session
 		checkRequest(request);
 
 		// Execute invokeHandlerMethod in synchronized block if required.
+		// 是否使用 synchronized 执行 handler（对于同一个 Session）
 		if (this.synchronizeOnSession) {
 			HttpSession session = request.getSession(false);
 			if (session != null) {

@@ -196,7 +196,9 @@ public class UrlPathHelper {
 	 * @since 5.3
 	 */
 	public String resolveAndCacheLookupPath(HttpServletRequest request) {
+		// 获取 path（去除了 contextPath 前缀）
 		String lookupPath = getLookupPathForRequest(request);
+		// 设置到 request 属性中
 		request.setAttribute(PATH_ATTRIBUTE, lookupPath);
 		return lookupPath;
 	}
@@ -344,6 +346,9 @@ public class UrlPathHelper {
 	/**
 	 * Return the path within the web application for the given request.
 	 * <p>Detects include request URL if called within a RequestDispatcher include.
+	 *
+	 * 如果 requestUri 以 contextPath 为开头，那么就返回剩余部分；否则返回 requestUri
+	 *
 	 * @param request current HTTP request
 	 * @return the path within the web application
 	 * @see #getLookupPathForRequest
@@ -366,14 +371,19 @@ public class UrlPathHelper {
 	 * is a match return the extra part. This method is needed because the
 	 * context path and the servlet path returned by the HttpServletRequest are
 	 * stripped of semicolon content unlike the requestUri.
+	 *
+	 * 这个方法的目的就是替换前缀 servlet context。因为匹配 handler 的时候不需要考虑 servlet context。
 	 */
 	@Nullable
 	private String getRemainingPath(String requestUri, String mapping, boolean ignoreCase) {
 		int index1 = 0;
 		int index2 = 0;
 		for (; (index1 < requestUri.length()) && (index2 < mapping.length()); index1++, index2++) {
+			// 获取双方的字符，进行比较
 			char c1 = requestUri.charAt(index1);
 			char c2 = mapping.charAt(index2);
+
+			// 忽略 ; 到下一个 / 之间的内容
 			if (c1 == ';') {
 				index1 = requestUri.indexOf('/', index1);
 				if (index1 == -1) {
@@ -381,18 +391,25 @@ public class UrlPathHelper {
 				}
 				c1 = requestUri.charAt(index1);
 			}
+
 			if (c1 == c2 || (ignoreCase && (Character.toLowerCase(c1) == Character.toLowerCase(c2)))) {
 				continue;
 			}
+
+			// 一旦两个字符不相等，就返回 null，
 			return null;
 		}
+
+		// 匹配结束，但是 mapping 没匹配完，挺奇怪的
 		if (index2 != mapping.length()) {
 			return null;
 		}
 		else if (index1 == requestUri.length()) {
+			// index1 到头了，没有剩余部分
 			return "";
 		}
 		else if (requestUri.charAt(index1) == ';') {
+			// requestUri 末尾竟然是 ;  需要
 			index1 = requestUri.indexOf('/', index1);
 		}
 		return (index1 != -1 ? requestUri.substring(index1) : "");
@@ -617,6 +634,7 @@ public class UrlPathHelper {
 	}
 
 	private static String removeSemicolonContentInternal(String requestUri) {
+		// 寻找 ;
 		int semicolonIndex = requestUri.indexOf(';');
 		if (semicolonIndex == -1) {
 			return requestUri;
@@ -627,6 +645,7 @@ public class UrlPathHelper {
 			if (slashIndex == -1) {
 				return sb.substring(0, semicolonIndex);
 			}
+			// 删掉 ; 到下一个 / 之间的内容
 			sb.delete(semicolonIndex, slashIndex);
 			semicolonIndex = sb.indexOf(";", semicolonIndex);
 		}
