@@ -857,6 +857,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {
 
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
+		// 创建异步 Web请求
 		AsyncWebRequest asyncWebRequest = WebAsyncUtils.createAsyncWebRequest(request, response);
 		asyncWebRequest.setTimeout(this.asyncRequestTimeout);
 
@@ -872,13 +873,21 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 				(ServletWebRequest) asyncWebRequest : new ServletWebRequest(request, response));
 
 		try {
+			// Web 数据绑定器工厂
 			WebDataBinderFactory binderFactory = getDataBinderFactory(handlerMethod);
+
+			// Model 工厂
 			ModelFactory modelFactory = getModelFactory(handlerMethod, binderFactory);
 
+			// 包装成 ServletInvocableHandlerMethod
 			ServletInvocableHandlerMethod invocableMethod = createInvocableHandlerMethod(handlerMethod);
+
+			// Set 方法参数解析器
 			if (this.argumentResolvers != null) {
 				invocableMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
 			}
+
+			// Set 返回值解析器
 			if (this.returnValueHandlers != null) {
 				invocableMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
 			}

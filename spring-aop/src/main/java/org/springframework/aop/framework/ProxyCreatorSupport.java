@@ -32,6 +32,9 @@ import org.springframework.util.Assert;
 @SuppressWarnings("serial")
 public class ProxyCreatorSupport extends AdvisedSupport {
 
+	/**
+	 * 用于创建 AopProxy 对象
+	 */
 	private AopProxyFactory aopProxyFactory;
 
 	private final List<AdvisedSupportListener> listeners = new ArrayList<>();
@@ -102,6 +105,7 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 		if (!this.active) {
 			activate();
 		}
+		// 创建 AopProxy
 		return getAopProxyFactory().createAopProxy(this);
 	}
 

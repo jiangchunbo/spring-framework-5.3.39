@@ -291,6 +291,8 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 		else {
 			// Generally only look for a pattern after a prefix here,
 			// and on Tomcat only after the "*/" separator for its "war:" protocol.
+
+			// 以 war: 开头
 			int prefixEnd = (locationPattern.startsWith("war:") ? locationPattern.indexOf("*/") + 1 :
 					locationPattern.indexOf(':') + 1);
 			if (getPathMatcher().isPattern(locationPattern.substring(prefixEnd))) {
@@ -536,8 +538,13 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * @see #retrieveMatchingFiles
 	 */
 	protected String determineRootDir(String location) {
+		// 找到 : 。比如可能 chasspath: 或者也可能是 classpath*:
+		// prefixEnd 这个不就是 start  我们关心的 package 的第一个字符所在的位置么？！
 		int prefixEnd = location.indexOf(':') + 1;
 		int rootDirEnd = location.length();
+
+		// rootDirEnd > prefixEnd ： rootDirEnd 每次循环都会变化的，直到达到 start，也就是到头了
+		// 第二个条件是 不断检查是不是通配符，如果是，那么继续往前找，直到找到一个具体的 root
 		while (rootDirEnd > prefixEnd && getPathMatcher().isPattern(location.substring(prefixEnd, rootDirEnd))) {
 			rootDirEnd = location.lastIndexOf('/', rootDirEnd - 2) + 1;
 		}

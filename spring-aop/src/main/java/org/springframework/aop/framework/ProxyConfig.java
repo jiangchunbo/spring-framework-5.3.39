@@ -38,6 +38,9 @@ public class ProxyConfig implements Serializable {
 
 	private boolean optimize = false;
 
+	/**
+	 * 翻译为 “不透明”，不透明就是看不清里面的细节。细节隐藏。默认 false 意味着透明 -> 看清细节。
+	 */
 	boolean opaque = false;
 
 	boolean exposeProxy = false;

@@ -79,14 +79,15 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 	/**
 	 * Complete constructor with pluggable "reactive" type support.
+	 *
 	 * @param messageConverters converters to write emitted objects with
-	 * @param registry for reactive return value type support
-	 * @param executor for blocking I/O writes of items emitted from reactive types
-	 * @param manager for detecting streaming media types
+	 * @param registry          for reactive return value type support
+	 * @param executor          for blocking I/O writes of items emitted from reactive types
+	 * @param manager           for detecting streaming media types
 	 * @since 5.0
 	 */
 	public ResponseBodyEmitterReturnValueHandler(List<HttpMessageConverter<?>> messageConverters,
-			ReactiveAdapterRegistry registry, TaskExecutor executor, ContentNegotiationManager manager) {
+												 ReactiveAdapterRegistry registry, TaskExecutor executor, ContentNegotiationManager manager) {
 
 		Assert.notEmpty(messageConverters, "HttpMessageConverter List must not be empty");
 		this.sseMessageConverters = initSseConverters(messageConverters);
@@ -108,10 +109,13 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 	@Override
 	public boolean supportsReturnType(MethodParameter returnType) {
+		// 1. ResponseEntity<T> 返回类型使用 ResponseEntity 包装
+		// 2. 直接返回类型是需要的类型
 		Class<?> bodyType = ResponseEntity.class.isAssignableFrom(returnType.getParameterType()) ?
 				ResolvableType.forMethodParameter(returnType).getGeneric().resolve() :
 				returnType.getParameterType();
 
+		// 支持 ResponseBodyEmitter 或者是这些 Reactive 库的返回值类型
 		return (bodyType != null && (ResponseBodyEmitter.class.isAssignableFrom(bodyType) ||
 				this.reactiveHandler.isReactiveType(bodyType)));
 	}
@@ -119,7 +123,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 	@Override
 	@SuppressWarnings("resource")
 	public void handleReturnValue(@Nullable Object returnValue, MethodParameter returnType,
-			ModelAndViewContainer mavContainer, NativeWebRequest webRequest) throws Exception {
+								  ModelAndViewContainer mavContainer, NativeWebRequest webRequest) throws Exception {
 
 		if (returnValue == null) {
 			mavContainer.setRequestHandled(true);
@@ -146,11 +150,13 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 		ServletRequest request = webRequest.getNativeRequest(ServletRequest.class);
 		Assert.state(request != null, "No ServletRequest");
 
+		// 两种处理方式：
+		// 转换为 ResponseBodyEmitter
 		ResponseBodyEmitter emitter;
 		if (returnValue instanceof ResponseBodyEmitter) {
 			emitter = (ResponseBodyEmitter) returnValue;
-		}
-		else {
+		} else {
+			// 交给 reactive handler 处理
 			emitter = this.reactiveHandler.handleValue(returnValue, returnType, mavContainer, webRequest);
 			if (emitter == null) {
 				// Not streaming: write headers without committing response..
@@ -162,9 +168,12 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 				return;
 			}
 		}
+
+		// 扩展响应头
 		emitter.extendResponse(outputMessage);
 
 		// At this point we know we're streaming..
+		// 禁用缓存
 		ShallowEtagHeaderFilter.disableContentCaching(request);
 
 		// Wrap the response to ignore further header changes
@@ -173,11 +182,13 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 		HttpMessageConvertingHandler handler;
 		try {
+			// 构造一个 DeferredResult
 			DeferredResult<?> deferredResult = new DeferredResult<>(emitter.getTimeout());
 			WebAsyncUtils.getAsyncManager(webRequest).startDeferredResultProcessing(deferredResult, mavContainer);
+
+			// handle 包装了 response 和 deferredResult
 			handler = new HttpMessageConvertingHandler(outputMessage, deferredResult);
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			emitter.initializeWithError(ex);
 			throw ex;
 		}
@@ -205,6 +216,9 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 			sendInternal(data, mediaType);
 		}
 
+		/**
+		 * 当外部调用 send 时，就会将数据 flush 出去
+		 */
 		@SuppressWarnings("unchecked")
 		private <T> void sendInternal(T data, @Nullable MediaType mediaType) throws IOException {
 			for (HttpMessageConverter<?> converter : ResponseBodyEmitterReturnValueHandler.this.sseMessageConverters) {
@@ -220,10 +234,12 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 		@Override
 		public void complete() {
 			try {
+				// 数据刷出去
 				this.outputMessage.flush();
+
+				// 设置结果是 null
 				this.deferredResult.setResult(null);
-			}
-			catch (IOException ex) {
+			} catch (IOException ex) {
 				this.deferredResult.setErrorResult(ex);
 			}
 		}

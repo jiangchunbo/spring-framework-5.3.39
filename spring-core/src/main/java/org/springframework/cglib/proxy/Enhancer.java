@@ -888,12 +888,14 @@ public class Enhancer extends AbstractClassGenerator {
 	}
 
 	private static void setThreadCallbacks(Class type, Callback[] callbacks) {
+		// 找到 CGLIB$SET_THREAD_CALLBACKS 方法，这方法就是给 ThreadLocal 赋值
 		setCallbacksHelper(type, callbacks, SET_THREAD_CALLBACKS_NAME);
 	}
 
 	private static void setCallbacksHelper(Class type, Callback[] callbacks, String methodName) {
 		// TODO: optimize
 		try {
+			// 拿到 setter
 			Method setter = getCallbacksSetter(type, methodName);
 			setter.invoke(null, new Object[]{callbacks});
 		}
@@ -921,6 +923,8 @@ public class Enhancer extends AbstractClassGenerator {
 	 * @return newly created instance
 	 */
 	private Object createUsingReflection(Class type) {
+		// callbacks 就是我们在 Enhancer 设置的 callback
+		// 给代理类的 Callbacks 赋值
 		setThreadCallbacks(type, callbacks);
 		try {
 
