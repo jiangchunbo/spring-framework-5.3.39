@@ -110,6 +110,10 @@ public class DispatcherHandler implements WebHandler, PreFlightRequestHandler, A
 		return this.handlerMappings;
 	}
 
+
+	/**
+	 * 设置 ApplicationContext，同时在这里初始化策略
+	 */
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) {
 		initStrategies(applicationContext);
@@ -117,6 +121,7 @@ public class DispatcherHandler implements WebHandler, PreFlightRequestHandler, A
 
 
 	protected void initStrategies(ApplicationContext context) {
+		// 从容器中发现所有的 HandlerMapping
 		Map<String, HandlerMapping> mappingBeans = BeanFactoryUtils.beansOfTypeIncludingAncestors(
 				context, HandlerMapping.class, true, false);
 
@@ -146,10 +151,15 @@ public class DispatcherHandler implements WebHandler, PreFlightRequestHandler, A
 		if (CorsUtils.isPreFlightRequest(exchange.getRequest())) {
 			return handlePreFlight(exchange);
 		}
+		// 从 handlerMappings 生成一个 Flux
 		return Flux.fromIterable(this.handlerMappings)
+				// 有序调用每个 mapping 的 getHandler 方法
 				.concatMap(mapping -> mapping.getHandler(exchange))
+				// 只取 1 个
 				.next()
+				// 如果找不到，则反馈一个错误
 				.switchIfEmpty(createNotFoundError())
+				//
 				.flatMap(handler -> invokeHandler(exchange, handler))
 				.flatMap(result -> handleResult(exchange, result));
 	}

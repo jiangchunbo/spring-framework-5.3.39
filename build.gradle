@@ -435,9 +435,13 @@ configure(rootProject) {
 		}
 	}
 
-	tasks.named("checkstyleNohttp").configure {
-		maxHeapSize = "1g"
+	tasks.withType(Javadoc) {
+		enabled = false
 	}
+
+//	tasks.named("checkstyleNohttp").configure {
+//		maxHeapSize = "1g"
+//	}
 
 	publishing {
 		publications {

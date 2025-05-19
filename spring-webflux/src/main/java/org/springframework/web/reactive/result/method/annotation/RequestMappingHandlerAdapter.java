@@ -179,6 +179,7 @@ public class RequestMappingHandlerAdapter implements HandlerAdapter, Application
 
 	@Override
 	public boolean supports(Object handler) {
+		// 支持那种 @RequestMapping 扫描出来的处理器
 		return handler instanceof HandlerMethod;
 	}
 

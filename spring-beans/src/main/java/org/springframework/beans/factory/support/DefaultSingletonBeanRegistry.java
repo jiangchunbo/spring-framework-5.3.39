@@ -226,9 +226,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				}
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
+
+				// 压制异常
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
 				if (recordSuppressedExceptions) {
-					this.suppressedExceptions = new LinkedHashSet<>();
+//					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
 					singletonObject = singletonFactory.getObject();

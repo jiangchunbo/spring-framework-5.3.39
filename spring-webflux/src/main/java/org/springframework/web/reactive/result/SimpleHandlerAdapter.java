@@ -34,6 +34,11 @@ import org.springframework.web.server.WebHandler;
  */
 public class SimpleHandlerAdapter implements HandlerAdapter {
 
+	/**
+	 * 这种适配器，能够处理 handler 类型是 WebHandler
+	 * @param handler the handler object to check
+	 * @return
+	 */
 	@Override
 	public boolean supports(Object handler) {
 		return WebHandler.class.isAssignableFrom(handler.getClass());
