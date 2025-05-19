@@ -227,10 +227,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 
-				// 压制异常
+				// Bean 创建的过程中，如果发生异常，比如说是循环依赖，那么会把异常记录到这个 Set 中
+				// 如果异常实在太多，比如超过 100 个，那么才会抛出
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
 				if (recordSuppressedExceptions) {
-//					this.suppressedExceptions = new LinkedHashSet<>();
+					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
 					singletonObject = singletonFactory.getObject();
