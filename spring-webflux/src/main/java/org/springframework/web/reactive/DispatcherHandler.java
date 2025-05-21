@@ -145,26 +145,36 @@ public class DispatcherHandler implements WebHandler, PreFlightRequestHandler, A
 
 	@Override
 	public Mono<Void> handle(ServerWebExchange exchange) {
+		// 没有配置 handler mapping 吗？ 404
 		if (this.handlerMappings == null) {
 			return createNotFoundError();
 		}
+
+		// 如果是 pre flight 请求
 		if (CorsUtils.isPreFlightRequest(exchange.getRequest())) {
 			return handlePreFlight(exchange);
 		}
+
 		// 从 handlerMappings 生成一个 Flux
 		return Flux.fromIterable(this.handlerMappings)
 				// 有序调用每个 mapping 的 getHandler 方法
 				.concatMap(mapping -> mapping.getHandler(exchange))
 				// 只取 1 个
 				.next()
-				// 如果找不到，则反馈一个错误
+				// 如果找不到，则返回 404
 				.switchIfEmpty(createNotFoundError())
-				//
+				// 处理请求
 				.flatMap(handler -> invokeHandler(exchange, handler))
+				// 处理请求结果
 				.flatMap(result -> handleResult(exchange, result));
 	}
 
+
+	/**
+	 * 创建 404 错误。
+	 */
 	private <R> Mono<R> createNotFoundError() {
+		// 看起来使用了 lambda，其实也算个常量。因为没有影响计算的量。
 		return Mono.defer(() -> {
 			Exception ex = new ResponseStatusException(HttpStatus.NOT_FOUND, "No matching handler");
 			return Mono.error(ex);
@@ -177,6 +187,7 @@ public class DispatcherHandler implements WebHandler, PreFlightRequestHandler, A
 		}
 		if (this.handlerAdapters != null) {
 			for (HandlerAdapter handlerAdapter : this.handlerAdapters) {
+				// 寻找合适的适配器，只找到第一个
 				if (handlerAdapter.supports(handler)) {
 					return handlerAdapter.handle(exchange, handler);
 				}

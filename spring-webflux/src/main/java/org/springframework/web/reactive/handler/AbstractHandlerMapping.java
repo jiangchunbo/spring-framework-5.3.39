@@ -53,7 +53,9 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 
 	private static final WebHandler NO_OP_HANDLER = exchange -> Mono.empty();
 
-	/** Dedicated "hidden" logger for request mappings. */
+	/**
+	 * Dedicated "hidden" logger for request mappings.
+	 */
 	protected final Log mappingsLogger =
 			LogDelegateFactory.getHiddenLog(HandlerMapping.class.getName() + ".Mappings");
 
@@ -116,6 +118,7 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 	/**
 	 * Set the "global" CORS configurations based on URL patterns. By default, the
 	 * first matching URL pattern is combined with handler-level CORS configuration if any.
+	 *
 	 * @see #setCorsConfigurationSource(CorsConfigurationSource)
 	 */
 	public void setCorsConfigurations(Map<String, CorsConfiguration> corsConfigurations) {
@@ -124,8 +127,7 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 			UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(this.patternParser);
 			source.setCorsConfigurations(corsConfigurations);
 			this.corsConfigurationSource = source;
-		}
-		else {
+		} else {
 			this.corsConfigurationSource = null;
 		}
 	}
@@ -133,8 +135,9 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 	/**
 	 * Set the "global" CORS configuration source. By default, the first matching URL
 	 * pattern is combined with the CORS configuration for the handler, if any.
-	 * @since 5.1
+	 *
 	 * @see #setCorsConfigurations(Map)
+	 * @since 5.1
 	 */
 	public void setCorsConfigurationSource(CorsConfigurationSource corsConfigurationSource) {
 		Assert.notNull(corsConfigurationSource, "corsConfigurationSource must not be null");
@@ -161,6 +164,7 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 	/**
 	 * Specify the order value for this HandlerMapping bean.
 	 * <p>The default value is {@code Ordered.LOWEST_PRECEDENCE}, meaning non-ordered.
+	 *
 	 * @see org.springframework.core.Ordered#getOrder()
 	 */
 	public void setOrder(int order) {
@@ -182,26 +186,41 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 	}
 
 
+	/**
+	 * 将一次 HTTP 请求定位到一个 handler 处理器对象（可能是一个 Controller 方法、一个函数式 HandlerFunction）
+	 * <p>
+	 * 定位这个词是 o3 给我的启发，我觉得也很恰当。
+	 */
 	@Override
 	public Mono<Object> getHandler(ServerWebExchange exchange) {
+		// 具体逻辑由子类实现 getHandlerInternal
+
+		// 自己再使用 Mono.map 进行后置处理
 		return getHandlerInternal(exchange).map(handler -> {
 			if (logger.isDebugEnabled()) {
 				logger.debug(exchange.getLogPrefix() + "Mapped to " + handler);
 			}
 			ServerHttpRequest request = exchange.getRequest();
+
+			// 存在 CORS 配置，或者是 Pre Flight 请求
 			if (hasCorsConfigurationSource(handler) || CorsUtils.isPreFlightRequest(request)) {
 				CorsConfiguration config = (this.corsConfigurationSource != null ?
 						this.corsConfigurationSource.getCorsConfiguration(exchange) : null);
 				CorsConfiguration handlerConfig = getCorsConfiguration(handler, exchange);
 				config = (config != null ? config.combine(handlerConfig) : handlerConfig);
 				if (config != null) {
+					// 验证配置
 					config.validateAllowCredentials();
 					config.validateAllowPrivateNetwork();
 				}
+
+				// 处理失败，或者 Pre Flight 请求，就不处理
 				if (!this.corsProcessor.process(config, exchange) || CorsUtils.isPreFlightRequest(request)) {
 					return NO_OP_HANDLER;
 				}
 			}
+
+			// 因为只是后置处理，所以，依然返回 handler
 			return handler;
 		});
 	}
@@ -213,6 +232,7 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 	 * the pre-flight request but for the expected actual request based on the URL
 	 * path, the HTTP methods from the "Access-Control-Request-Method" header, and
 	 * the headers from the "Access-Control-Request-Headers" header.
+	 *
 	 * @param exchange current exchange
 	 * @return {@code Mono} for the matching handler, if any
 	 */
@@ -220,6 +240,7 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 
 	/**
 	 * Return {@code true} if there is a {@link CorsConfigurationSource} for this handler.
+	 *
 	 * @since 5.2
 	 */
 	protected boolean hasCorsConfigurationSource(Object handler) {
@@ -228,7 +249,8 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport
 
 	/**
 	 * Retrieve the CORS configuration for the given handler.
-	 * @param handler the handler to check (never {@code null})
+	 *
+	 * @param handler  the handler to check (never {@code null})
 	 * @param exchange the current exchange
 	 * @return the CORS configuration for the handler, or {@code null} if none
 	 */

@@ -36,8 +36,9 @@ public class SimpleHandlerAdapter implements HandlerAdapter {
 
 	/**
 	 * 这种适配器，能够处理 handler 类型是 WebHandler
+	 *
 	 * @param handler the handler object to check
-	 * @return
+	 * @return 是否支持 handler
 	 */
 	@Override
 	public boolean supports(Object handler) {
