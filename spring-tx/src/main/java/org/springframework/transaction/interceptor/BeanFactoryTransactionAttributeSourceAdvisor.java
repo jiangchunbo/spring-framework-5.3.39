@@ -37,6 +37,9 @@ public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFa
 	@Nullable
 	private TransactionAttributeSource transactionAttributeSource;
 
+	/**
+	 * {@link TransactionAttributeSourcePointcut} 是一个接口，Spring 没有实现具体的类，而是用了匿名类。
+	 */
 	private final TransactionAttributeSourcePointcut pointcut = new TransactionAttributeSourcePointcut() {
 		@Override
 		@Nullable

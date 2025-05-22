@@ -77,6 +77,7 @@ public abstract class Pointcuts {
 		if (pointcut == Pointcut.TRUE) {
 			return true;
 		}
+		// 如果 targetClass 有可能存在 @Transactional，那么进一步检查
 		if (pointcut.getClassFilter().matches(targetClass)) {
 			// Only check if it gets past first hurdle.
 			MethodMatcher mm = pointcut.getMethodMatcher();

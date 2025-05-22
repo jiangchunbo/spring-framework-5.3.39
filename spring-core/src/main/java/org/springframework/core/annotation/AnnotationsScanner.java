@@ -481,9 +481,12 @@ abstract class AnnotationsScanner {
 	}
 
 	static boolean isKnownEmpty(AnnotatedElement source, SearchStrategy searchStrategy) {
+		// 明显不可能存在注解
 		if (hasPlainJavaAnnotationsOnly(source)) {
 			return true;
 		}
+
+		//
 		if (searchStrategy == SearchStrategy.DIRECT || isWithoutHierarchy(source, searchStrategy)) {
 			if (source instanceof Method && ((Method) source).isBridge()) {
 				return false;

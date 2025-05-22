@@ -20,10 +20,13 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 
 import org.springframework.aop.ClassFilter;
+import org.springframework.aop.MethodMatcher;
 import org.springframework.aop.support.StaticMethodMatcherPointcut;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.TransactionManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 /**
@@ -37,10 +40,18 @@ import org.springframework.util.ObjectUtils;
 abstract class TransactionAttributeSourcePointcut extends StaticMethodMatcherPointcut implements Serializable {
 
 	protected TransactionAttributeSourcePointcut() {
+		// 构造一个固定 ClassFilter，只是用于初步判断是否有资格存在注解 @Transactional
 		setClassFilter(new TransactionAttributeSourceClassFilter());
 	}
 
 
+	/**
+	 * 实现了 {@link MethodMatcher#matches(Method, Class)}
+	 *
+	 * @param method      the candidate method
+	 * @param targetClass the target class
+	 * @return 方法、类是否匹配
+	 */
 	@Override
 	public boolean matches(Method method, Class<?> targetClass) {
 		TransactionAttributeSource tas = getTransactionAttributeSource();
@@ -84,6 +95,12 @@ abstract class TransactionAttributeSourcePointcut extends StaticMethodMatcherPoi
 	 */
 	private class TransactionAttributeSourceClassFilter implements ClassFilter {
 
+		/**
+		 * 底层会通过非常粗糙地判断返回结果。见 {@link AnnotationUtils#isCandidateClass(Class, Class)}
+		 *
+		 * @param clazz the candidate target class
+		 * @return 是否这个类有可能存在 {@link Transactional} 注解
+		 */
 		@Override
 		public boolean matches(Class<?> clazz) {
 			if (TransactionalProxy.class.isAssignableFrom(clazz) ||
