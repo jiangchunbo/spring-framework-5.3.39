@@ -99,12 +99,17 @@ public final class MultipartResolutionDelegate {
 		boolean isMultipart = (multipartRequest != null || isMultipartContent(request));
 
 		if (MultipartFile.class == parameter.getNestedParameterType()) {
+			// 如果参数是 MultipartFile，但是却不是 multipart 请求
 			if (!isMultipart) {
 				return null;
 			}
+
+			// 应该不可能是 null 吧，除非前面 DispatcherServlet 没有解析？
 			if (multipartRequest == null) {
 				multipartRequest = new StandardMultipartHttpServletRequest(request);
 			}
+
+			// 总之拿到 MultipartFile
 			return multipartRequest.getFile(name);
 		}
 		else if (isMultipartFileCollection(parameter)) {
@@ -114,6 +119,7 @@ public final class MultipartResolutionDelegate {
 			if (multipartRequest == null) {
 				multipartRequest = new StandardMultipartHttpServletRequest(request);
 			}
+			// 与上面类似，上面是返回 1 个，这里是返回 List
 			List<MultipartFile> files = multipartRequest.getFiles(name);
 			return (!files.isEmpty() ? files : null);
 		}

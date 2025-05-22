@@ -77,11 +77,13 @@ public abstract class WebAsyncUtils {
 	/**
 	 * Create an AsyncWebRequest instance. By default, an instance of
 	 * {@link StandardServletAsyncWebRequest} gets created.
-	 * @param request the current request
+	 *
+	 * @param request  the current request
 	 * @param response the current response
 	 * @return an AsyncWebRequest instance (never {@code null})
 	 */
 	public static AsyncWebRequest createAsyncWebRequest(HttpServletRequest request, HttpServletResponse response) {
+		// 拿到 manager，进而拿到 AsyncWebRequest
 		AsyncWebRequest prev = getAsyncManager(request).getAsyncWebRequest();
 		return (prev instanceof StandardServletAsyncWebRequest ?
 				new StandardServletAsyncWebRequest(request, response, (StandardServletAsyncWebRequest) prev) :

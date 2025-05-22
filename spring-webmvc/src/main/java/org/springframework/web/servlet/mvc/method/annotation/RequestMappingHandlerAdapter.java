@@ -856,9 +856,13 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	protected ModelAndView invokeHandlerMethod(HttpServletRequest request,
 			HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {
 
+		// 总是确保 request 属性中有一个 WebAsyncManager
+		// 你别以为这是一个什么所谓的管理器，所以它管理很多请求，实际上只在本次请求有效而已
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
-		// 创建异步 Web请求
+
+		// 创建 AsyncWebRequest。默认，实际上就是 StandardServletAsyncWebRequest
 		AsyncWebRequest asyncWebRequest = WebAsyncUtils.createAsyncWebRequest(request, response);
+		// 设置超时
 		asyncWebRequest.setTimeout(this.asyncRequestTimeout);
 
 		asyncManager.setTaskExecutor(this.taskExecutor);

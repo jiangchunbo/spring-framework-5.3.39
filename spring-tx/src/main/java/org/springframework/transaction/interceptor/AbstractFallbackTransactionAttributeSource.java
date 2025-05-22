@@ -103,17 +103,19 @@ public abstract class AbstractFallbackTransactionAttributeSource
 	@Override
 	@Nullable
 	public TransactionAttribute getTransactionAttribute(Method method, @Nullable Class<?> targetClass) {
-		// 方法不能是 Method 声明的
+		// method 声明类不能是 Object
 		if (method.getDeclaringClass() == Object.class) {
 			return null;
 		}
 
 		// First, see if we have a cached value.
+		// 首先，看看我们是不是缓存了
 		Object cacheKey = getCacheKey(method, targetClass);
 		TransactionAttribute cached = this.attributeCache.get(cacheKey);
 		if (cached != null) {
 			// Value will either be canonical value indicating there is no transaction attribute,
 			// or an actual transaction attribute.
+
 			// NULL_TRANSACTION_ATTRIBUTE 是一个无事务的标记
 			if (cached == NULL_TRANSACTION_ATTRIBUTE) {
 				return null;
@@ -122,6 +124,7 @@ public abstract class AbstractFallbackTransactionAttributeSource
 			}
 		} else {
 			// We need to work it out.
+			// 我们需要把他算出来
 			TransactionAttribute txAttr = computeTransactionAttribute(method, targetClass);
 			// Put it in the cache.
 			if (txAttr == null) {

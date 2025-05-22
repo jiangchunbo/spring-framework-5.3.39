@@ -187,6 +187,8 @@ public class GenericConversionService implements ConfigurableConversionService {
 			throw new IllegalArgumentException("Source to convert from must be an instance of [" +
 					sourceType + "]; instead it was a [" + source.getClass().getName() + "]");
 		}
+
+		// 获得转换器
 		GenericConverter converter = getConverter(sourceType, targetType);
 		if (converter != null) {
 			Object result = ConversionUtils.invokeConverter(converter, source, sourceType, targetType);
@@ -433,6 +435,8 @@ public class GenericConversionService implements ConfigurableConversionService {
 			if (source == null) {
 				return convertNullSource(sourceType, targetType);
 			}
+
+			// 通过 ConverterFactory 得到一个 Converter，然后调用其 convert
 			return this.converterFactory.getConverter(targetType.getObjectType()).convert(source);
 		}
 
