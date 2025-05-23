@@ -76,6 +76,7 @@ public abstract class TypeConverterSupport extends PropertyEditorRegistrySupport
 		catch (ConverterNotFoundException | IllegalStateException ex) {
 			throw new ConversionNotSupportedException(value, requiredType, ex);
 		}
+		// convert 过程中出现的 ConversionException 或者 IllegalArgumentException 都会包装成 TypeMismatchException
 		catch (ConversionException | IllegalArgumentException ex) {
 			throw new TypeMismatchException(value, requiredType, ex);
 		}
