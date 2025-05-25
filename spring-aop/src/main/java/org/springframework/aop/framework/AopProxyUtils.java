@@ -208,6 +208,9 @@ public abstract class AopProxyUtils {
 	 * rather, equality of interfaces, advisors and target sources.
 	 */
 	public static boolean equalsInProxy(AdvisedSupport a, AdvisedSupport b) {
+		// 1. 代理的接口必须一模一样
+		// 2. 代理的 advisor 必须一模一样
+		// 3. TargetSource 必须相等
 		return (a == b ||
 				(equalsProxiedInterfaces(a, b) && equalsAdvisors(a, b) && a.getTargetSource().equals(b.getTargetSource())));
 	}

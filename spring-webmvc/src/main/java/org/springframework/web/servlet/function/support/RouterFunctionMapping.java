@@ -134,6 +134,7 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (this.routerFunction == null) {
+			// routerFunction 是 null，那这个方法肯定就是给 routerFunction 赋值
 			initRouterFunctions();
 		}
 		if (CollectionUtils.isEmpty(this.messageConverters)) {
@@ -160,6 +161,8 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 				.map(router -> (RouterFunction<?>) router)
 				.collect(Collectors.toList());
 
+		// 如果不需要父容器的，那么就 remove
+		// 所以上一个步骤太强了，把父子容器的 RouterFunction 都拿过来了
 		ApplicationContext parentContext = obtainApplicationContext().getParent();
 		if (parentContext != null && !this.detectHandlerFunctionsInAncestorContexts) {
 			parentContext.getBeanProvider(RouterFunction.class).stream().forEach(routerFunctions::remove);

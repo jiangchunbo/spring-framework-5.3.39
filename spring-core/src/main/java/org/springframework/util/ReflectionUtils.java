@@ -527,10 +527,12 @@ public abstract class ReflectionUtils {
 
 	/**
 	 * Determine whether the given method is an "equals" method.
+	 * 判断给定的方法是不是 equals 方法
 	 *
 	 * @see java.lang.Object#equals(Object)
 	 */
 	public static boolean isEqualsMethod(@Nullable Method method) {
+		// 从方法参数，方法名，方法参数类型全部进行判断
 		return (method != null && method.getParameterCount() == 1 && method.getName().equals("equals") &&
 				method.getParameterTypes()[0] == Object.class);
 	}

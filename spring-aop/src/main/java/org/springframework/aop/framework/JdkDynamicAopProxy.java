@@ -161,9 +161,11 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		for (Class<?> proxiedInterface : proxiedInterfaces) {
 			Method[] methods = proxiedInterface.getDeclaredMethods();
 			for (Method method : methods) {
+				// 如果这个方法是 equals 方法，表示自己定义了 equals 方法
 				if (AopUtils.isEqualsMethod(method)) {
 					this.equalsDefined = true;
 				}
+				// 如果这个方法是 hashCode 方法，表示自己定了 hashCode 方法
 				if (AopUtils.isHashCodeMethod(method)) {
 					this.hashCodeDefined = true;
 				}
@@ -192,10 +194,12 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		try {
 			if (!this.equalsDefined && AopUtils.isEqualsMethod(method)) {
 				// The target does not implement the equals(Object) method itself.
+				// 如果自己没有实现 equals 方法，但是这是一个 equals，那么就交给自己处理
 				return equals(args[0]);
 			}
 			else if (!this.hashCodeDefined && AopUtils.isHashCodeMethod(method)) {
 				// The target does not implement the hashCode() method itself.
+				// 如果自己没有实现 hashCode，但是这是一个 hashCode，自己处理
 				return hashCode();
 			}
 			else if (method.getDeclaringClass() == DecoratingProxy.class) {
@@ -204,6 +208,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 			}
 			else if (!this.advised.opaque && method.getDeclaringClass().isInterface() &&
 					method.getDeclaringClass().isAssignableFrom(Advised.class)) {
+				// Advised 不透明 -> 不隐藏
 				// Service invocations on ProxyConfig with the proxy config...
 				return AopUtils.invokeJoinpointUsingReflection(this.advised, method, args);
 			}
@@ -212,6 +217,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 			if (this.advised.exposeProxy) {
 				// Make invocation available if necessary.
+				// 暴露 Proxy
 				oldProxy = AopContext.setCurrentProxy(proxy);
 				setProxyContext = true;
 			}

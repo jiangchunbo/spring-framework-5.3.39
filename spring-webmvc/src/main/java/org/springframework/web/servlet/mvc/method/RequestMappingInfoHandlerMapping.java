@@ -245,13 +245,16 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 			return null;
 		}
 
+		// 找出 path 能匹配上的
 		PartialMatchHelper helper = new PartialMatchHelper(infos, request);
 		if (helper.isEmpty()) {
 			return null;
 		}
 
+		// 方法不匹配
 		if (helper.hasMethodsMismatch()) {
 			Set<String> methods = helper.getAllowedMethods();
+			// 如果是 options，则返回一个 HandlerMethod
 			if (HttpMethod.OPTIONS.matches(request.getMethod())) {
 				Set<MediaType> mediaTypes = helper.getConsumablePatchMediaTypes();
 				HttpOptionsHandler handler = new HttpOptionsHandler(methods, mediaTypes);
@@ -260,6 +263,7 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 			throw new HttpRequestMethodNotSupportedException(request.getMethod(), methods);
 		}
 
+		// 请求的 ContentType 不匹配
 		if (helper.hasConsumesMismatch()) {
 			Set<MediaType> mediaTypes = helper.getConsumableMediaTypes();
 			MediaType contentType = null;
@@ -296,7 +300,10 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 		private final List<PartialMatch> partialMatches = new ArrayList<>();
 
 		PartialMatchHelper(Set<RequestMappingInfo> infos, HttpServletRequest request) {
+			// 传入所有的 RequestMappingInfo 和 ServletRequest
+			// 从中找出哪些 RequestMappingInfo 具备的条件能够与 request 有重合的地方
 			for (RequestMappingInfo info : infos) {
+				// 找出哪些路径能匹配上的
 				if (info.getActivePatternsCondition().getMatchingCondition(request) != null) {
 					this.partialMatches.add(new PartialMatch(info, request));
 				}

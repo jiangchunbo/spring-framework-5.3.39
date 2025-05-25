@@ -144,7 +144,11 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 		// 拿到没有 contextPath 的 path
 		String lookupPath = initLookupPath(request);
 		Object handler;
+
+		// 下面看你配的匹配是 ant 还是 pattern
+		// 好像 spring boot 默认是 pattern，可以改成 ant
 		if (usesPathPatterns()) {
+			// 如果是 path pattern 匹配
 			RequestPath path = ServletRequestPathUtils.getParsedRequestPath(request);
 			handler = lookupHandler(path, lookupPath, request);
 		}
@@ -155,7 +159,10 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 			// We need to care for the default handler directly, since we need to
 			// expose the PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE for it as well.
 			Object rawHandler = null;
+
+			// 就是比较 lookupPath 是否是等于 '/'
 			if (StringUtils.matchesCharacter(lookupPath, '/')) {
+				// WelcomePageHandlerMapping
 				rawHandler = getRootHandler();
 			}
 			if (rawHandler == null) {
@@ -232,7 +239,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 */
 	@Nullable
 	protected Object lookupHandler(String lookupPath, HttpServletRequest request) throws Exception {
-		// 看看能不能直接命中一个对象
+		// 从 handlerMap 找。handlerMap 是本类特有属性
 		Object handler = getDirectMatch(lookupPath, request);
 		if (handler != null) {
 			return handler;
@@ -242,6 +249,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 		// 不能直接命中？试试 pattern
 		List<String> matchingPatterns = new ArrayList<>();
 		for (String registeredPattern : this.handlerMap.keySet()) {
+			// ant 匹配器
 			if (getPathMatcher().match(registeredPattern, lookupPath)) {
 				matchingPatterns.add(registeredPattern);
 			}

@@ -472,6 +472,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			@SuppressWarnings("unchecked")
 			@Override
 			public Stream<T> orderedStream() {
+				// 获取 beanName（包括祖先容器）
 				String[] beanNames = getBeanNamesForTypedStream(requiredType, allowEagerInit);
 				if (beanNames.length == 0) {
 					return Stream.empty();
@@ -541,6 +542,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (!isConfigurationFrozen() || type == null || !allowEagerInit) {
 			return doGetBeanNamesForType(ResolvableType.forRawClass(type), includeNonSingletons, allowEagerInit);
 		}
+
+		// 缓存。两个缓存，一个是所有 beanName，另一个是 singleton beanName
 		Map<Class<?>, String[]> cache =
 				(includeNonSingletons ? this.allBeanNamesByType : this.singletonBeanNamesByType);
 		String[] resolvedBeanNames = cache.get(type);
