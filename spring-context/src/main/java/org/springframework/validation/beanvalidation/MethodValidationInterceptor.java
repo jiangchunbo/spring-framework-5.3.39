@@ -55,9 +55,9 @@ import org.springframework.validation.annotation.Validated;
  * <p>As of Spring 5.0, this functionality requires a Bean Validation 1.1+ provider.
  *
  * @author Juergen Hoeller
- * @since 3.1
  * @see MethodValidationPostProcessor
  * @see javax.validation.executable.ExecutableValidator
+ * @since 3.1
  */
 public class MethodValidationInterceptor implements MethodInterceptor {
 
@@ -73,6 +73,7 @@ public class MethodValidationInterceptor implements MethodInterceptor {
 
 	/**
 	 * Create a new MethodValidationInterceptor using the given JSR-303 ValidatorFactory.
+	 *
 	 * @param validatorFactory the JSR-303 ValidatorFactory to use
 	 */
 	public MethodValidationInterceptor(ValidatorFactory validatorFactory) {
@@ -81,6 +82,7 @@ public class MethodValidationInterceptor implements MethodInterceptor {
 
 	/**
 	 * Create a new MethodValidationInterceptor using the given JSR-303 Validator.
+	 *
 	 * @param validator the JSR-303 Validator to use
 	 */
 	public MethodValidationInterceptor(Validator validator) {
@@ -92,10 +94,14 @@ public class MethodValidationInterceptor implements MethodInterceptor {
 	@Nullable
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		// Avoid Validator invocation on FactoryBean.getObjectType/isSingleton
+		// Validator 对 FactoryBean 的两个方法 getObjectType 和 isSingleton 不校验
+		// 但是，对 FactoryBean 的 getObject 校验呢！
+		// 可能是一个快速判断吧
 		if (isFactoryBeanMetadataMethod(invocation.getMethod())) {
 			return invocation.proceed();
 		}
 
+		// 没有组
 		Class<?>[] groups = determineValidationGroups(invocation);
 
 		// Standard Bean Validation 1.1 API
@@ -108,8 +114,7 @@ public class MethodValidationInterceptor implements MethodInterceptor {
 
 		try {
 			result = execVal.validateParameters(target, methodToValidate, invocation.getArguments(), groups);
-		}
-		catch (IllegalArgumentException ex) {
+		} catch (IllegalArgumentException ex) {
 			// Probably a generic type mismatch between interface and impl as reported in SPR-12237 / HV-1011
 			// Let's try to find the bridged method on the implementation class...
 			methodToValidate = BridgeMethodResolver.findBridgedMethod(
@@ -135,16 +140,14 @@ public class MethodValidationInterceptor implements MethodInterceptor {
 
 		// Call from interface-based proxy handle, allowing for an efficient check?
 		if (clazz.isInterface()) {
-			return ((clazz == FactoryBean.class || clazz == SmartFactoryBean.class) &&
-					!method.getName().equals("getObject"));
+			return ((clazz == FactoryBean.class || clazz == SmartFactoryBean.class) && !method.getName().equals("getObject"));
 		}
 
 		// Call from CGLIB proxy handle, potentially implementing a FactoryBean method?
 		Class<?> factoryBeanType = null;
 		if (SmartFactoryBean.class.isAssignableFrom(clazz)) {
 			factoryBeanType = SmartFactoryBean.class;
-		}
-		else if (FactoryBean.class.isAssignableFrom(clazz)) {
+		} else if (FactoryBean.class.isAssignableFrom(clazz)) {
 			factoryBeanType = FactoryBean.class;
 		}
 		return (factoryBeanType != null && !method.getName().equals("getObject") &&
@@ -155,16 +158,25 @@ public class MethodValidationInterceptor implements MethodInterceptor {
 	 * Determine the validation groups to validate against for the given method invocation.
 	 * <p>Default are the validation groups as specified in the {@link Validated} annotation
 	 * on the containing target class of the method.
+	 *
 	 * @param invocation the current MethodInvocation
 	 * @return the applicable validation groups as a Class array
 	 */
 	protected Class<?>[] determineValidationGroups(MethodInvocation invocation) {
+		// 获取方法上面的 @Validated
 		Validated validatedAnn = AnnotationUtils.findAnnotation(invocation.getMethod(), Validated.class);
 		if (validatedAnn == null) {
+			// 获得类上面的 @Validated
+			// 再学习一下。
+			// 如果方法本身在子类没有被重写，getThis 返回的是子类对象，但是 method 确是父类声明的
+			// 比如说，子类是被代理的对象，那它一定没有重写方法
+			// 比如说，子类是继承，但它没有重写
 			Object target = invocation.getThis();
 			Assert.state(target != null, "Target must not be null");
 			validatedAnn = AnnotationUtils.findAnnotation(target.getClass(), Validated.class);
 		}
+
+		// 获得 group，也可能没有
 		return (validatedAnn != null ? validatedAnn.value() : new Class<?>[0]);
 	}
 

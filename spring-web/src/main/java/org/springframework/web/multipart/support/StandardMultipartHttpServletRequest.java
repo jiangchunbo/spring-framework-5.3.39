@@ -263,6 +263,8 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 
 		@Override
 		public void transferTo(File dest) throws IOException, IllegalStateException {
+			// 对于 tomcat 来说，传入了一个路径，构造得到一个 File 对象
+			// 然后使用 FileItem 写入这个 File
 			this.part.write(dest.getPath());
 			if (dest.isAbsolute() && !dest.exists()) {
 				// Servlet 3.0 Part.write is not guaranteed to support absolute file paths:
