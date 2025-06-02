@@ -160,6 +160,7 @@ public abstract class StreamUtils {
 		Assert.notNull(in, "No InputStream specified");
 		Assert.notNull(out, "No OutputStream specified");
 
+		// 非常经典地一个利用字节数组，将 in 拷贝到 out
 		int byteCount = 0;
 		byte[] buffer = new byte[BUFFER_SIZE];
 		int bytesRead;
