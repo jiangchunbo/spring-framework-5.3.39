@@ -147,10 +147,15 @@ class RequestResponseBodyAdviceChain implements RequestBodyAdvice, ResponseBodyA
 
 	@SuppressWarnings("unchecked")
 	private <A> List<A> getMatchingAdvice(MethodParameter parameter, Class<? extends A> adviceType) {
+		//
 		List<Object> availableAdvice = getAdvice(adviceType);
+
+		//
 		if (CollectionUtils.isEmpty(availableAdvice)) {
 			return Collections.emptyList();
 		}
+
+		//
 		List<A> result = new ArrayList<>(availableAdvice.size());
 		for (Object advice : availableAdvice) {
 			if (advice instanceof ControllerAdviceBean) {
@@ -167,6 +172,9 @@ class RequestResponseBodyAdviceChain implements RequestBodyAdvice, ResponseBodyA
 		return result;
 	}
 
+	/**
+	 * 只有两种情况，RequestBodyAdvice 或者 ResponseBodyAdvice，其他都报错。
+	 */
 	private List<Object> getAdvice(Class<?> adviceType) {
 		if (RequestBodyAdvice.class == adviceType) {
 			return this.requestBodyAdvice;
