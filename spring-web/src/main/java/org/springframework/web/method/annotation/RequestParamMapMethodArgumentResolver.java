@@ -63,6 +63,9 @@ public class RequestParamMapMethodArgumentResolver implements HandlerMethodArgum
 
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
+		// @RequestParam，且类型是 Map，而且没有设置注解的 name
+		// 这是什么意思
+		// 我希望使用这个 Map 来接收许多参数？
 		RequestParam requestParam = parameter.getParameterAnnotation(RequestParam.class);
 		return (requestParam != null && Map.class.isAssignableFrom(parameter.getParameterType()) &&
 				!StringUtils.hasText(requestParam.name()));
@@ -74,17 +77,26 @@ public class RequestParamMapMethodArgumentResolver implements HandlerMethodArgum
 
 		ResolvableType resolvableType = ResolvableType.forMethodParameter(parameter);
 
+		// 两个走向，一个是如果用 Spring 自己的 MultiValueMap 接收
+		// 另一个就是其他 Map
+
+		// 如果是多 value Map（Spring 自己设计的 Map）
 		if (MultiValueMap.class.isAssignableFrom(parameter.getParameterType())) {
 			// MultiValueMap
+			// 获取泛型第 0 个，其实就是 Value 的类型
 			Class<?> valueType = resolvableType.as(MultiValueMap.class).getGeneric(1).resolve();
+
+			// 如果是 MultiValueMap<String, MultipartFile>
 			if (valueType == MultipartFile.class) {
 				MultipartRequest multipartRequest = MultipartResolutionDelegate.resolveMultipartRequest(webRequest);
 				return (multipartRequest != null ? multipartRequest.getMultiFileMap() : new LinkedMultiValueMap<>(0));
 			}
+			// 如果是 MultiValueMap<?, Part>
 			else if (valueType == Part.class) {
 				HttpServletRequest servletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
 				if (servletRequest != null && MultipartResolutionDelegate.isMultipartRequest(servletRequest)) {
 					Collection<Part> parts = servletRequest.getParts();
+					// 仔细看，这里是 LinkedMultiValueMap
 					LinkedMultiValueMap<String, Part> result = new LinkedMultiValueMap<>(parts.size());
 					for (Part part : parts) {
 						result.add(part.getName(), part);
@@ -94,8 +106,13 @@ public class RequestParamMapMethodArgumentResolver implements HandlerMethodArgum
 				return new LinkedMultiValueMap<>(0);
 			}
 			else {
+				// 实际上就是对 Servlet Request 的包装
 				Map<String, String[]> parameterMap = webRequest.getParameterMap();
+
+				// 构造一个 LinkedMultiValueMap
 				MultiValueMap<String, String> result = new LinkedMultiValueMap<>(parameterMap.size());
+
+				// 这里很简单，就是从 request 的参数构造一个 MultiValueMap
 				parameterMap.forEach((key, values) -> {
 					for (String value : values) {
 						result.add(key, value);
@@ -110,12 +127,16 @@ public class RequestParamMapMethodArgumentResolver implements HandlerMethodArgum
 			Class<?> valueType = resolvableType.asMap().getGeneric(1).resolve();
 			if (valueType == MultipartFile.class) {
 				MultipartRequest multipartRequest = MultipartResolutionDelegate.resolveMultipartRequest(webRequest);
+				// 跟上面逻辑基本一致，就是返回值变成了 LinkedHashMap
+				// 或者是，直接取第 1 个 value，不管多值了，一般就是认为只需要 1 个 file 可以这么写
 				return (multipartRequest != null ? multipartRequest.getFileMap() : new LinkedHashMap<>(0));
 			}
 			else if (valueType == Part.class) {
 				HttpServletRequest servletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
 				if (servletRequest != null && MultipartResolutionDelegate.isMultipartRequest(servletRequest)) {
 					Collection<Part> parts = servletRequest.getParts();
+
+					// 与上面有所不同，这里是 LinkedHashMap
 					LinkedHashMap<String, Part> result = CollectionUtils.newLinkedHashMap(parts.size());
 					for (Part part : parts) {
 						if (!result.containsKey(part.getName())) {

@@ -53,8 +53,8 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * @author Juergen Hoeller
  * @author Rossen Stoyanchev
- * @since 3.1
  * @see StandardServletMultipartResolver
+ * @since 3.1
  */
 public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpServletRequest {
 
@@ -65,25 +65,30 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 	/**
 	 * Create a new StandardMultipartHttpServletRequest wrapper for the given request,
 	 * immediately parsing the multipart content.
+	 *
 	 * @param request the servlet request to wrap
 	 * @throws MultipartException if parsing failed
 	 */
 	public StandardMultipartHttpServletRequest(HttpServletRequest request) throws MultipartException {
+		// 第 2 个参数是 false，说明默认会立即解析 request
 		this(request, false);
 	}
 
 	/**
 	 * Create a new StandardMultipartHttpServletRequest wrapper for the given request.
-	 * @param request the servlet request to wrap
+	 *
+	 * @param request     the servlet request to wrap
 	 * @param lazyParsing whether multipart parsing should be triggered lazily on
-	 * first access of multipart files or parameters
+	 *                    first access of multipart files or parameters
 	 * @throws MultipartException if an immediate parsing attempt failed
 	 * @since 3.2.9
 	 */
 	public StandardMultipartHttpServletRequest(HttpServletRequest request, boolean lazyParsing)
 			throws MultipartException {
 
+		// super 其实这里没什么特别的逻辑，就是赋值 request
 		super(request);
+
 		if (!lazyParsing) {
 			parseRequest(request);
 		}
@@ -110,14 +115,12 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 						filename = MimeDelegate.decode(filename);
 					}
 					files.add(part.getName(), new StandardMultipartFile(part, filename));
-				}
-				else {
+				} else {
 					this.multipartParameterNames.add(part.getName());
 				}
 			}
 			setMultipartFiles(files);
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			handleParseFailure(ex);
 		}
 	}
@@ -126,6 +129,7 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 		String msg = ex.getMessage();
 		if (msg != null) {
 			msg = msg.toLowerCase();
+			// 挺有意思的判断：直接检查字符串有没有 size exceed
 			if (msg.contains("size") && msg.contains("exceed")) {
 				throw new MaxUploadSizeExceededException(-1, ex);
 			}
@@ -184,8 +188,7 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 		try {
 			Part part = getPart(paramOrFileName);
 			return (part != null ? part.getContentType() : null);
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			throw new MultipartException("Could not access multipart servlet request", ex);
 		}
 	}
@@ -200,12 +203,10 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 					headers.put(headerName, new ArrayList<>(part.getHeaders(headerName)));
 				}
 				return headers;
-			}
-			else {
+			} else {
 				return null;
 			}
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			throw new MultipartException("Could not access multipart servlet request", ex);
 		}
 	}
@@ -287,6 +288,7 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 
 		@Override
 		public void transferTo(Path dest) throws IOException, IllegalStateException {
+			// in 流 → out 流
 			FileCopyUtils.copy(this.part.getInputStream(), Files.newOutputStream(dest));
 		}
 	}
@@ -300,8 +302,7 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 		public static String decode(String value) {
 			try {
 				return MimeUtility.decodeText(value);
-			}
-			catch (UnsupportedEncodingException ex) {
+			} catch (UnsupportedEncodingException ex) {
 				throw new IllegalStateException(ex);
 			}
 		}

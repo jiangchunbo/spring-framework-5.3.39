@@ -35,6 +35,8 @@ import org.springframework.web.util.WebUtils;
 /**
  * A common delegate for {@code HandlerMethodArgumentResolver} implementations
  * which need to resolve {@link MultipartFile} and {@link Part} arguments.
+ * <p>
+ * 一种用于解析 MultipartFile 和 Part 参数的【方法参数解析器】实现的通用委托
  *
  * @author Juergen Hoeller
  * @since 4.3
@@ -64,21 +66,33 @@ public final class MultipartResolutionDelegate {
 		return null;
 	}
 
+	/**
+	 * 从 request 类型以及，Content Type 判断
+	 */
 	public static boolean isMultipartRequest(HttpServletRequest request) {
+		// 包装成 MultipartHttpServletRequest
+		// 或者，请求 ContentType 是 multipart/form-data
 		return (WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class) != null ||
 				isMultipartContent(request));
 	}
 
+	/**
+	 * 从 ContentType 判断是不是 multipart
+	 */
 	private static boolean isMultipartContent(HttpServletRequest request) {
 		String contentType = request.getContentType();
 		return (contentType != null && contentType.toLowerCase().startsWith("multipart/"));
 	}
 
+	/**
+	 * 包装成 MultipartHttpServletRequest
+	 */
 	static MultipartHttpServletRequest asMultipartHttpServletRequest(HttpServletRequest request) {
 		MultipartHttpServletRequest unwrapped = WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class);
 		if (unwrapped != null) {
 			return unwrapped;
 		}
+		// 这里会立即触发解析
 		return new StandardMultipartHttpServletRequest(request);
 	}
 
@@ -111,8 +125,7 @@ public final class MultipartResolutionDelegate {
 
 			// 总之拿到 MultipartFile
 			return multipartRequest.getFile(name);
-		}
-		else if (isMultipartFileCollection(parameter)) {
+		} else if (isMultipartFileCollection(parameter)) {
 			if (!isMultipart) {
 				return null;
 			}
@@ -122,8 +135,7 @@ public final class MultipartResolutionDelegate {
 			// 与上面类似，上面是返回 1 个，这里是返回 List
 			List<MultipartFile> files = multipartRequest.getFiles(name);
 			return (!files.isEmpty() ? files : null);
-		}
-		else if (isMultipartFileArray(parameter)) {
+		} else if (isMultipartFileArray(parameter)) {
 			if (!isMultipart) {
 				return null;
 			}
@@ -132,28 +144,24 @@ public final class MultipartResolutionDelegate {
 			}
 			List<MultipartFile> files = multipartRequest.getFiles(name);
 			return (!files.isEmpty() ? files.toArray(new MultipartFile[0]) : null);
-		}
-		else if (Part.class == parameter.getNestedParameterType()) {
+		} else if (Part.class == parameter.getNestedParameterType()) {
 			if (!isMultipart) {
 				return null;
 			}
 			return request.getPart(name);
-		}
-		else if (isPartCollection(parameter)) {
+		} else if (isPartCollection(parameter)) {
 			if (!isMultipart) {
 				return null;
 			}
 			List<Part> parts = resolvePartList(request, name);
 			return (!parts.isEmpty() ? parts : null);
-		}
-		else if (isPartArray(parameter)) {
+		} else if (isPartArray(parameter)) {
 			if (!isMultipart) {
 				return null;
 			}
 			List<Part> parts = resolvePartList(request, name);
 			return (!parts.isEmpty() ? parts.toArray(new Part[0]) : null);
-		}
-		else {
+		} else {
 			return UNRESOLVABLE;
 		}
 	}
@@ -177,7 +185,7 @@ public final class MultipartResolutionDelegate {
 	@Nullable
 	private static Class<?> getCollectionParameterType(MethodParameter methodParam) {
 		Class<?> paramType = methodParam.getNestedParameterType();
-		if (Collection.class == paramType || List.class.isAssignableFrom(paramType)){
+		if (Collection.class == paramType || List.class.isAssignableFrom(paramType)) {
 			Class<?> valueType = ResolvableType.forMethodParameter(methodParam).asCollection().resolveGeneric();
 			if (valueType != null) {
 				return valueType;

@@ -1082,6 +1082,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			Exception dispatchException = null;
 
 			try {
+				// 解析 multipart/form-data
 				processedRequest = checkMultipart(request);
 				multipartRequestParsed = (processedRequest != request);
 

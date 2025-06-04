@@ -197,24 +197,27 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 	protected void handleMissingValue(String name, MethodParameter parameter, NativeWebRequest request)
 			throws Exception {
 
+		// 没有沿用父类的处理方式，因为父类的异常太不明显
+		// 这里选择自己抛出特定的异常
 		handleMissingValueInternal(name, parameter, request, false);
 	}
 
 	@Override
 	protected void handleMissingValueAfterConversion(
 			String name, MethodParameter parameter, NativeWebRequest request) throws Exception {
-
 		handleMissingValueInternal(name, parameter, request, true);
 	}
 
 	/**
-	 * 处理找不到值
+	 * 处理找不到值，其实也是抛出异常
 	 */
 	protected void handleMissingValueInternal(
 			String name, MethodParameter parameter, NativeWebRequest request, boolean missingAfterConversion)
 			throws Exception {
 
 		HttpServletRequest servletRequest = request.getNativeRequest(HttpServletRequest.class);
+
+		// 看看参数是不是 Multipart 相关的
 		if (MultipartResolutionDelegate.isMultipartArgument(parameter)) {
 			if (servletRequest == null || !MultipartResolutionDelegate.isMultipartRequest(servletRequest)) {
 				throw new MultipartException("Current request is not a multipart request");

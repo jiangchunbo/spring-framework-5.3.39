@@ -111,6 +111,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 		Object arg = resolveName(resolvedName.toString(), nestedParameter, webRequest);
 		if (arg == null) {
 			// 若请求没有值，那么检查是否是否设置了默认值
+			// 不是每个注解都有默认值
 			if (namedValueInfo.defaultValue != null) {
 				arg = resolveEmbeddedValuesAndExpressions(namedValueInfo.defaultValue);
 			} else if (namedValueInfo.required && !nestedParameter.isOptional()) {
@@ -227,7 +228,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	 */
 	protected void handleMissingValue(String name, MethodParameter parameter, NativeWebRequest request)
 			throws Exception {
-
+		// 默认抛出一个 ServletRequestBindingException
 		handleMissingValue(name, parameter);
 	}
 
