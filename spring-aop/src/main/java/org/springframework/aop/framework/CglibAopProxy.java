@@ -690,15 +690,20 @@ class CglibAopProxy implements AopProxy, Serializable {
 			this.advised = advised;
 		}
 
+		/**
+		 * 这个方法非常关键。比如一些 Spring 事务也会直接走到这里面
+		 */
 		@Override
 		@Nullable
 		public Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
 			Object oldProxy = null;
 			boolean setProxyContext = false;
 			Object target = null;
+
+			// 获取代理的目标对象
 			TargetSource targetSource = this.advised.getTargetSource();
 			try {
-				// 设置到 AopContext
+				// 设置到 AopContext，如果希望从 AopContext 获取代理
 				if (this.advised.exposeProxy) {
 					// Make invocation available if necessary.
 					oldProxy = AopContext.setCurrentProxy(proxy);
@@ -706,9 +711,11 @@ class CglibAopProxy implements AopProxy, Serializable {
 				}
 
 				// Get as late as possible to minimize the time we "own" the target, in case it comes from a pool...
+				// 获得 target 对象
 				target = targetSource.getTarget();
 				Class<?> targetClass = (target != null ? target.getClass() : null);
-				// 再拿一次
+
+				// 获取所有的 Advice
 				List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 				Object retVal;
 				// Check whether we only have one InvokerInterceptor: that is,
