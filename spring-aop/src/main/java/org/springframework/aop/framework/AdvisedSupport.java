@@ -344,11 +344,15 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * @param advisors the advisors to register
 	 */
 	public void addAdvisors(Collection<Advisor> advisors) {
+		// 如果冻结了，那就不能添加了，报错
 		if (isFrozen()) {
 			throw new AopConfigException("Cannot add advisor: Configuration is frozen.");
 		}
+
 		if (!CollectionUtils.isEmpty(advisors)) {
 			for (Advisor advisor : advisors) {
+				// 如果是引介，需要校验，校验通过就 addInterfaces
+				// 其实也可以直接 addInterfaces 吧
 				if (advisor instanceof IntroductionAdvisor) {
 					validateIntroductionAdvisor((IntroductionAdvisor) advisor);
 				}
@@ -358,6 +362,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 			adviceChanged();
 		}
 	}
+
 
 	private void validateIntroductionAdvisor(IntroductionAdvisor advisor) {
 		advisor.validateInterfaces();

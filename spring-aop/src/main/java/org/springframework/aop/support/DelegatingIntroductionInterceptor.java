@@ -88,6 +88,8 @@ public class DelegatingIntroductionInterceptor extends IntroductionInfoSupport
 	private void init(Object delegate) {
 		Assert.notNull(delegate, "Delegate must not be null");
 		this.delegate = delegate;
+
+		// 获得 delegate 所有实现的接口，添加到发布接口中
 		implementInterfacesOnObject(delegate);
 
 		// We don't want to expose the control interface

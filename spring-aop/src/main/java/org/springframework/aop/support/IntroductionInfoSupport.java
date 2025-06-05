@@ -43,6 +43,9 @@ import org.springframework.util.ClassUtils;
 @SuppressWarnings("serial")
 public class IntroductionInfoSupport implements IntroductionInfo, Serializable {
 
+	/**
+	 * 发布出来的接口
+	 */
 	protected final Set<Class<?>> publishedInterfaces = new LinkedHashSet<>();
 
 	private transient Map<Method, Boolean> rememberedMethods = new ConcurrentHashMap<>(32);
@@ -53,6 +56,7 @@ public class IntroductionInfoSupport implements IntroductionInfo, Serializable {
 	 * due to the delegate implementing it. Call this method to exclude
 	 * internal interfaces from being visible at the proxy level.
 	 * <p>Does nothing if the interface is not implemented by the delegate.
+	 *
 	 * @param ifc the interface to suppress
 	 */
 	public void suppressInterface(Class<?> ifc) {
@@ -66,10 +70,12 @@ public class IntroductionInfoSupport implements IntroductionInfo, Serializable {
 
 	/**
 	 * Check whether the specified interfaces is a published introduction interface.
+	 *
 	 * @param ifc the interface to check
 	 * @return whether the interface is part of this introduction
 	 */
 	public boolean implementsInterface(Class<?> ifc) {
+		// 检查给定的 ifc 是否在发布接口中
 		for (Class<?> pubIfc : this.publishedInterfaces) {
 			if (ifc.isInterface() && ifc.isAssignableFrom(pubIfc)) {
 				return true;
@@ -80,14 +86,17 @@ public class IntroductionInfoSupport implements IntroductionInfo, Serializable {
 
 	/**
 	 * Publish all interfaces that the given delegate implements at the proxy level.
+	 *
 	 * @param delegate the delegate object
 	 */
 	protected void implementInterfacesOnObject(Object delegate) {
+		// 获取 delegate 所有的接口
 		this.publishedInterfaces.addAll(ClassUtils.getAllInterfacesAsSet(delegate));
 	}
 
 	/**
 	 * Is this method on an introduced interface?
+	 *
 	 * @param mi the method invocation
 	 * @return whether the invoked method is on an introduced interface
 	 */
@@ -95,8 +104,7 @@ public class IntroductionInfoSupport implements IntroductionInfo, Serializable {
 		Boolean rememberedResult = this.rememberedMethods.get(mi.getMethod());
 		if (rememberedResult != null) {
 			return rememberedResult;
-		}
-		else {
+		} else {
 			// Work it out and cache it.
 			boolean result = implementsInterface(mi.getMethod().getDeclaringClass());
 			this.rememberedMethods.put(mi.getMethod(), result);

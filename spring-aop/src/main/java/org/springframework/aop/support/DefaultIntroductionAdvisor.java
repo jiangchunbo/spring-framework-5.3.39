@@ -44,6 +44,9 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 
 	private final Advice advice;
 
+	/**
+	 * 返回了引介，引入了哪些接口
+	 */
 	private final Set<Class<?>> interfaces = new LinkedHashSet<>();
 
 	private int order = Ordered.LOWEST_PRECEDENCE;
@@ -97,6 +100,7 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 
 	/**
 	 * Add the specified interface to the list of interfaces to introduce.
+	 * <p>添加引介接口
 	 *
 	 * @param ifc the interface to introduce
 	 */
@@ -110,12 +114,18 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 
 	@Override
 	public Class<?>[] getInterfaces() {
+		// 转换成数组
 		return ClassUtils.toClassArray(this.interfaces);
 	}
 
+
 	@Override
 	public void validateInterfaces() throws IllegalArgumentException {
+		// 校验引介接口
+
 		for (Class<?> ifc : this.interfaces) {
+			// 如果 advice 属于动态引介通知
+			// 但是 advice 又没有实现 interface，就要报错
 			if (this.advice instanceof DynamicIntroductionAdvice &&
 					!((DynamicIntroductionAdvice) this.advice).implementsInterface(ifc)) {
 				throw new IllegalArgumentException("DynamicIntroductionAdvice [" + this.advice + "] " +
