@@ -239,6 +239,7 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 
 	/**
 	 * Return the mapping paths that are not patterns.
+	 * <p>这个方法就是获得那种没有“模糊”匹配的 path，精确的 path
 	 *
 	 * @since 5.3
 	 */

@@ -700,6 +700,8 @@ public class GenericConversionService implements ConfigurableConversionService {
 
 	/**
 	 * Manages converters registered with a specific {@link ConvertiblePair}.
+	 * <p>
+	 * 这只是一个管理器，管理着你通过一对类型 S 和 T，能够找到的所有转换器
 	 */
 	private static class ConvertersForPair {
 

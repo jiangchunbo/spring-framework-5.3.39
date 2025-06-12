@@ -125,8 +125,14 @@ public abstract class AopUtils {
 	 * if actually exposed on the target type, or otherwise a corresponding method
 	 * on one of the target type's interfaces or on the target type itself.
 	 *
+	 * <p>
+	 * 你不要觉得这个方法是万能的，这个方法在某些场景下会返回一个不能使用的 method，使用了会报错的方法。
+	 * <p>
+	 * 这个方法的初衷也不是设计一个万能的方法，它只是为 AOP 服务的。
+	 *
 	 * @param method     the method to check
 	 * @param targetType the target type to search methods on (typically an AOP proxy)
+	 *                   搜索方法的目标类型（通常是 AOP 代理）
 	 * @return a corresponding invocable method on the target type
 	 * @throws IllegalStateException if the given method is not invocable on the given
 	 *                               target type (typically due to a proxy mismatch)
@@ -134,6 +140,7 @@ public abstract class AopUtils {
 	 * @since 4.3
 	 */
 	public static Method selectInvocableMethod(Method method, @Nullable Class<?> targetType) {
+		// 第一次看到这个方法：选出可调用的方法？
 		if (targetType == null) {
 			return method;
 		}

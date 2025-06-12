@@ -370,12 +370,17 @@ public class HandlerMethod {
 	 * the bean name is resolved before a {@link HandlerMethod} is created and returned.
 	 */
 	public HandlerMethod createWithResolvedBean() {
+		// 可能需要解析 bean，如果是字符串类型的 handler
 		Object handler = this.bean;
 		if (this.bean instanceof String) {
 			Assert.state(this.beanFactory != null, "Cannot resolve bean name without BeanFactory");
 			String beanName = (String) this.bean;
 			handler = this.beanFactory.getBean(beanName);
 		}
+
+		// 一般情况应该都不是字符串吧，所以直接包装成 HandlerMethod
+		// >>> 不过也真是奇怪，自己是一个 HandlerMethod，然后又包装成 HandlerMethod
+		// >>> 实际上是拷贝了一份，属性全都拷贝
 		return new HandlerMethod(this, handler);
 	}
 

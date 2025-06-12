@@ -127,8 +127,11 @@ public final class PathPatternsRequestCondition extends AbstractRequestCondition
 		}
 		Set<String> result = Collections.emptySet();
 		for (PathPattern pattern : this.patterns) {
+			// 是否包含 pattern 愈发，亦或是一个 direct path
 			if (!pattern.hasPatternSyntax()) {
+				// 惰性创建
 				result = (result.isEmpty() ? new HashSet<>(1) : result);
+				// 添加 pattern
 				result.add(pattern.getPatternString());
 			}
 		}

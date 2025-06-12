@@ -295,10 +295,13 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 		if (info != null) {
 			// 类上面也创建一个映射信息，可能需要一些前缀
 			RequestMappingInfo typeInfo = createRequestMappingInfo(handlerType);
+
+			// 把类级别的信息和方法级别的信息合并
 			if (typeInfo != null) {
-				// 合并
 				info = typeInfo.combine(info);
 			}
+
+			// 我觉得可能有点鸡肋的功能，根据 handler 类型，判断是否需要增加前缀
 			String prefix = getPathPrefix(handlerType);
 			if (prefix != null) {
 				info = RequestMappingInfo.paths(prefix).options(this.config).build().combine(info);
@@ -309,8 +312,12 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 
 	@Nullable
 	String getPathPrefix(Class<?> handlerType) {
+		// 这里可能一般不会有人去这么配
+		// 需要提前注册 一个 String path -> Predicate 的映射关系
 		for (Map.Entry<String, Predicate<Class<?>>> entry : this.pathPrefixes.entrySet()) {
+			// Predicate 断言去测试这个 handlerType
 			if (entry.getValue().test(handlerType)) {
+				// 若通过，则获取 key，key 就是前缀，然后还进行了嵌入值解析，得到了 prefix 前缀
 				String prefix = entry.getKey();
 				if (this.embeddedValueResolver != null) {
 					prefix = this.embeddedValueResolver.resolveStringValue(prefix);
@@ -331,6 +338,7 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	 */
 	@Nullable
 	private RequestMappingInfo createRequestMappingInfo(AnnotatedElement element) {
+		// 获得注解信息
 		RequestMapping requestMapping = AnnotatedElementUtils.findMergedAnnotation(element, RequestMapping.class);
 		RequestCondition<?> condition = (element instanceof Class
 				? getCustomTypeCondition((Class<?>) element)
@@ -352,7 +360,7 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	 */
 	@Nullable
 	protected RequestCondition<?> getCustomTypeCondition(Class<?> handlerType) {
-		// 类上面的 @RequestMapping，没啥条件，作用就是加前缀的
+		// 自定义类型条件，似乎根本没用
 		return null;
 	}
 
@@ -370,6 +378,7 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	 */
 	@Nullable
 	protected RequestCondition<?> getCustomMethodCondition(Method method) {
+		// 自定义条件，似乎没有用
 		return null;
 	}
 
@@ -383,6 +392,7 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 			RequestMapping requestMapping, @Nullable RequestCondition<?> customCondition) {
 
 		RequestMappingInfo.Builder builder = RequestMappingInfo
+				// 注意一下，这里还会解析你路径中的嵌入值，也就是你甚至可以加入 ${} 这种标记
 				.paths(resolveEmbeddedValuesInPatterns(requestMapping.path()))
 				.methods(requestMapping.method())
 				.params(requestMapping.params())
