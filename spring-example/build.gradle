@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.springframework'
+version = '5.3.39'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
