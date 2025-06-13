@@ -222,6 +222,7 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	/**
 	 * Returns either {@link #getPathPatternsCondition()} or
 	 * {@link #getPatternsCondition()} depending on which is not null.
+	 * <p>这个方法没有什么惊讶的，其实就是个策略，优先检查 pathPatternsCondition
 	 *
 	 * @since 5.3
 	 */
@@ -383,14 +384,21 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	@Override
 	@Nullable
 	public RequestMappingInfo getMatchingCondition(HttpServletRequest request) {
+		// 这个方法就是从 request 中，找到与本 mapping 匹配的地方
+
 		RequestMethodsRequestCondition methods = this.methodsCondition.getMatchingCondition(request);
+		// 如果没有匹配上，这里就会返回 null
 		if (methods == null) {
 			return null;
 		}
+
+		// 需要所有 params 表达式都匹配
 		ParamsRequestCondition params = this.paramsCondition.getMatchingCondition(request);
 		if (params == null) {
 			return null;
 		}
+
+		// 需要所有 header 都匹配
 		HeadersRequestCondition headers = this.headersCondition.getMatchingCondition(request);
 		if (headers == null) {
 			return null;

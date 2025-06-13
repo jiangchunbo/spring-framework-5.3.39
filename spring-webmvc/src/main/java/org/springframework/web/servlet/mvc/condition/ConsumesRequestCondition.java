@@ -201,9 +201,12 @@ public final class ConsumesRequestCondition extends AbstractRequestCondition<Con
 		if (CorsUtils.isPreFlightRequest(request)) {
 			return EMPTY_CONDITION;
 		}
+
 		if (isEmpty()) {
 			return this;
 		}
+
+		// ruo
 		if (!hasBody(request) && !this.bodyRequired) {
 			return EMPTY_CONDITION;
 		}
@@ -224,8 +227,13 @@ public final class ConsumesRequestCondition extends AbstractRequestCondition<Con
 		return !CollectionUtils.isEmpty(result) ? new ConsumesRequestCondition(result) : null;
 	}
 
+	/**
+	 * 判断请求是否有请求体
+	 */
 	private boolean hasBody(HttpServletRequest request) {
+		// 获取 Content-Length
 		String contentLength = request.getHeader(HttpHeaders.CONTENT_LENGTH);
+		// 获得 Transfer-Encoding
 		String transferEncoding = request.getHeader(HttpHeaders.TRANSFER_ENCODING);
 		return StringUtils.hasText(transferEncoding) ||
 				(StringUtils.hasText(contentLength) && !contentLength.trim().equals("0"));

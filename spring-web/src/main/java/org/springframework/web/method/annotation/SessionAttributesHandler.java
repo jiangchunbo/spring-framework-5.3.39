@@ -68,9 +68,12 @@ public class SessionAttributesHandler {
 		Assert.notNull(sessionAttributeStore, "SessionAttributeStore may not be null");
 		this.sessionAttributeStore = sessionAttributeStore;
 
+		// 从 handler Class 中解析 @SessionAttributes
 		SessionAttributes ann = AnnotatedElementUtils.findMergedAnnotation(handlerType, SessionAttributes.class);
 		if (ann != null) {
+			// 指定了 name 就表示会将模型中的 name 对应的属性存入 Session
 			Collections.addAll(this.attributeNames, ann.names());
+			// 指定了 type 就表示会将模型中的 type 所有这个类型的属性存入 Session
 			Collections.addAll(this.attributeTypes, ann.types());
 		}
 		this.knownAttributeNames.addAll(this.attributeNames);

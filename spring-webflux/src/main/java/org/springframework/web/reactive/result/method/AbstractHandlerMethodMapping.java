@@ -173,10 +173,13 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 * @see #handlerMethodsInitialized(Map)
 	 */
 	protected void initHandlerMethods() {
+		// 获取所有的 beanName（看起来很暴力）
 		String[] beanNames = obtainApplicationContext().getBeanNamesForType(Object.class);
 
 		for (String beanName : beanNames) {
+			// beanName 非 scopedTarget. 开头
 			if (!beanName.startsWith(SCOPED_TARGET_NAME_PREFIX)) {
+				// 通过容器提供的方法 将 beanName 得到 beanClass
 				Class<?> beanType = null;
 				try {
 					beanType = obtainApplicationContext().getType(beanName);
@@ -187,11 +190,14 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 						logger.trace("Could not resolve type for bean '" + beanName + "'", ex);
 					}
 				}
+
+				// 是否是一个
 				if (beanType != null && isHandler(beanType)) {
 					detectHandlerMethods(beanName);
 				}
 			}
 		}
+
 		handlerMethodsInitialized(getHandlerMethods());
 	}
 

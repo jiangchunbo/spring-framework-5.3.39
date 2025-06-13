@@ -378,7 +378,8 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 		// Check whether we should support the request method.
 		String method = request.getMethod();
 
-		// 是否是不支持的方法
+		// 检查是否支持这个方法
+		// 基本不会有人配置这个
 		if (this.supportedMethods != null && !this.supportedMethods.contains(method)) {
 			throw new HttpRequestMethodNotSupportedException(method, this.supportedMethods);
 		}

@@ -433,15 +433,16 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			addMatchingMappings(directPathMatches, matches, request);
 		}
 
-		// TODO 如果通过 path 并没有找到，那么...
+		// 如果无法通过 direct path 获得匹配到的 mapping
 		if (matches.isEmpty()) {
 			addMatchingMappings(this.mappingRegistry.getRegistrations().keySet(), matches, request);
 		}
 
 
 		if (!matches.isEmpty()) {
-			// 取出最好的一个
 			Match bestMatch = matches.get(0);
+
+			// 如果命中了多个
 			if (matches.size() > 1) {
 				Comparator<Match> comparator = new MatchComparator(getMappingComparator(request));
 				matches.sort(comparator);
@@ -470,14 +471,20 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			handleMatch(bestMatch.mapping, lookupPath, request);
 			return bestMatch.getHandlerMethod();
 		} else {
+			// 处理未匹配的情况
 			return handleNoMatch(this.mappingRegistry.getRegistrations().keySet(), lookupPath, request);
 		}
 	}
 
+	/**
+	 * 这个方法接收 N 个 mapping，
+	 */
 	private void addMatchingMappings(Collection<T> mappings, List<Match> matches, HttpServletRequest request) {
 		for (T mapping : mappings) {
-			// 获得匹配上的 info
+			// 传入一个 mapping 然后又得到一个 match 这也是一个 mapping
 			T match = getMatchingMapping(mapping, request);
+
+			// 只有匹配上了，才会得到一个 match
 			if (match != null) {
 				matches.add(new Match(match, this.mappingRegistry.getRegistrations().get(mapping)));
 			}
@@ -703,6 +710,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 					this.corsLookup.put(handlerMethod, corsConfig);
 				}
 
+				// 将 mapping 和注册的信息加到注册表
 				this.registry.put(mapping,
 						new MappingRegistration<>(mapping, handlerMethod, directPaths, name, corsConfig != null));
 			} finally {

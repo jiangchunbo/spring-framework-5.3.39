@@ -42,9 +42,16 @@ import org.springframework.web.util.pattern.PathPatternParser;
  */
 public class PathMatchConfigurer {
 
+	/**
+	 * 新的 path 解析器，用于替代 Ant
+	 * Since 5.0
+	 */
 	@Nullable
 	private PathPatternParser patternParser;
 
+	/**
+	 * 是否匹配末尾斜杠
+	 */
 	@Nullable
 	private Boolean trailingSlashMatch;
 
@@ -93,6 +100,9 @@ public class PathMatchConfigurer {
 	 * Whether to match to URLs irrespective of the presence of a trailing slash.
 	 * If enabled a method mapped to "/users" also matches to "/users/".
 	 * <p>The default value is {@code true}.
+	 *
+	 * <p> 是否匹配 URL 时忽略尾部斜杠的存在。
+	 * <p> 如果开启这个，那么 /users 也可以匹配 /users
 	 */
 	public PathMatchConfigurer setUseTrailingSlashMatch(Boolean trailingSlashMatch) {
 		this.trailingSlashMatch = trailingSlashMatch;
@@ -173,6 +183,9 @@ public class PathMatchConfigurer {
 	 * <p>By default this is {@link AntPathMatcher}.
 	 * <p><strong>Note:</strong> This property is mutually exclusive with and
 	 * ignored when {@link #setPatternParser(PathPatternParser)} is set.
+	 * <p> 设置用于进行字符串模式匹配的 PathMatcher。
+	 * <p> 默认也就是，有且仅有 1 个 AntPathMatcher
+	 * <p> 注意，这个属性与 PathPatternParser 是互斥的，如果你设置了 PathPatternParser，那么这个不会有用
 	 */
 	public PathMatchConfigurer setPathMatcher(PathMatcher pathMatcher) {
 		this.pathMatcher = pathMatcher;

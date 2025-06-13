@@ -802,7 +802,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 
 		ModelAndView mav;
 
-		// 提前检查。比如 http method、session
+		// 检查请求
 		checkRequest(request);
 
 		// Execute invokeHandlerMethod in synchronized block if required.
@@ -823,6 +823,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			mav = invokeHandlerMethod(request, response, handlerMethod);
 		}
 
+		// 响应头不包含 Cache-Control
 		if (!response.containsHeader(HEADER_CACHE_CONTROL)) {
 			if (getSessionAttributesHandler(handlerMethod).hasSessionAttributes()) {
 				applyCacheSeconds(response, this.cacheSecondsForSessionAttributeHandlers);

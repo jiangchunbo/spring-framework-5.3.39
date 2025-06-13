@@ -35,6 +35,9 @@ import org.springframework.util.StringUtils;
  */
 public class PathPatternParser {
 
+	/**
+	 * 末尾斜杠是否匹配
+	 */
 	private boolean matchOptionalTrailingSeparator = true;
 
 	private boolean caseSensitive = true;

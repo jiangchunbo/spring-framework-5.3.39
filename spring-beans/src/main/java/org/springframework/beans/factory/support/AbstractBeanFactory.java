@@ -690,9 +690,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		String beanName = transformedBeanName(name);
 
 		// Check manually registered singletons.
-		// 检查手工注册的 bean
+		// 检查手工注册的 bean，第 2 个 参数感觉是 true 或者 false 都无所谓，因为直接被一个条件挡住了：是否循环创建中
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null && beanInstance.getClass() != NullBean.class) {
+			// 如果发现了 bean 实例
 			if (beanInstance instanceof FactoryBean && !BeanFactoryUtils.isFactoryDereference(name)) {
 				return getTypeForFactoryBean((FactoryBean<?>) beanInstance);
 			}
@@ -701,6 +702,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 
+		// 从 parent 容器找
 		// No singleton instance found -> check bean definition.
 		BeanFactory parentBeanFactory = getParentBeanFactory();
 		if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
@@ -708,6 +710,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			return parentBeanFactory.getType(originalBeanName(name));
 		}
 
+		// 拿到一个所谓的合并之后的 BeanDefinition
 		RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 
 		// Check decorated bean definition, if any: We assume it'll be easier

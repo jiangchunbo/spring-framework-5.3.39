@@ -119,6 +119,7 @@ public class PathPattern implements Comparable<PathPattern> {
 
 	/**
 	 * If this pattern has no trailing slash, allow candidates to include one and still match successfully.
+	 * <p> 如果这个模式末尾没有斜杠，也允许候选者可以包含一个斜杠，且仍然可以成功匹配
 	 */
 	private final boolean matchOptionalTrailingSeparator;
 

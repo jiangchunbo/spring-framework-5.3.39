@@ -136,6 +136,8 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	 */
 	public void setUseTrailingSlashMatch(boolean useTrailingSlashMatch) {
 		this.useTrailingSlashMatch = useTrailingSlashMatch;
+
+		// 如果配置了 PatternParser，是否匹配末尾斜杠
 		if (getPatternParser() != null) {
 			getPatternParser().setMatchOptionalTrailingSeparator(useTrailingSlashMatch);
 		}
@@ -301,7 +303,8 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 				info = typeInfo.combine(info);
 			}
 
-			// 我觉得可能有点鸡肋的功能，根据 handler 类型，判断是否需要增加前缀
+			// 传入你的 handler 类型，根据这个类型，你可以自定义前缀
+			// 比如获取 Class 的全限定名，判断是否处于某个包下面
 			String prefix = getPathPrefix(handlerType);
 			if (prefix != null) {
 				info = RequestMappingInfo.paths(prefix).options(this.config).build().combine(info);
@@ -343,6 +346,8 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 		RequestCondition<?> condition = (element instanceof Class
 				? getCustomTypeCondition((Class<?>) element)
 				: getCustomMethodCondition((Method) element));
+
+		// 创建一个 RequestMappingInfo 对象
 		return (requestMapping != null ? createRequestMappingInfo(requestMapping, condition) : null);
 	}
 
@@ -449,12 +454,19 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 		updateConsumesCondition(mapping, method);
 	}
 
+	/**
+	 * 这个方法是一个注册之后的后置操作
+	 */
 	private void updateConsumesCondition(RequestMappingInfo info, Method method) {
+		// 拿到其中的 consumes 请求条件
 		ConsumesRequestCondition condition = info.getConsumesCondition();
 		if (!condition.isEmpty()) {
+			// 遍历每个方法参数，找到其中带有 @RequestBody 的
 			for (Parameter parameter : method.getParameters()) {
 				MergedAnnotation<RequestBody> annot = MergedAnnotations.from(parameter).get(RequestBody.class);
 				if (annot.isPresent()) {
+					// 获取其中配置的 required 参数，表示是否必需请求体
+					// 默认不是必需
 					condition.setBodyRequired(annot.getBoolean("required"));
 					break;
 				}
