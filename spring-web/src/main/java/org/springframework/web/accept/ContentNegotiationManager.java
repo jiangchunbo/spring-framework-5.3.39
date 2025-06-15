@@ -58,6 +58,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 	 * Create an instance with the given list of
 	 * {@code ContentNegotiationStrategy} strategies each of which may also be
 	 * an instance of {@code MediaTypeFileExtensionResolver}.
+	 *
 	 * @param strategies the strategies to use
 	 */
 	public ContentNegotiationManager(ContentNegotiationStrategy... strategies) {
@@ -67,6 +68,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 	/**
 	 * A collection-based alternative to
 	 * {@link #ContentNegotiationManager(ContentNegotiationStrategy...)}.
+	 *
 	 * @param strategies the strategies to use
 	 * @since 3.2.2
 	 */
@@ -82,6 +84,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 
 	/**
 	 * Create a default instance with a {@link HeaderContentNegotiationStrategy}.
+	 * <p> 创建一个默认是实例，使用 Header 内容协商策略，其实就是请求头内容协商。
 	 */
 	public ContentNegotiationManager() {
 		this(new HeaderContentNegotiationStrategy());
@@ -90,6 +93,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 
 	/**
 	 * Return the configured content negotiation strategies.
+	 *
 	 * @since 3.2.16
 	 */
 	public List<ContentNegotiationStrategy> getStrategies() {
@@ -98,6 +102,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 
 	/**
 	 * Find a {@code ContentNegotiationStrategy} of the given type.
+	 *
 	 * @param strategyType the strategy type
 	 * @return the first matching strategy, or {@code null} if none
 	 * @since 4.3
@@ -116,6 +121,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 	/**
 	 * Register more {@code MediaTypeFileExtensionResolver} instances in addition
 	 * to those detected at construction.
+	 *
 	 * @param resolvers the resolvers to add
 	 */
 	public void addFileExtensionResolvers(MediaTypeFileExtensionResolver... resolvers) {
@@ -124,6 +130,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 
 	@Override
 	public List<MediaType> resolveMediaTypes(NativeWebRequest request) throws HttpMediaTypeNotAcceptableException {
+		// 取出所有的策略
 		for (ContentNegotiationStrategy strategy : this.strategies) {
 			List<MediaType> mediaTypes = strategy.resolveMediaTypes(request);
 			if (mediaTypes.equals(MEDIA_TYPE_ALL_LIST)) {
@@ -149,6 +156,8 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 	 * useRegisteredExtensionsOnly} property is set to "false", the list of extensions may
 	 * increase as file extensions are resolved via
 	 * {@link org.springframework.http.MediaTypeFactory} and cached.
+	 *
+	 * <p> 获得所有文件后缀名
 	 */
 	@Override
 	public List<String> getAllFileExtensions() {
@@ -156,12 +165,16 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 	}
 
 	private List<String> doResolveExtensions(Function<MediaTypeFileExtensionResolver, List<String>> extractor) {
+		// 获得所有解析器，然后得到一堆 extension
+
 		List<String> result = null;
 		for (MediaTypeFileExtensionResolver resolver : this.resolvers) {
 			List<String> extensions = extractor.apply(resolver);
 			if (CollectionUtils.isEmpty(extensions)) {
 				continue;
 			}
+
+			// 这是一个去重
 			result = (result != null ? result : new ArrayList<>(4));
 			for (String extension : extensions) {
 				if (!result.contains(extension)) {
@@ -175,6 +188,7 @@ public class ContentNegotiationManager implements ContentNegotiationStrategy, Me
 	/**
 	 * Return all registered lookup key to media type mappings by iterating
 	 * {@link MediaTypeFileExtensionResolver}s.
+	 *
 	 * @since 5.2.4
 	 */
 	public Map<String, MediaType> getMediaTypeMappings() {

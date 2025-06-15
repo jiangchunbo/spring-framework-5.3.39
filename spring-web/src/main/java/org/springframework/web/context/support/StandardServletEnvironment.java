@@ -107,11 +107,17 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 	 */
 	@Override
 	protected void customizePropertySources(MutablePropertySources propertySources) {
+		// >>> 这个方法是构造器的扩展点
+
+		// 增加一个 Stub
 		propertySources.addLast(new StubPropertySource(SERVLET_CONFIG_PROPERTY_SOURCE_NAME));
+		// 增加一个 Stub
 		propertySources.addLast(new StubPropertySource(SERVLET_CONTEXT_PROPERTY_SOURCE_NAME));
 		if (jndiPresent && JndiLocatorDelegate.isDefaultJndiEnvironmentAvailable()) {
 			propertySources.addLast(new JndiPropertySource(JNDI_PROPERTY_SOURCE_NAME));
 		}
+
+		// 调用 super
 		super.customizePropertySources(propertySources);
 	}
 

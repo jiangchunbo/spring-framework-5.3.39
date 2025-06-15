@@ -323,12 +323,18 @@ public class ContentNegotiationManagerFactoryBean
 	 */
 	@SuppressWarnings("deprecation")
 	public ContentNegotiationManager build() {
+		// >>>>>> 构建 ContentNegotiationManager
 		List<ContentNegotiationStrategy> strategies = new ArrayList<>();
 
 		if (this.strategies != null) {
 			strategies.addAll(this.strategies);
 		}
 		else {
+			// 默认情况下，这里已经从类路径推断出注册了一些 MediaTypes
+			// 毕竟你类路径存在，就说明你能处理这些类型
+
+			// 是否优先考虑使用 URL 的路径扩展名来决定请求的媒体类型
+			// 默认 false
 			if (this.favorPathExtension) {
 				PathExtensionContentNegotiationStrategy strategy;
 				if (this.servletContext != null && !useRegisteredExtensionsOnly()) {
@@ -343,6 +349,9 @@ public class ContentNegotiationManagerFactoryBean
 				}
 				strategies.add(strategy);
 			}
+
+			// 是否优先考虑使用特定的 URL 请求参数来决定请求的媒体类型
+			// 默认 false
 			if (this.favorParameter) {
 				ParameterContentNegotiationStrategy strategy = new ParameterContentNegotiationStrategy(this.mediaTypes);
 				strategy.setParameterName(this.parameterName);
@@ -367,7 +376,10 @@ public class ContentNegotiationManagerFactoryBean
 		// Ensure media type mappings are available via ContentNegotiationManager#getMediaTypeMappings()
 		// independent of path extension or parameter strategies.
 
+		// mediaTypes 不为空，什么含义？就是说注册了一些可以支持的 MediaType
+		// 同时，不从路径扩展名推断请求 Accept，也不从参数推测
 		if (!CollectionUtils.isEmpty(this.mediaTypes) && !this.favorPathExtension && !this.favorParameter) {
+			// 那么就添加一个文件扩展名解析器
 			this.contentNegotiationManager.addFileExtensionResolvers(
 					new MappingMediaTypeFileExtensionResolver(this.mediaTypes));
 		}

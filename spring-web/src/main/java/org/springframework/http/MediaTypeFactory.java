@@ -65,19 +65,29 @@ public final class MediaTypeFactory {
 	 * @return a multi-value map, mapping media types to file extensions.
 	 */
 	private static MultiValueMap<String, MediaType> parseMimeTypes() {
+		// 获取资源，类路径里面有个文件
 		InputStream is = MediaTypeFactory.class.getResourceAsStream(MIME_TYPES_FILE_NAME);
 		Assert.state(is != null, MIME_TYPES_FILE_NAME + " not found in classpath");
+
+		// 读取文件
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.US_ASCII))) {
 			MultiValueMap<String, MediaType> result = new LinkedMultiValueMap<>();
 			String line;
 			while ((line = reader.readLine()) != null) {
+				// # 是注释
 				if (line.isEmpty() || line.charAt(0) == '#') {
 					continue;
 				}
+				// 拆分
 				String[] tokens = StringUtils.tokenizeToStringArray(line, " \t\n\r\f");
+				// 解析第一部分，因为第一部分是 MediaType 字符串
 				MediaType mediaType = MediaType.parseMediaType(tokens[0]);
+
+				// 从第二部分开始，都是扩展名，可能没有，也可能有 1 个或者 2 个及其以上
 				for (int i = 1; i < tokens.length; i++) {
+					// 转换为扩展名小写
 					String fileExtension = tokens[i].toLowerCase(Locale.ENGLISH);
+					// 构建映射，extension -> MediaType
 					result.add(fileExtension, mediaType);
 				}
 			}
@@ -105,6 +115,7 @@ public final class MediaTypeFactory {
 	 * @return the corresponding media type, or {@code null} if none found
 	 */
 	public static Optional<MediaType> getMediaType(@Nullable String filename) {
+		// 传入 filename 得到一个 MediaType
 		return getMediaTypes(filename).stream().findFirst();
 	}
 
@@ -115,7 +126,10 @@ public final class MediaTypeFactory {
 	 */
 	public static List<MediaType> getMediaTypes(@Nullable String filename) {
 		List<MediaType> mediaTypes = null;
+		// 解析扩展名
 		String ext = StringUtils.getFilenameExtension(filename);
+
+		// 如果存在扩展名，就从缓存 map 获取 MediaType
 		if (ext != null) {
 			mediaTypes = fileExtensionToMediaTypes.get(ext.toLowerCase(Locale.ENGLISH));
 		}

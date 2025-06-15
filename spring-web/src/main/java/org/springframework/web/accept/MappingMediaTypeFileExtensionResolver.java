@@ -37,12 +37,17 @@ import org.springframework.lang.Nullable;
  * <p>Initially created with a map of file extensions and media types.
  * Subsequently subclasses can use {@link #addMapping} to add more mappings.
  *
+ * <p> 这是一个用于通过解析文件扩展名，寻找 MediaType 的解析器，你可以向里面注册。不过似乎很少再使用了，因为可以使用 {@link org.springframework.http.MediaTypeFactory}
+ *
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
  * @since 3.2
  */
 public class MappingMediaTypeFileExtensionResolver implements MediaTypeFileExtensionResolver {
 
+	/**
+	 * 已经注册的 MediaType
+	 */
 	private final ConcurrentMap<String, MediaType> mediaTypes = new ConcurrentHashMap<>(64);
 
 	private final ConcurrentMap<MediaType, List<String>> fileExtensions = new ConcurrentHashMap<>(64);
@@ -105,6 +110,7 @@ public class MappingMediaTypeFileExtensionResolver implements MediaTypeFileExten
 
 	/**
 	 * Use this method for a reverse lookup from extension to MediaType.
+	 *
 	 * @return a MediaType for the extension, or {@code null} if none found
 	 */
 	@Nullable

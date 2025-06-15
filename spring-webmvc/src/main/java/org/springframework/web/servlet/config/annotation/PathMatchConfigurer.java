@@ -55,6 +55,9 @@ public class PathMatchConfigurer {
 	@Nullable
 	private Boolean trailingSlashMatch;
 
+	/**
+	 * 存放路径前缀断言
+	 */
 	@Nullable
 	private Map<String, Predicate<Class<?>>> pathPrefixes;
 
@@ -122,9 +125,14 @@ public class PathMatchConfigurer {
 	 * @since 5.1
 	 */
 	public PathMatchConfigurer addPathPrefix(String prefix, Predicate<Class<?>> predicate) {
+		// >>>>>> 添加路径匹配的前缀断言。其实就是满足什么条件是，增加一个 prefix
+
+		// 惰性创建存放这些断言规则的容器
 		if (this.pathPrefixes == null) {
 			this.pathPrefixes = new LinkedHashMap<>();
 		}
+
+		// 添加断言前缀
 		this.pathPrefixes.put(prefix, predicate);
 		return this;
 	}

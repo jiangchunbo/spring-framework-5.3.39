@@ -59,8 +59,14 @@ public class PatternsRequestCondition extends AbstractRequestCondition<PatternsR
 
 	private final boolean useSuffixPatternMatch;
 
+	/**
+	 * 是否使用末尾的斜杠匹配
+	 */
 	private final boolean useTrailingSlashMatch;
 
+	/**
+	 * 文件扩展名
+	 */
 	private final List<String> fileExtensions = new ArrayList<>();
 
 
@@ -294,17 +300,27 @@ public class PatternsRequestCondition extends AbstractRequestCondition<PatternsR
 	 * @return a collection of matching patterns sorted with the closest match at the top
 	 */
 	public List<String> getMatchingPatterns(String lookupPath) {
+		// 收集匹配上哪些模式
 		List<String> matches = null;
+
 		for (String pattern : this.patterns) {
+
+			// 获得匹配上的模式，有可能 pattern 原样返回，也可能增加一个后缀，比如 /user.json
 			String match = getMatchingPattern(pattern, lookupPath);
+
+			// 若匹配上，就加到 matches 里
 			if (match != null) {
 				matches = (matches != null ? matches : new ArrayList<>());
 				matches.add(match);
 			}
 		}
+
+		// 若一个都没匹配上，返回空
 		if (matches == null) {
 			return Collections.emptyList();
 		}
+
+		// 若匹配上多个，需要排序
 		if (matches.size() > 1) {
 			matches.sort(this.pathMatcher.getPatternComparator(lookupPath));
 		}
@@ -313,18 +329,25 @@ public class PatternsRequestCondition extends AbstractRequestCondition<PatternsR
 
 	@Nullable
 	private String getMatchingPattern(String pattern, String lookupPath) {
+		// 如果请求的 lookupPath 与存储的 pattern 一模一样，那么就直接返回
 		if (pattern.equals(lookupPath)) {
 			return pattern;
 		}
+
+		// 使用后缀 pattern 匹配，其实早就弃用了
 		if (this.useSuffixPatternMatch) {
+
+			// 如果配置了文件后缀列表，寻找点(.)
 			if (!this.fileExtensions.isEmpty() && lookupPath.indexOf('.') != -1) {
 				for (String extension : this.fileExtensions) {
+					// 末尾有文件后缀 /user/** -> /user/**.do 是否匹配 /user/**.do
 					if (this.pathMatcher.match(pattern + extension, lookupPath)) {
 						return pattern + extension;
 					}
 				}
 			}
 			else {
+				// 如果你的请求 path 没有配 . 那么就自己加一个 .* 表示匹配一切后缀
 				boolean hasSuffix = pattern.indexOf('.') != -1;
 				if (!hasSuffix && this.pathMatcher.match(pattern + ".*", lookupPath)) {
 					return pattern + ".*";

@@ -723,6 +723,9 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 			return this;
 		}
 
+		/**
+		 * 这个方法用于构造请求映射的信息。
+		 */
 		@Override
 		@SuppressWarnings("deprecation")
 		public RequestMappingInfo build() {
@@ -731,15 +734,20 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 			PatternsRequestCondition patterns = null;
 
 			if (this.options.patternParser != null) {
+				// pattern 有可能没有配 path，直接用的类上面的 path
 				pathPatterns = (ObjectUtils.isEmpty(this.paths) ?
 						EMPTY_PATH_PATTERNS :
 						new PathPatternsRequestCondition(this.options.patternParser, this.paths));
 			} else {
 				patterns = (ObjectUtils.isEmpty(this.paths) ?
 						EMPTY_PATTERNS :
+						// 这个其实已经弃用了，不建议使用
 						new PatternsRequestCondition(
-								this.paths, null, this.options.getPathMatcher(),
-								this.options.useSuffixPatternMatch(), this.options.useTrailingSlashMatch(),
+								this.paths,
+								null,
+								this.options.getPathMatcher(),
+								this.options.useSuffixPatternMatch(), // 使用后缀 pattern 匹配
+								this.options.useTrailingSlashMatch(),
 								this.options.getFileExtensions()));
 			}
 
@@ -1056,6 +1064,9 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 		@Nullable
 		@Deprecated
 		public List<String> getFileExtensions() {
+			// >>>>>>> 获得文件扩展名
+
+			// 如果确切设置了使用已经注册的后缀模式匹配 && 内容协商管理器存在  >>> 那么就从内容协商管理器获取文件后缀
 			if (useRegisteredSuffixPatternMatch() && this.contentNegotiationManager != null) {
 				return this.contentNegotiationManager.getAllFileExtensions();
 			}

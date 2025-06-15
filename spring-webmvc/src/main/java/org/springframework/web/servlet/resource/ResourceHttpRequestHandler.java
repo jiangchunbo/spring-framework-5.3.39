@@ -580,6 +580,7 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 		prepareResponse(response);
 
 		// Check the media type for the resource
+		// 检查请求的 Media 类型
 		MediaType mediaType = getMediaType(request, resource);
 		setHeaders(response, resource, mediaType);
 
@@ -777,17 +778,28 @@ public class ResourceHttpRequestHandler extends WebContentGenerator
 	@Nullable
 	protected MediaType getMediaType(HttpServletRequest request, Resource resource) {
 		MediaType result = null;
+
+		// 通过 Servlet 上下文从 filename 解析出 MimeType
 		String mimeType = request.getServletContext().getMimeType(resource.getFilename());
 		if (StringUtils.hasText(mimeType)) {
+			// 然后再解析成 MediaType 枚举
 			result = MediaType.parseMediaType(mimeType);
 		}
+
+		// 如果没解析出来，或者解析出 APPLICATION_OCTET_STREAM
 		if (result == null || MediaType.APPLICATION_OCTET_STREAM.equals(result)) {
 			MediaType mediaType = null;
 			String filename = resource.getFilename();
+
+			// 获得扩展名
 			String ext = StringUtils.getFilenameExtension(filename);
+
+			// 从 mediaTypes 中，这个已经注册 MediaType 中获取
 			if (ext != null) {
 				mediaType = this.mediaTypes.get(ext.toLowerCase(Locale.ENGLISH));
 			}
+
+			// 如果还是空，从 MediaTypeFactory 获取
 			if (mediaType == null) {
 				List<MediaType> mediaTypes = MediaTypeFactory.getMediaTypes(filename);
 				if (!CollectionUtils.isEmpty(mediaTypes)) {

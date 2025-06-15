@@ -63,6 +63,7 @@ public abstract class AbstractMappingContentNegotiationStrategy extends MappingM
 	 * Create an instance with the given map of file extensions and media types.
 	 */
 	public AbstractMappingContentNegotiationStrategy(@Nullable Map<String, MediaType> mediaTypes) {
+		// 构造函数注册一些固定的
 		super(mediaTypes);
 	}
 
@@ -99,6 +100,9 @@ public abstract class AbstractMappingContentNegotiationStrategy extends MappingM
 	public List<MediaType> resolveMediaTypes(NativeWebRequest webRequest)
 			throws HttpMediaTypeNotAcceptableException {
 
+		// 先从请求的 URL 中解析出扩展名，这也就是所谓的 MediaTypeKey
+
+		//
 		return resolveMediaTypeKey(webRequest, getMediaTypeKey(webRequest));
 	}
 
@@ -110,8 +114,13 @@ public abstract class AbstractMappingContentNegotiationStrategy extends MappingM
 	public List<MediaType> resolveMediaTypeKey(NativeWebRequest webRequest, @Nullable String key)
 			throws HttpMediaTypeNotAcceptableException {
 
+		// 如果传入了 key，就要从 media type 的 map 寻找这种 key 了
+		// key 其实就是 URL 里的扩展名，比如 .json .xml
 		if (StringUtils.hasText(key)) {
 			MediaType mediaType = lookupMediaType(key);
+
+			// 如果匹配上了，handle ，然后 返回
+			// 没有 handle 的逻辑
 			if (mediaType != null) {
 				handleMatch(key, mediaType);
 				return Collections.singletonList(mediaType);
@@ -150,12 +159,18 @@ public abstract class AbstractMappingContentNegotiationStrategy extends MappingM
 	protected MediaType handleNoMatch(NativeWebRequest request, String key)
 			throws HttpMediaTypeNotAcceptableException {
 
+		// isUseRegisteredExtensionsOnly 是否仅仅使用注册的扩展名
+
+		// 如果不仅仅拘泥于注册的扩展名
 		if (!isUseRegisteredExtensionsOnly()) {
+			// 这里借助 MediaTypeFactory 的力量，比如扩展名是 json，那么传入 file.json，让他通过扩展名解析 MediaType
 			Optional<MediaType> mediaType = MediaTypeFactory.getMediaType("file." + key);
 			if (mediaType.isPresent()) {
 				return mediaType.get();
 			}
 		}
+
+		// 如果忽略未知的扩展名，那么不管
 		if (isIgnoreUnknownExtensions()) {
 			return null;
 		}

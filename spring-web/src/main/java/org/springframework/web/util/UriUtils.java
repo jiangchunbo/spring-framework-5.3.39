@@ -395,19 +395,36 @@ public abstract class UriUtils {
 	 */
 	@Nullable
 	public static String extractFileExtension(String path) {
-		int end = path.indexOf('?');
+		// 找到 ? 和 #，取这两者之中位置最靠前的一个作为路径分析的 end
+		int end = path.indexOf('?'); // 假设靠前的是 ?
 		int fragmentIndex = path.indexOf('#');
+
+		// 如果存在 #，而且比 ? 更加靠前，那么就使用 # 的位置作为 end
 		if (fragmentIndex != -1 && (end == -1 || fragmentIndex < end)) {
 			end = fragmentIndex;
 		}
+
+		// 如果没有 ? 也没有 #，那么整个字符串的长度就是终点
 		if (end == -1) {
 			end = path.length();
 		}
+
+		// 接下来，定位最后一个路径段 segment
+
+		// 从最后开始找，找到最后一个 / 的位置
 		int begin = path.lastIndexOf('/', end) + 1;
+
+		// 检查最后一个路径段中是否包含分号 ; 矩阵变量的分隔符 例如 jsessionid
+		// 如果存在分号，那么 end 将会被更新为分号的位置，确保矩阵变量不会被认为是扩展名的一部分
 		int paramIndex = path.indexOf(';', begin);
 		end = (paramIndex != -1 && paramIndex < end ? paramIndex : end);
+
+		// 范围最终确定，在这个范围内，寻找最后一个点 .
 		int extIndex = path.lastIndexOf('.', end);
+
+		// 如果找到了点 . 还会进行最后一次检查，确保这个点是最后一个斜杠 / 之后的，而不是类似于 /assets/css.v1/style
 		if (extIndex != -1 && extIndex >= begin) {
+			// 截取
 			return path.substring(extIndex + 1, end);
 		}
 		return null;

@@ -463,11 +463,16 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	/**
 	 * Return a {@link ContentNegotiationManager} instance to use to determine
 	 * requested {@linkplain MediaType media types} in a given request.
+	 * <p> 内容协商管理器
 	 */
 	@Bean
 	public ContentNegotiationManager mvcContentNegotiationManager() {
+		// Spring Boot 项目默认情况都是 null，由这里 new 出来
 		if (this.contentNegotiationManager == null) {
+
+			// 配置器
 			ContentNegotiationConfigurer configurer = new ContentNegotiationConfigurer(this.servletContext);
+			// 设置默认的 MediaType，从类路径的类是否存在判断默认有哪些
 			configurer.mediaTypes(getDefaultMediaTypes());
 			configureContentNegotiation(configurer);
 			this.contentNegotiationManager = configurer.buildContentNegotiationManager();
@@ -481,6 +486,8 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 			map.put("atom", MediaType.APPLICATION_ATOM_XML);
 			map.put("rss", MediaType.APPLICATION_RSS_XML);
 		}
+
+		// 如果不忽略 XML 并且 JAXB 或者 Jackson2XML 存在就支持 XML
 		if (!shouldIgnoreXml && (jaxb2Present || jackson2XmlPresent)) {
 			map.put("xml", MediaType.APPLICATION_XML);
 		}

@@ -126,6 +126,7 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	@Deprecated
 	public void setUseRegisteredSuffixPatternMatch(boolean useRegisteredSuffixPatternMatch) {
 		this.useRegisteredSuffixPatternMatch = useRegisteredSuffixPatternMatch;
+		// 这个写法就是说，这两个变量都将会开启后缀模式匹配
 		this.useSuffixPatternMatch = (useRegisteredSuffixPatternMatch || this.useSuffixPatternMatch);
 	}
 
@@ -193,10 +194,16 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	@Override
 	@SuppressWarnings("deprecation")
 	public void afterPropertiesSet() {
+		// 创建了一个 BuilderConfiguration
 		this.config = new RequestMappingInfo.BuilderConfiguration();
+
+		// 是否支持末尾斜杠匹配
 		this.config.setTrailingSlashMatch(useTrailingSlashMatch());
+
+		// 内容协商管理器
 		this.config.setContentNegotiationManager(getContentNegotiationManager());
 
+		// pattern
 		if (getPatternParser() != null) {
 			this.config.setPatternParser(getPatternParser());
 			Assert.isTrue(!this.useSuffixPatternMatch && !this.useRegisteredSuffixPatternMatch,

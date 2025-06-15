@@ -301,6 +301,9 @@ public abstract class MimeTypeUtils {
 	 * @since 5.1.3
 	 */
 	public static List<String> tokenize(String mimeTypes) {
+		// >>>>> 这个方法的意思就说，可能你传入了一个字符串，表面上是一个 MIME，实际上用逗号分隔了
+		// 但是这个方法不会处理 引号之中的逗号，例如 " application/json;profile=\"http://example.com/profile,v1\""
+
 		if (!StringUtils.hasLength(mimeTypes)) {
 			return Collections.emptyList();
 		}

@@ -94,13 +94,14 @@ class InternalPathPatternParser {
 	public PathPattern parse(String pathPattern) throws PatternParseException {
 		Assert.notNull(pathPattern, "Path pattern must not be null");
 
+		// 将输入的 pathPattern 转换为 char[] 数组
 		this.pathPatternData = pathPattern.toCharArray();
 		this.pathPatternLength = this.pathPatternData.length;
-		this.headPE = null;
+		this.headPE = null; // 用于构建 PathElement 链表的头节点和当前节点
 		this.currentPE = null;
-		this.capturedVariableNames = null;
+		this.capturedVariableNames = null; // 用于存储捕获的变量名(例如 {id})
 		this.pathElementStart = -1;
-		this.pos = 0;
+		this.pos = 0; // 当前解析到的字符的位置，从 0 开始
 		resetPathElementState();
 
 		while (this.pos < this.pathPatternLength) {
