@@ -135,6 +135,7 @@ public class ServletRequestMethodArgumentResolver implements HandlerMethodArgume
 
 	@Nullable
 	private Object resolveArgument(Class<?> paramType, HttpServletRequest request) throws IOException {
+		// 支持解析 HttpSession 类型的参数
 		if (HttpSession.class.isAssignableFrom(paramType)) {
 			HttpSession session = request.getSession();
 			if (session != null && !paramType.isInstance(session)) {
@@ -146,6 +147,8 @@ public class ServletRequestMethodArgumentResolver implements HandlerMethodArgume
 		else if (pushBuilder != null && pushBuilder.isAssignableFrom(paramType)) {
 			return PushBuilderDelegate.resolvePushBuilder(request, paramType);
 		}
+
+		// 支持解析 Request 的 InputStream
 		else if (InputStream.class.isAssignableFrom(paramType)) {
 			InputStream inputStream = request.getInputStream();
 			if (inputStream != null && !paramType.isInstance(inputStream)) {
@@ -154,6 +157,8 @@ public class ServletRequestMethodArgumentResolver implements HandlerMethodArgume
 			}
 			return inputStream;
 		}
+
+		// 支持解析 Request 的 Reader
 		else if (Reader.class.isAssignableFrom(paramType)) {
 			Reader reader = request.getReader();
 			if (reader != null && !paramType.isInstance(reader)) {
@@ -162,8 +167,12 @@ public class ServletRequestMethodArgumentResolver implements HandlerMethodArgume
 			}
 			return reader;
 		}
+
+		// 支持解析 Principal
 		else if (Principal.class.isAssignableFrom(paramType)) {
+			// 如果是 Spring Security 这边会被包装起来
 			Principal userPrincipal = request.getUserPrincipal();
+			// 如果是 null， 或者参数类型不是一个实例(是一个接口？)
 			if (userPrincipal != null && !paramType.isInstance(userPrincipal)) {
 				throw new IllegalStateException(
 						"Current user principal is not of type [" + paramType.getName() + "]: " + userPrincipal);
