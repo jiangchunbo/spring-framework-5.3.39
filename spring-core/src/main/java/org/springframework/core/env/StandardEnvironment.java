@@ -70,6 +70,7 @@ public class StandardEnvironment extends AbstractEnvironment {
 	 * {@link MutablePropertySources} instance.
 	 */
 	public StandardEnvironment() {
+		super();
 	}
 
 	/**

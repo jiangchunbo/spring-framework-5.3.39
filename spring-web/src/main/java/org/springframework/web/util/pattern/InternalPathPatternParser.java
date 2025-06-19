@@ -106,6 +106,8 @@ class InternalPathPatternParser {
 
 		while (this.pos < this.pathPatternLength) {
 			char ch = this.pathPatternData[this.pos];
+
+			// 获取分隔符，你就认为是 / 就好了
 			char separator = this.parser.getPathOptions().separator();
 			if (ch == separator) {
 				if (this.pathElementStart != -1) {

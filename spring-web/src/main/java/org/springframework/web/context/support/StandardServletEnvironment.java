@@ -41,18 +41,24 @@ import org.springframework.web.context.ConfigurableWebEnvironment;
  *
  * @author Chris Beams
  * @author Juergen Hoeller
- * @since 3.1
  * @see StandardEnvironment
+ * @since 3.1
  */
 public class StandardServletEnvironment extends StandardEnvironment implements ConfigurableWebEnvironment {
 
-	/** Servlet context init parameters property source name: {@value}. */
+	/**
+	 * Servlet context init parameters property source name: {@value}.
+	 */
 	public static final String SERVLET_CONTEXT_PROPERTY_SOURCE_NAME = "servletContextInitParams";
 
-	/** Servlet config init parameters property source name: {@value}. */
+	/**
+	 * Servlet config init parameters property source name: {@value}.
+	 */
 	public static final String SERVLET_CONFIG_PROPERTY_SOURCE_NAME = "servletConfigInitParams";
 
-	/** JNDI property source name: {@value}. */
+	/**
+	 * JNDI property source name: {@value}.
+	 */
 	public static final String JNDI_PROPERTY_SOURCE_NAME = "jndiProperties";
 
 
@@ -69,6 +75,7 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 
 	/**
 	 * Create a new {@code StandardServletEnvironment} instance with a specific {@link MutablePropertySources} instance.
+	 *
 	 * @param propertySources property sources to use
 	 * @since 5.3.4
 	 */
@@ -97,6 +104,7 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 	 * once the actual {@link ServletContext} object becomes available.
 	 * <p>Addition of {@value #JNDI_PROPERTY_SOURCE_NAME} can be disabled with
 	 * {@link JndiLocatorDelegate#IGNORE_JNDI_PROPERTY_NAME}.
+	 *
 	 * @see StandardEnvironment#customizePropertySources
 	 * @see org.springframework.core.env.AbstractEnvironment#customizePropertySources
 	 * @see ServletConfigPropertySource
@@ -109,10 +117,12 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 	protected void customizePropertySources(MutablePropertySources propertySources) {
 		// >>> 这个方法是构造器的扩展点
 
-		// 增加一个 Stub
+		// 增加占位符
+		// 因为在 Environment 对象构建时，ServletContext 和 ServletConfig 还不可用
+		// 但是 Environment 的顺序非常重要。因此添加了两个占位符。等待后续替换。
 		propertySources.addLast(new StubPropertySource(SERVLET_CONFIG_PROPERTY_SOURCE_NAME));
-		// 增加一个 Stub
 		propertySources.addLast(new StubPropertySource(SERVLET_CONTEXT_PROPERTY_SOURCE_NAME));
+
 		if (jndiPresent && JndiLocatorDelegate.isDefaultJndiEnvironmentAvailable()) {
 			propertySources.addLast(new JndiPropertySource(JNDI_PROPERTY_SOURCE_NAME));
 		}
@@ -121,6 +131,11 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 		super.customizePropertySources(propertySources);
 	}
 
+	/**
+	 * 替换 StubPropertySource
+	 * @param servletContext Servlet 标准 API
+	 * @param servletConfig  Servlet 标准 API
+	 */
 	@Override
 	public void initPropertySources(@Nullable ServletContext servletContext, @Nullable ServletConfig servletConfig) {
 		WebApplicationContextUtils.initServletPropertySources(getPropertySources(), servletContext, servletConfig);

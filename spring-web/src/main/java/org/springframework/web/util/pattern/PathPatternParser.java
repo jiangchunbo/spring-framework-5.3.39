@@ -122,6 +122,7 @@ public class PathPatternParser {
 	 * @throws PatternParseException in case of parse errors
 	 */
 	public PathPattern parse(String pathPattern) throws PatternParseException {
+		// 使用 InternalPathPatternParser 进一步解析
 		return new InternalPathPatternParser(this).parse(pathPattern);
 	}
 
