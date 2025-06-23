@@ -59,13 +59,18 @@ public class TomcatRequestUpgradeStrategy extends AbstractStandardUpgradeStrateg
 			@Nullable String selectedProtocol, List<Extension> selectedExtensions, Endpoint endpoint)
 			throws HandshakeFailureException {
 
+		// 从 request response 中获取 servlet request 和 servlet response
 		HttpServletRequest servletRequest = getHttpServletRequest(request);
 		HttpServletResponse servletResponse = getHttpServletResponse(response);
 
+		// 获得请求的 URL 包含协议的
 		StringBuffer requestUrl = servletRequest.getRequestURL();
+
+		// 获得路径
 		String path = servletRequest.getRequestURI();  // shouldn't matter
 		Map<String, String> pathParams = Collections.<String, String> emptyMap();
 
+		// 端点注册信息
 		ServerEndpointRegistration endpointConfig = new ServerEndpointRegistration(path, endpoint);
 		endpointConfig.setSubprotocols(Collections.singletonList(selectedProtocol));
 		endpointConfig.setExtensions(selectedExtensions);

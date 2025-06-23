@@ -82,14 +82,21 @@ public abstract class WebSocketMessageBrokerConfigurationSupport extends Abstrac
 	public HandlerMapping stompWebSocketHandlerMapping(
 			WebSocketHandler subProtocolWebSocketHandler, TaskScheduler messageBrokerTaskScheduler) {
 
+		// 装饰，得到一个新的对象
 		WebSocketHandler handler = decorateWebSocketHandler(subProtocolWebSocketHandler);
+
+		// 创建一个注册表，给注册表 application context
 		WebMvcStompEndpointRegistry registry =
 				new WebMvcStompEndpointRegistry(handler, getTransportRegistration(), messageBrokerTaskScheduler);
+
 		ApplicationContext applicationContext = getApplicationContext();
 		if (applicationContext != null) {
 			registry.setApplicationContext(applicationContext);
 		}
+
+		// 注册端点，感觉名字叫错了吧，应该叫 configureStompEndpoints
 		registerStompEndpoints(registry);
+
 		return registry.getHandlerMapping();
 	}
 

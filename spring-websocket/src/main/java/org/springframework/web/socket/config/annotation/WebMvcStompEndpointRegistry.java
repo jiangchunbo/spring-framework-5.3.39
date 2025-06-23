@@ -98,9 +98,14 @@ public class WebMvcStompEndpointRegistry implements StompEndpointRegistry {
 	}
 
 
+	/**
+	 * 添加一个端点
+	 */
 	@Override
 	public StompWebSocketEndpointRegistration addEndpoint(String... paths) {
 		this.subProtocolWebSocketHandler.addProtocolHandler(this.stompHandler);
+
+		// 创建一个所谓的注册
 		WebMvcStompWebSocketEndpointRegistration registration =
 				new WebMvcStompWebSocketEndpointRegistration(paths, this.webSocketHandler, this.sockJsScheduler);
 		this.registrations.add(registration);
@@ -151,7 +156,11 @@ public class WebMvcStompEndpointRegistry implements StompEndpointRegistry {
 	 */
 	public AbstractHandlerMapping getHandlerMapping() {
 		Map<String, Object> urlMap = new LinkedHashMap<>();
+
+		// 遍历每个端点的注册信息
 		for (WebMvcStompWebSocketEndpointRegistration registration : this.registrations) {
+
+			// handler -> /path1, /path2, ...
 			MultiValueMap<HttpRequestHandler, String> mappings = registration.getMappings();
 			mappings.forEach((httpHandler, patterns) -> {
 				for (String pattern : patterns) {

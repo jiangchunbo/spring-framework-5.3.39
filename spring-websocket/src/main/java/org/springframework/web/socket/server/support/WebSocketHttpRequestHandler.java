@@ -157,13 +157,18 @@ public class WebSocketHttpRequestHandler implements HttpRequestHandler, Lifecycl
 	}
 
 
+	/**
+	 * HttpRequestHandler 接口必须要实现的方法
+	 */
 	@Override
 	public void handleRequest(HttpServletRequest servletRequest, HttpServletResponse servletResponse)
 			throws ServletException, IOException {
 
+		// 包装
 		ServerHttpRequest request = new ServletServerHttpRequest(servletRequest);
 		ServerHttpResponse response = new ServletServerHttpResponse(servletResponse);
 
+		// 所谓的握手拦截器 chain，类比 HandlerChain
 		HandshakeInterceptorChain chain = new HandshakeInterceptorChain(this.interceptors, this.wsHandler);
 		HandshakeFailureException failure = null;
 
@@ -172,10 +177,16 @@ public class WebSocketHttpRequestHandler implements HttpRequestHandler, Lifecycl
 				logger.debug(servletRequest.getMethod() + " " + servletRequest.getRequestURI());
 			}
 			Map<String, Object> attributes = new HashMap<>();
+
+			// 握手之前，老套路
 			if (!chain.applyBeforeHandshake(request, response, attributes)) {
 				return;
 			}
+
+			// 握手
 			this.handshakeHandler.doHandshake(request, response, this.wsHandler, attributes);
+
+			// 握手后
 			chain.applyAfterHandshake(request, response, null);
 		}
 		catch (HandshakeFailureException ex) {

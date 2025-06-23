@@ -60,6 +60,10 @@ public class WebMvcStompWebSocketEndpointRegistration implements StompWebSocketE
 
 	private final List<String> allowedOriginPatterns = new ArrayList<>();
 
+
+	/**
+	 * 除非调用了 withSockJS，否则这里就是 null
+	 */
 	@Nullable
 	private SockJsServiceRegistration registration;
 
@@ -142,6 +146,8 @@ public class WebMvcStompWebSocketEndpointRegistration implements StompWebSocketE
 
 	public final MultiValueMap<HttpRequestHandler, String> getMappings() {
 		MultiValueMap<HttpRequestHandler, String> mappings = new LinkedMultiValueMap<>();
+
+		// 看看到底是用 SockJS，还是不用
 		if (this.registration != null) {
 			SockJsService sockJsService = this.registration.getSockJsService();
 			for (String path : this.paths) {
@@ -150,6 +156,8 @@ public class WebMvcStompWebSocketEndpointRegistration implements StompWebSocketE
 				mappings.add(handler, pattern);
 			}
 		}
+
+		// 不使用 SockJS
 		else {
 			for (String path : this.paths) {
 				WebSocketHttpRequestHandler handler;
