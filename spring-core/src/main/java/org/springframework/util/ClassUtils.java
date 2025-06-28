@@ -415,6 +415,9 @@ public abstract class ClassUtils {
 	/**
 	 * Check whether the given class is cache-safe in the given context,
 	 * i.e. whether it is loaded by the given ClassLoader or a parent of it.
+	 * <p>
+	 * 缓存安全是指，这个 clazz 是由当前 ClassLoader 或它的父加载器加载，
+	 * 这样可以确保缓存中的信息与实际使用的类想匹配，不会因为同一名称的类被不同的 ClassLoader 加载而产生冲突
 	 *
 	 * @param clazz       the class to analyze
 	 * @param classLoader the ClassLoader to potentially cache metadata in
@@ -425,13 +428,18 @@ public abstract class ClassUtils {
 		try {
 			ClassLoader target = clazz.getClassLoader();
 			// Common cases
+			// 通常的情况，类加载器就是传入的类加载器，或者由 bootstrap 加载
 			if (target == classLoader || target == null) {
 				return true;
 			}
+
+			// 没有传，就是 false
 			if (classLoader == null) {
 				return false;
 			}
+
 			// Check for match in ancestors -> positive
+			// 检查祖先
 			ClassLoader current = classLoader;
 			while (current != null) {
 				current = current.getParent();
@@ -439,7 +447,10 @@ public abstract class ClassUtils {
 					return true;
 				}
 			}
+
 			// Check for match in children -> negative
+			// 如果加载 clazz 的类加载器，在 classLoader 下面，那就不是缓存安全的
+			// 肯定是这个类加载器自己违背了 双亲委派
 			while (target != null) {
 				target = target.getParent();
 				if (target == classLoader) {
@@ -452,6 +463,7 @@ public abstract class ClassUtils {
 
 		// Fallback for ClassLoaders without parent/child relationship:
 		// safe if same Class can be loaded from given ClassLoader
+		// 最后没办法，竟然尝试类加载，如果能加在就 OK
 		return (classLoader != null && isLoadable(clazz, classLoader));
 	}
 
