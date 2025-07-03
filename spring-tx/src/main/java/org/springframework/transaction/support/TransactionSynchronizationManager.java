@@ -220,7 +220,10 @@ public abstract class TransactionSynchronizationManager {
 		if (map == null) {
 			return null;
 		}
+
+		// 返回被删除的 value
 		Object value = map.remove(actualKey);
+
 		// Remove entire ThreadLocal if empty...
 		if (map.isEmpty()) {
 			resources.remove();
