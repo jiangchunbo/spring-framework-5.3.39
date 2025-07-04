@@ -33,9 +33,9 @@ import org.springframework.util.ObjectUtils;
  * requesting injection point for building a customized bean instance.
  *
  * @author Juergen Hoeller
- * @since 4.3
  * @see UnsatisfiedDependencyException#getInjectionPoint()
  * @see org.springframework.beans.factory.config.DependencyDescriptor
+ * @since 4.3
  */
 public class InjectionPoint {
 
@@ -51,6 +51,7 @@ public class InjectionPoint {
 
 	/**
 	 * Create an injection point descriptor for a method or constructor parameter.
+	 *
 	 * @param methodParameter the MethodParameter to wrap
 	 */
 	public InjectionPoint(MethodParameter methodParameter) {
@@ -60,6 +61,7 @@ public class InjectionPoint {
 
 	/**
 	 * Create an injection point descriptor for a field.
+	 *
 	 * @param field the field to wrap
 	 */
 	public InjectionPoint(Field field) {
@@ -69,6 +71,7 @@ public class InjectionPoint {
 
 	/**
 	 * Copy constructor.
+	 *
 	 * @param original the original descriptor to create a copy from
 	 */
 	protected InjectionPoint(InjectionPoint original) {
@@ -88,6 +91,11 @@ public class InjectionPoint {
 	/**
 	 * Return the wrapped MethodParameter, if any.
 	 * <p>Note: Either MethodParameter or Field is available.
+	 * <p>
+	 * 返回包装的方法参数
+	 * <p>
+	 * 要不就是方法参数，要不就是字段
+	 *
 	 * @return the MethodParameter, or {@code null} if none
 	 */
 	@Nullable
@@ -98,6 +106,11 @@ public class InjectionPoint {
 	/**
 	 * Return the wrapped Field, if any.
 	 * <p>Note: Either MethodParameter or Field is available.
+	 * <p>
+	 * 返回包装的字段，如果有的话。
+	 * <p>
+	 * 注入点要不就是方法参数，要不就是字段
+	 *
 	 * @return the Field, or {@code null} if none
 	 */
 	@Nullable
@@ -107,6 +120,7 @@ public class InjectionPoint {
 
 	/**
 	 * Return the wrapped MethodParameter, assuming it is present.
+	 *
 	 * @return the MethodParameter (never {@code null})
 	 * @throws IllegalStateException if no MethodParameter is available
 	 * @since 5.0
@@ -118,9 +132,13 @@ public class InjectionPoint {
 
 	/**
 	 * Obtain the annotations associated with the wrapped field or method/constructor parameter.
+	 * <p>
+	 * 从名字看，获得注解，也就是或者方法参数，或者字段上面的注解
 	 */
 	public Annotation[] getAnnotations() {
+		// 如果是字段
 		if (this.field != null) {
+			// 获取字段注解
 			Annotation[] fieldAnnotations = this.fieldAnnotations;
 			if (fieldAnnotations == null) {
 				fieldAnnotations = this.field.getAnnotations();
@@ -128,6 +146,7 @@ public class InjectionPoint {
 			}
 			return fieldAnnotations;
 		}
+		// 如果是方法参数
 		else {
 			return obtainMethodParameter().getParameterAnnotations();
 		}
@@ -135,6 +154,7 @@ public class InjectionPoint {
 
 	/**
 	 * Retrieve a field/parameter annotation of the given type, if any.
+	 *
 	 * @param annotationType the annotation type to retrieve
 	 * @return the annotation instance, or {@code null} if none found
 	 * @since 4.3.9
@@ -155,6 +175,7 @@ public class InjectionPoint {
 
 	/**
 	 * Returns the wrapped member, containing the injection point.
+	 *
 	 * @return the Field / Method / Constructor as Member
 	 */
 	public Member getMember() {
@@ -168,6 +189,7 @@ public class InjectionPoint {
 	 * (i.e. at the method/constructor level, not at the parameter level).
 	 * Use {@link #getAnnotations()} to obtain parameter-level annotations in
 	 * such a scenario, transparently with corresponding field annotations.
+	 *
 	 * @return the Field / Method / Constructor as AnnotatedElement
 	 */
 	public AnnotatedElement getAnnotatedElement() {

@@ -51,20 +51,34 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 	@Override
 	@Nullable
 	public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, @Nullable String beanName) {
+		// 是否是惰性解析，这个至少要判断一下吧
 		return (isLazy(descriptor) ? buildLazyResolutionProxy(descriptor, beanName) : null);
 	}
 
+	/**
+	 * 判断这个依赖是不是惰性
+	 */
 	protected boolean isLazy(DependencyDescriptor descriptor) {
+		// 获取注解，这里就体现了依赖描述器的设计统一性，不管字段的依赖，还是方法的依赖
 		for (Annotation ann : descriptor.getAnnotations()) {
 			Lazy lazy = AnnotationUtils.getAnnotation(ann, Lazy.class);
 			if (lazy != null && lazy.value()) {
 				return true;
 			}
 		}
+
+		// 获取方法参数
 		MethodParameter methodParam = descriptor.getMethodParameter();
 		if (methodParam != null) {
+			// 获得这个方法参数的 Method
+			// 盲猜背后是 Executable
 			Method method = methodParam.getMethod();
+
+			// 1. method == null 就是构造器
+			// 2. method 返回值是 void，一般就是 setter 方法
 			if (method == null || void.class == method.getReturnType()) {
+
+				// 获取是否是懒加载
 				Lazy lazy = AnnotationUtils.getAnnotation(methodParam.getAnnotatedElement(), Lazy.class);
 				if (lazy != null && lazy.value()) {
 					return true;
@@ -74,6 +88,9 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 		return false;
 	}
 
+	/**
+	 * 构建代理，用于惰性解析。这个方法就是用 ProxyFactory 创建代理对象。
+	 */
 	protected Object buildLazyResolutionProxy(final DependencyDescriptor descriptor, final @Nullable String beanName) {
 		BeanFactory beanFactory = getBeanFactory();
 		Assert.state(beanFactory instanceof DefaultListableBeanFactory,
@@ -85,10 +102,12 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 			public Class<?> getTargetClass() {
 				return descriptor.getDependencyType();
 			}
+
 			@Override
 			public boolean isStatic() {
 				return false;
 			}
+
 			@Override
 			public Object getTarget() {
 				Set<String> autowiredBeanNames = (beanName != null ? new LinkedHashSet<>(1) : null);
@@ -97,11 +116,9 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 					Class<?> type = getTargetClass();
 					if (Map.class == type) {
 						return Collections.emptyMap();
-					}
-					else if (List.class == type) {
+					} else if (List.class == type) {
 						return Collections.emptyList();
-					}
-					else if (Set.class == type || Collection.class == type) {
+					} else if (Set.class == type || Collection.class == type) {
 						return Collections.emptySet();
 					}
 					throw new NoSuchBeanDefinitionException(descriptor.getResolvableType(),
@@ -116,6 +133,7 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 				}
 				return target;
 			}
+
 			@Override
 			public void releaseTarget(Object target) {
 			}

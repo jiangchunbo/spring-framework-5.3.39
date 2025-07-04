@@ -120,6 +120,9 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	@Nullable
 	volatile Boolean beforeInstantiationResolved;
 
+	/**
+	 * 外部管理的成员
+	 */
 	@Nullable
 	private Set<Member> externallyManagedConfigMembers;
 
@@ -440,6 +443,7 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	 * Determine if the given method or field is an externally managed configuration member.
 	 */
 	public boolean isExternallyManagedConfigMember(Member configMember) {
+		// 是否是外部管理的 member
 		synchronized (this.postProcessingLock) {
 			return (this.externallyManagedConfigMembers != null &&
 					this.externallyManagedConfigMembers.contains(configMember));
