@@ -59,13 +59,16 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 	 * 判断这个依赖是不是惰性
 	 */
 	protected boolean isLazy(DependencyDescriptor descriptor) {
-		// 获取注解，这里就体现了依赖描述器的设计统一性，不管字段的依赖，还是方法的依赖
+		// 1. 类属性
+		// 2. 方法参数
 		for (Annotation ann : descriptor.getAnnotations()) {
 			Lazy lazy = AnnotationUtils.getAnnotation(ann, Lazy.class);
 			if (lazy != null && lazy.value()) {
 				return true;
 			}
 		}
+
+		// 为什么这里还要获取方法参数？因为方法参数可能没有 @Lazy 注解，但是方法有 @Lazy
 
 		// 获取方法参数
 		MethodParameter methodParam = descriptor.getMethodParameter();
@@ -74,8 +77,8 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 			// 盲猜背后是 Executable
 			Method method = methodParam.getMethod();
 
-			// 1. method == null 就是构造器
-			// 2. method 返回值是 void，一般就是 setter 方法
+			// 1. [method     == null] --> 构造器，写得有点投机取巧，
+			// 2. [returnType == void] --> 返回值是空，一般我们认为这是一个 Write 方法
 			if (method == null || void.class == method.getReturnType()) {
 
 				// 获取是否是懒加载

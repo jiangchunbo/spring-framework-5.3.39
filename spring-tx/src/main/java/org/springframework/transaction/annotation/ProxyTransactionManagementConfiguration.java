@@ -57,7 +57,7 @@ public class ProxyTransactionManagementConfiguration extends AbstractTransaction
 	}
 
 	/**
-	 * 用于解析事务注解
+	 * 用于解析事务注解，并且缓存
 	 */
 	@Bean
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)

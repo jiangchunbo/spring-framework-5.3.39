@@ -34,6 +34,8 @@ import org.springframework.lang.Nullable;
 /**
  * {@link MergedAnnotations} implementation that searches for and adapts
  * annotations and meta-annotations using {@link AnnotationTypeMappings}.
+ * <p>
+ * 一个比较新的工具类，提供统一的注解查询和访问方式
  *
  * @author Phillip Webb
  * @since 5.2
@@ -67,19 +69,27 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	private volatile List<Aggregate> aggregates;
 
 
+	/**
+	 * 模式1: 基于 AnnotatedElement 的动态扫描
+	 */
 	private TypeMappedAnnotations(AnnotatedElement element, SearchStrategy searchStrategy,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		this.source = element;
 		this.element = element;
 		this.searchStrategy = searchStrategy;
 		this.annotations = null;
 		this.repeatableContainers = repeatableContainers;
+
+		// 正常来说可能都是过滤 java lang 以及 spring lang  ---> AnnotationFilter
 		this.annotationFilter = annotationFilter;
 	}
 
+	/**
+	 * 模式2: 基于已知注解数组的静态处理
+	 */
 	private TypeMappedAnnotations(@Nullable Object source, Annotation[] annotations,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		this.source = source;
 		this.element = null;
@@ -90,11 +100,17 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 
+	/**
+	 * 是否存在这个注解。开始真正解析。
+	 */
 	@Override
 	public <A extends Annotation> boolean isPresent(Class<A> annotationType) {
+		// 先看过滤器
 		if (this.annotationFilter.matches(annotationType)) {
 			return false;
 		}
+
+		// 然后扫描，扫描的时候传入了一个 IsPresent 处理器
 		return Boolean.TRUE.equals(scan(annotationType,
 				IsPresent.get(this.repeatableContainers, this.annotationFilter, false)));
 	}
@@ -113,6 +129,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		if (this.annotationFilter.matches(annotationType)) {
 			return false;
 		}
+
+		// 在执行 scan 时，任何处理器都必须提供 2 个泛型，第一个泛型是入参，第二个泛型是出参
+		// IsPresent 的入参是 Object；出参是 boolean。因为这里是通过一个什么东西，得到一个 boolean，表示是否直接存在这种注解。
 		return Boolean.TRUE.equals(scan(annotationType,
 				IsPresent.get(this.repeatableContainers, this.annotationFilter, true)));
 	}
@@ -133,15 +152,15 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(Class<A> annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate) {
 
 		return get(annotationType, predicate, null);
 	}
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(Class<A> annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate,
-			@Nullable MergedAnnotationSelector<A> selector) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate,
+														  @Nullable MergedAnnotationSelector<A> selector) {
 
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
@@ -158,15 +177,15 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(String annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate) {
 
 		return get(annotationType, predicate, null);
 	}
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(String annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate,
-			@Nullable MergedAnnotationSelector<A> selector) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate,
+														  @Nullable MergedAnnotationSelector<A> selector) {
 
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
@@ -216,7 +235,12 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return spliterator(null);
 	}
 
+
+	/**
+	 * 并行迭代器
+	 */
 	private <A extends Annotation> Spliterator<MergedAnnotation<A>> spliterator(@Nullable Object annotationType) {
+		// 底层会使用 AggregatesCollector 这个处理器
 		return new AggregatesSpliterator<>(annotationType, getAggregates());
 	}
 
@@ -234,10 +258,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Nullable
 	private <C, R> R scan(C criteria, AnnotationsProcessor<C, R> processor) {
+		// 如果有预先设置的注解数组，直接处理
 		if (this.annotations != null) {
 			R result = processor.doWithAnnotations(criteria, 0, this.source, this.annotations);
 			return processor.finish(result);
 		}
+
+		// 否则使用 AnnotationsScanner 动态扫描
 		if (this.element != null && this.searchStrategy != null) {
 			return AnnotationsScanner.scan(criteria, this.element, this.searchStrategy, processor);
 		}
@@ -246,16 +273,19 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
+		// 快速判断，是否 element 在当前搜索策略 searchStrategy 下一定是空注解(没有注解)
 		if (AnnotationsScanner.isKnownEmpty(element, searchStrategy)) {
 			return NONE;
 		}
+
+		// 否则，这里可能是构造注解
 		return new TypeMappedAnnotations(element, searchStrategy, repeatableContainers, annotationFilter);
 	}
 
 	static MergedAnnotations from(@Nullable Object source, Annotation[] annotations,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		if (annotations.length == 0) {
 			return NONE;
@@ -264,7 +294,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 	private static boolean isMappingForType(AnnotationTypeMapping mapping,
-			AnnotationFilter annotationFilter, @Nullable Object requiredType) {
+											AnnotationFilter annotationFilter, @Nullable Object requiredType) {
 
 		Class<? extends Annotation> actualType = mapping.getAnnotationType();
 		return (!annotationFilter.matches(actualType) &&
@@ -283,6 +313,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		 * the common combinations.
 		 */
 		private static final IsPresent[] SHARED;
+
 		static {
 			SHARED = new IsPresent[4];
 			SHARED[0] = new IsPresent(RepeatableContainers.none(), AnnotationFilter.PLAIN, true);
@@ -298,7 +329,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private final boolean directOnly;
 
 		private IsPresent(RepeatableContainers repeatableContainers,
-				AnnotationFilter annotationFilter, boolean directOnly) {
+						  AnnotationFilter annotationFilter, boolean directOnly) {
 
 			this.repeatableContainers = repeatableContainers;
 			this.annotationFilter = annotationFilter;
@@ -308,7 +339,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Override
 		@Nullable
 		public Boolean doWithAnnotations(Object requiredType, int aggregateIndex,
-				@Nullable Object source, Annotation[] annotations) {
+										 @Nullable Object source, Annotation[] annotations) {
 
 			for (Annotation annotation : annotations) {
 				if (annotation != null) {
@@ -341,8 +372,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return null;
 		}
 
+
 		static IsPresent get(RepeatableContainers repeatableContainers,
-				AnnotationFilter annotationFilter, boolean directOnly) {
+							 AnnotationFilter annotationFilter, boolean directOnly) {
 
 			// Use a single shared instance for common combinations
 			if (annotationFilter == AnnotationFilter.PLAIN) {
@@ -375,7 +407,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private MergedAnnotation<A> result;
 
 		MergedAnnotationFinder(Object requiredType, @Nullable Predicate<? super MergedAnnotation<A>> predicate,
-				@Nullable MergedAnnotationSelector<A> selector) {
+							   @Nullable MergedAnnotationSelector<A> selector) {
 
 			this.requiredType = requiredType;
 			this.predicate = predicate;
@@ -391,7 +423,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Override
 		@Nullable
 		public MergedAnnotation<A> doWithAnnotations(Object type, int aggregateIndex,
-				@Nullable Object source, Annotation[] annotations) {
+													 @Nullable Object source, Annotation[] annotations) {
 
 			for (Annotation annotation : annotations) {
 				if (annotation != null && !annotationFilter.matches(annotation)) {
@@ -456,8 +488,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Override
 		@Nullable
 		public List<Aggregate> doWithAnnotations(Object criteria, int aggregateIndex,
-				@Nullable Object source, Annotation[] annotations) {
+												 @Nullable Object source, Annotation[] annotations) {
 
+			// 创建一个聚合，然后添加进去
 			this.aggregates.add(createAggregate(aggregateIndex, source, annotations));
 			return null;
 		}
@@ -479,8 +512,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 					Annotation[] repeatedAnnotations = repeatableContainers.findRepeatedAnnotations(annotation);
 					if (repeatedAnnotations != null) {
 						addAggregateAnnotations(aggregateAnnotations, repeatedAnnotations);
-					}
-					else {
+					} else {
 						aggregateAnnotations.add(annotation);
 					}
 				}
@@ -494,8 +526,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 
+	/**
+	 * 聚合。每个聚合代表一个注解来源层次（如类本身、父类、接口等）
+	 */
 	private static class Aggregate {
 
+		/**
+		 * 通过 aggregateIndex 区分优先级（数值越小优先级越高）
+		 */
 		private final int aggregateIndex;
 
 		@Nullable
@@ -632,7 +670,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		public long estimateSize() {
 			int size = 0;
 			for (int aggregateIndex = this.aggregateCursor;
-					aggregateIndex < this.aggregates.size(); aggregateIndex++) {
+				 aggregateIndex < this.aggregates.size(); aggregateIndex++) {
 				Aggregate aggregate = this.aggregates.get(aggregateIndex);
 				for (int annotationIndex = 0; annotationIndex < aggregate.size(); annotationIndex++) {
 					AnnotationTypeMappings mappings = aggregate.getMappings(annotationIndex);

@@ -1111,7 +1111,11 @@ public abstract class ClassUtils {
 	 */
 	public static String getPackageName(String fqClassName) {
 		Assert.notNull(fqClassName, "Class name must not be null");
+
+		// 找到最后一个点 '.'
 		int lastDotIndex = fqClassName.lastIndexOf(PACKAGE_SEPARATOR);
+
+		// 截取 [0, lastDotIndex)
 		return (lastDotIndex != -1 ? fqClassName.substring(0, lastDotIndex) : "");
 	}
 
@@ -1353,6 +1357,11 @@ public abstract class ClassUtils {
 	 * <p><b>NOTE:</b> If Java security settings disallow reflective access &mdash;
 	 * for example, calls to {@code Class#getDeclaredMethods}, etc. &mdash; this
 	 * implementation will fall back to returning the originally provided method.
+	 * <p>
+	 * 给定一个方法，它可能来自于 interface，一个用于当前反射调用的 target 类型。
+	 * 找到相关的目标方法，如果有 1 个
+	 * <p>
+	 * 注意：相比于 AopUtils 的 getMostSpecificMethod 方法，这个方法不会自动解析桥接方法
 	 *
 	 * @param method      the method to be invoked, which may come from an interface
 	 * @param targetClass the target class for the current invocation
@@ -1362,6 +1371,10 @@ public abstract class ClassUtils {
 	 * @see #getInterfaceMethodIfPossible(Method, Class)
 	 */
 	public static Method getMostSpecificMethod(Method method, @Nullable Class<?> targetClass) {
+		// 要想进入解析的逻辑里面。参数必须达到一定要求
+		// 1. targetClass 你至少别传个 null 进来
+		// 2. method 的声明类不能就是 targetClass，否则没什么需要找的
+		// 3.
 		if (targetClass != null && targetClass != method.getDeclaringClass() &&
 				(isOverridable(method, targetClass) || !method.getDeclaringClass().isAssignableFrom(targetClass))) {
 			try {
@@ -1464,17 +1477,26 @@ public abstract class ClassUtils {
 
 	/**
 	 * Determine whether the given method is overridable in the given target class.
+	 * <p>
+	 * 只是确定给定的 method 是否能够被 targetClass 覆盖。
+	 * <p>
+	 * 注意：不是真的覆盖了啊，只是有这个能力。
 	 *
 	 * @param method      the method to check
 	 * @param targetClass the target class to check against
 	 */
 	private static boolean isOverridable(Method method, @Nullable Class<?> targetClass) {
+		// 如果是 private、static、final，这些修饰符只要存在 1 个，就表示这个方法绝对不可能被重写
 		if ((method.getModifiers() & NON_OVERRIDABLE_MODIFIER) != 0) {
 			return false;
 		}
+
+		// 只要出现 public 或者 protected，这个方法一定可以重写
 		if ((method.getModifiers() & OVERRIDABLE_MODIFIER) != 0) {
 			return true;
 		}
+
+		// 否则，只能同一个包之内可以访问
 		return (targetClass == null ||
 				getPackageName(method.getDeclaringClass()).equals(getPackageName(targetClass)));
 	}

@@ -99,15 +99,21 @@ abstract class TransactionAttributeSourcePointcut extends StaticMethodMatcherPoi
 		 * 底层会通过非常粗糙地判断返回结果。见 {@link AnnotationUtils#isCandidateClass(Class, Class)}
 		 *
 		 * @param clazz the candidate target class
-		 * @return 是否这个类有可能存在 {@link Transactional} 注解
+		 * @return 是否这个类有可能存在事务注解，我这里为什么不说 @Transactional，因为 Spring 支持 3 种事务注解
 		 */
 		@Override
 		public boolean matches(Class<?> clazz) {
+			// 这 3 个类型，直接跳过
 			if (TransactionalProxy.class.isAssignableFrom(clazz) ||
 					TransactionManager.class.isAssignableFrom(clazz) ||
 					PersistenceExceptionTranslator.class.isAssignableFrom(clazz)) {
 				return false;
 			}
+
+			// 剩下来的就是走 TransactionAttributeSource
+			// 这里级直接看 AnnotationTransactionAttributeSource
+
+			// 实际上，没啥好看的，关于注解属性源 3 种 Parser 全都是调用的 AnnotationUtils.isCandidateClass
 			TransactionAttributeSource tas = getTransactionAttributeSource();
 			return (tas == null || tas.isCandidateClass(clazz));
 		}

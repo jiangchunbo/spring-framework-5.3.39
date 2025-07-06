@@ -33,6 +33,8 @@ import org.springframework.util.Assert;
  * {@link MergedAnnotations} implementation backed by a {@link Collection} of
  * {@link MergedAnnotation} instances that represent direct annotations.
  *
+ * 这个类的工作就是把已经准备好的 {@code MergedAnnotation<?>} 对象收集成一个整体
+ *
  * @author Phillip Webb
  * @since 5.2
  * @see MergedAnnotations#of(Collection)

@@ -1309,6 +1309,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return new NamedBeanHolder<T>(beanName, adaptBeanInstance(beanName, bean, requiredType.toClass()));
 	}
 
+	/**
+	 * AutowireCapableBeanFactory 的接口能力
+	 *
+	 * @return 返回值可能还是一个 Collection Map 等
+	 */
 	@Override
 	@Nullable
 	public Object resolveDependency(DependencyDescriptor descriptor, @Nullable String requestingBeanName,

@@ -133,7 +133,7 @@ public class InjectionPoint {
 	/**
 	 * Obtain the annotations associated with the wrapped field or method/constructor parameter.
 	 * <p>
-	 * 从名字看，获得注解，也就是或者方法参数，或者字段上面的注解
+	 * 获得 Field 上面个的注解，或者是方法/构造器参数的注解
 	 */
 	public Annotation[] getAnnotations() {
 		// 如果是字段

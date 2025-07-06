@@ -171,6 +171,9 @@ public abstract class AnnotatedElementUtils {
 	 * @since 4.2.3
 	 */
 	public static boolean hasMetaAnnotationTypes(AnnotatedElement element, Class<? extends Annotation> annotationType) {
+		// 与 hasAnnotationTypes 相对，这表示是否存在元注解类型
+
+		// 搜索策略是 INHERITED_ANNOTATIONS
 		return getAnnotations(element).stream(annotationType).anyMatch(MergedAnnotation::isMetaPresent);
 	}
 
@@ -199,15 +202,18 @@ public abstract class AnnotatedElementUtils {
 	 * will return a non-null value.
 	 * <p>This method follows <em>get semantics</em> as described in the
 	 * {@linkplain AnnotatedElementUtils class-level javadoc}.
+	 * <p>
+	 * 这个方法可以判断注解是否存在于给定的 element 上，而且注解层次结构包含 annotationType 也可以
 	 *
-	 * @param element        the annotated element
-	 * @param annotationType the annotation type to find
+	 * @param element        the annotated element 被注解的元素，种类很多。比如：类、方法、字段、构造器、注解等
+	 * @param annotationType the annotation type to find 表示一个注解
 	 * @return {@code true} if a matching annotation is present
 	 * @see #hasAnnotation(AnnotatedElement, Class)
 	 * @since 4.2.3
 	 */
 	public static boolean isAnnotated(AnnotatedElement element, Class<? extends Annotation> annotationType) {
 		// Shortcut: directly present on the element, with no merging needed?
+		// 如果是简单的 Java 注解
 		if (AnnotationFilter.PLAIN.matches(annotationType) ||
 				AnnotationsScanner.hasPlainJavaAnnotationsOnly(element)) {
 			return element.isAnnotationPresent(annotationType);
@@ -551,6 +557,9 @@ public abstract class AnnotatedElementUtils {
 	 */
 	public static boolean hasAnnotation(AnnotatedElement element, Class<? extends Annotation> annotationType) {
 		// Shortcut: directly present on the element, with no merging needed?
+		// 快速判断
+		// 如果注解是 JDK 自带的，或者 Spring Lang，那么直接用反射的能力
+		// 或者 element 被注解的元素仅仅只有 Java 注解
 		if (AnnotationFilter.PLAIN.matches(annotationType) ||
 				AnnotationsScanner.hasPlainJavaAnnotationsOnly(element)) {
 			return element.isAnnotationPresent(annotationType);
@@ -795,6 +804,7 @@ public abstract class AnnotatedElementUtils {
 	}
 
 	private static MergedAnnotations getAnnotations(AnnotatedElement element) {
+		// 按照 @Inherited 搜索注解
 		return MergedAnnotations.from(element, SearchStrategy.INHERITED_ANNOTATIONS, RepeatableContainers.none());
 	}
 
