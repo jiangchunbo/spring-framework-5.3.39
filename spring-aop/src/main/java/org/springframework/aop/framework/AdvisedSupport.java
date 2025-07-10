@@ -398,6 +398,8 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	public void addAdvice(Advice advice) throws AopConfigException {
 		// 定位添加的位置
 		int pos = this.advisors.size();
+
+		// 添加 Advice，里面会包装为 Advisor
 		addAdvice(pos, advice);
 	}
 
@@ -407,15 +409,22 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	@Override
 	public void addAdvice(int pos, Advice advice) throws AopConfigException {
 		Assert.notNull(advice, "Advice must not be null");
+
+		// 如果是引介
 		if (advice instanceof IntroductionInfo) {
 			// We don't need an IntroductionAdvisor for this kind of introduction:
 			// It's fully self-describing.
 			addAdvisor(pos, new DefaultIntroductionAdvisor(advice, (IntroductionInfo) advice));
-		} else if (advice instanceof DynamicIntroductionAdvice) {
+		}
+		// 如果是动态引介
+		else if (advice instanceof DynamicIntroductionAdvice) {
 			// We need an IntroductionAdvisor for this kind of introduction.
 			throw new AopConfigException("DynamicIntroductionAdvice may only be added as part of IntroductionAdvisor");
-		} else {
+		}
+		// 其他
+		else {
 			// 将 advice 包装为 DefaultPointcutAdvisor
+			// 这意味着什么 DefaultPointcutAdvisor 匹配一切类，一切方法
 			addAdvisor(pos, new DefaultPointcutAdvisor(advice));
 		}
 	}
@@ -488,9 +497,11 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * @return a List of MethodInterceptors (may also include InterceptorAndDynamicMethodMatchers)
 	 */
 	public List<Object> getInterceptorsAndDynamicInterceptionAdvice(Method method, @Nullable Class<?> targetClass) {
+		// 构造一个 cacheKey
 		MethodCacheKey cacheKey = new MethodCacheKey(method);
 		List<Object> cached = this.methodCache.get(cacheKey);
 		if (cached == null) {
+			// 构建 cached
 			cached = this.advisorChainFactory.getInterceptorsAndDynamicInterceptionAdvice(
 					this, method, targetClass);
 			this.methodCache.put(cacheKey, cached);

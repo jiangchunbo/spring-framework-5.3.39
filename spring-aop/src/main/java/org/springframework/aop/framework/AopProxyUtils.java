@@ -244,13 +244,26 @@ public abstract class AopProxyUtils {
 		if (ObjectUtils.isEmpty(arguments)) {
 			return new Object[0];
 		}
+
+		// 如果方法接受可变参数
 		if (method.isVarArgs()) {
+
+			// 如果方法的参数数量与 arguments 长度一样
 			if (method.getParameterCount() == arguments.length) {
+				// 获取所有方法参数类型
 				Class<?>[] paramTypes = method.getParameterTypes();
+
+				// 定位到最后一个
 				int varargIndex = paramTypes.length - 1;
+
+				// 获取最后一个参数类型
 				Class<?> varargType = paramTypes[varargIndex];
+
+				// 如果最后一个参数，参数类型是数组
 				if (varargType.isArray()) {
 					Object varargArray = arguments[varargIndex];
+
+					// 如果最后一个是 Object[]
 					if (varargArray instanceof Object[] && !varargType.isInstance(varargArray)) {
 						Object[] newArguments = new Object[arguments.length];
 						System.arraycopy(arguments, 0, newArguments, 0, varargIndex);

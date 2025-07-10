@@ -58,9 +58,11 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 		AdvisorAdapterRegistry registry = GlobalAdvisorAdapterRegistry.getInstance();
 
 		// Advised 这是一个配置，拿到里面配置的所有 Advisor
+		// 这个就是我们通过 ProxyFactory 添加进来的所有的 Advisor
 		Advisor[] advisors = config.getAdvisors();
 
 		// 构造一个 Advisors 大小的数组。 这个数组用于收集所有的 MethodInterceptor
+		// 并不一定所有的 advisor 都可以用，但是我们预留足够空间 advisors.length
 		List<Object> interceptorList = new ArrayList<>(advisors.length);
 		Class<?> actualClass = (targetClass != null ? targetClass : method.getDeclaringClass());
 
