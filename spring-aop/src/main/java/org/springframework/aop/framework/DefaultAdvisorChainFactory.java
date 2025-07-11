@@ -75,12 +75,12 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 				// Add it conditionally.
 				PointcutAdvisor pointcutAdvisor = (PointcutAdvisor) advisor;
 
-				// 一些判断，如果不满足这几个判断，甚至还无法添加到 interceptors 里
+				// 如果需要预先过滤，或者类型过滤器匹配 targetClass
 				if (config.isPreFiltered() || pointcutAdvisor.getPointcut().getClassFilter().matches(actualClass)) {
 					// 方法匹配器
 					MethodMatcher mm = pointcutAdvisor.getPointcut().getMethodMatcher();
 
-					// 计算 match
+					// 计算 match 是否匹配方法
 					boolean match;
 					if (mm instanceof IntroductionAwareMethodMatcher) {
 						// 如果还没有计算过，那么就算一下 true/false，判断这个类能不能使用 “引介”
@@ -100,6 +100,8 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 					// 如果匹配上，才能添加到拦截器里面
 					if (match) {
 						MethodInterceptor[] interceptors = registry.getInterceptors(advisor);
+
+						// 如果需要运行时匹配的支持，那么会添加特殊的 InterceptorAndDynamicMethodMatcher
 						if (mm.isRuntime()) {
 							// Creating a new object instance in the getInterceptors() method
 							// isn't a problem as we normally cache created chains.
@@ -111,13 +113,18 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 						}
 					}
 				}
-			} else if (advisor instanceof IntroductionAdvisor) {
+			}
+			// 引介 IntroductionAdvisor
+			else if (advisor instanceof IntroductionAdvisor) {
 				IntroductionAdvisor ia = (IntroductionAdvisor) advisor;
 				if (config.isPreFiltered() || ia.getClassFilter().matches(actualClass)) {
 					Interceptor[] interceptors = registry.getInterceptors(advisor);
 					interceptorList.addAll(Arrays.asList(interceptors));
 				}
-			} else {
+			}
+			// 既不是 Pointcut，也不是 IntroductionAdvisor
+			// 那么其实就是个 Advice 套壳
+			else {
 				Interceptor[] interceptors = registry.getInterceptors(advisor);
 				interceptorList.addAll(Arrays.asList(interceptors));
 			}
