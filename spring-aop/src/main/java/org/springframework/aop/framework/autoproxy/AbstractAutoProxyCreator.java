@@ -332,15 +332,25 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
+
+		// 如果一个类是基础类，或者应该跳过，就赶紧标记为 false
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
 		}
 
 		// Create proxy if we have advice.
+		// 获取对于这个 bean 来说，需要的 advice 和 advisor
+		// 返回值也就两种，而且都是常量，一个是 null，另一个是一个 new Object[0]
+		// 所以，根本没有返回什么具体的对象，只是一个标记
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+
+		// 如果获取到的非 DO_NOT_PROXY ，那么就是存在代理
 		if (specificInterceptors != DO_NOT_PROXY) {
+			// 缓存
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+
+			// 创建一个代理对象
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
@@ -462,6 +472,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			}
 		}
 
+		// 真正找到 advisor
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);
@@ -554,13 +565,23 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @see #setInterceptorNames
 	 */
 	private Advisor[] resolveInterceptorNames() {
+		// 拿到 bean factory
 		BeanFactory bf = this.beanFactory;
 		ConfigurableBeanFactory cbf = (bf instanceof ConfigurableBeanFactory ? (ConfigurableBeanFactory) bf : null);
+
+		// interceptorNames 就是我们通过 set 方法设置的拦截器的名字，这些应该都是 bean
 		List<Advisor> advisors = new ArrayList<>();
 		for (String beanName : this.interceptorNames) {
+
+			// 没有 bean 工厂 ? --> 不知道为什么
+			// 如果 beanName 没有正在创建种，说明没有循环依赖，
 			if (cbf == null || !cbf.isCurrentlyInCreation(beanName)) {
 				Assert.state(bf != null, "BeanFactory required for resolving interceptor names");
+
+				// 创建 bean，也就是创建这个 interceptor
 				Object next = bf.getBean(beanName);
+
+				// 把
 				advisors.add(this.advisorAdapterRegistry.wrap(next));
 			}
 		}

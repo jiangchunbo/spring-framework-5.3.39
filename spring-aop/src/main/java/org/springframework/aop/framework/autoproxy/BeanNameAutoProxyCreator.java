@@ -38,11 +38,11 @@ import org.springframework.util.StringUtils;
  *
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 10.10.2003
  * @see #setBeanNames
  * @see #isMatch
  * @see #setInterceptorNames
  * @see AbstractAutoProxyCreator
+ * @since 10.10.2003
  */
 @SuppressWarnings("serial")
 public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
@@ -62,6 +62,7 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 	 * If you intend to proxy a FactoryBean instance itself (a rare use case, but
 	 * Spring 1.2's default behavior), specify the bean name of the FactoryBean
 	 * including the factory-bean prefix "&amp;": e.g. "&amp;myFactoryBean".
+	 *
 	 * @see org.springframework.beans.factory.FactoryBean
 	 * @see org.springframework.beans.factory.BeanFactory#FACTORY_BEAN_PREFIX
 	 */
@@ -78,8 +79,9 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 	 * Delegate to {@link AbstractAutoProxyCreator#getCustomTargetSource(Class, String)}
 	 * if the bean name matches one of the names in the configured list of supported
 	 * names, returning {@code null} otherwise.
-	 * @since 5.3
+	 *
 	 * @see #setBeanNames(String...)
+	 * @since 5.3
 	 */
 	@Override
 	protected TargetSource getCustomTargetSource(Class<?> beanClass, String beanName) {
@@ -90,6 +92,9 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 	/**
 	 * Identify as a bean to proxy if the bean name matches one of the names in
 	 * the configured list of supported names.
+	 * <p>
+	 * 为这个 bean 找到 advice 和 advisor
+	 *
 	 * @see #setBeanNames(String...)
 	 */
 	@Override
@@ -104,8 +109,9 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 	/**
 	 * Determine if the bean name for the given bean class matches one of the names
 	 * in the configured list of supported names.
+	 *
 	 * @param beanClass the class of the bean to advise
-	 * @param beanName the name of the bean
+	 * @param beanName  the name of the bean
 	 * @return {@code true} if the given bean name is supported
 	 * @see #setBeanNames(String...)
 	 */
@@ -113,12 +119,18 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 		if (this.beanNames != null) {
 			boolean isFactoryBean = FactoryBean.class.isAssignableFrom(beanClass);
 			for (String mappedName : this.beanNames) {
+				// 如果是一个 FactoryBean
 				if (isFactoryBean) {
+					// 如果 beanName 不是以 & 开头的，那么先跳过，用户并不想要一个 FactoryBean 对象
 					if (!mappedName.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
 						continue;
 					}
+
+					// 否则，用户希望拿到一个 FactoryBean 对象
 					mappedName = mappedName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());
 				}
+
+				// 匹配 beanName，只支持简单的匹配规则，只能使用 * 来表示通配符
 				if (isMatch(beanName, mappedName)) {
 					return true;
 				}
@@ -134,6 +146,8 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 				}
 			}
 		}
+
+		// 没有设置 beanName，那么一切都不支持
 		return false;
 	}
 
@@ -141,7 +155,8 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 	 * Determine if the given bean name matches the mapped name.
 	 * <p>The default implementation checks for "xxx*", "*xxx" and "*xxx*" matches,
 	 * as well as direct equality. Can be overridden in subclasses.
-	 * @param beanName the bean name to check
+	 *
+	 * @param beanName   the bean name to check
 	 * @param mappedName the name in the configured list of names
 	 * @return if the names match
 	 * @see org.springframework.util.PatternMatchUtils#simpleMatch(String, String)

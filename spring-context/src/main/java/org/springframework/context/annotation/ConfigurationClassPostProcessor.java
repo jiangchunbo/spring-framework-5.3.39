@@ -457,6 +457,9 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	}
 
 
+	/**
+	 * 一个私有的用于特殊处理 @Import 导入的 bean 的处理器
+	 */
 	private static class ImportAwareBeanPostProcessor implements InstantiationAwareBeanPostProcessor {
 
 		private final BeanFactory beanFactory;
@@ -477,8 +480,12 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 		@Override
 		public Object postProcessBeforeInitialization(Object bean, String beanName) {
+			// 如果 bean 实现了 ImportAware
 			if (bean instanceof ImportAware) {
+				// 那么获取 Import 注册表
 				ImportRegistry ir = this.beanFactory.getBean(IMPORT_REGISTRY_BEAN_NAME, ImportRegistry.class);
+				// 找到 @Import 所在的配置上面的注解元数据
+				// 也就是这个 @Import 希望知道是被哪个 @Configuration 导入的
 				AnnotationMetadata importingClass = ir.getImportingClassFor(ClassUtils.getUserClass(bean).getName());
 				if (importingClass != null) {
 					((ImportAware) bean).setImportMetadata(importingClass);

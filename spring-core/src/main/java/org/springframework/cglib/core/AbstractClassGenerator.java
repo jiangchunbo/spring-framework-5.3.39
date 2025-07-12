@@ -129,8 +129,7 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 		public Object get(AbstractClassGenerator gen, boolean useCache) {
 			if (!useCache) {
 				return gen.generate(ClassLoaderData.this);
-			}
-			else {
+			} else {
 				Object cachedValue = generatedClasses.get(gen);
 				return gen.unwrapCachedValue(cachedValue);
 			}
@@ -184,6 +183,7 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 	 * <p>
 	 * Classes are cached per-<code>ClassLoader</code> using a <code>WeakHashMap</code>, to allow
 	 * the generated classes to be removed when the associated loader is garbage collected.
+	 *
 	 * @param classLoader the loader to generate the new class with, or null to use the default
 	 */
 	public void setClassLoader(ClassLoader classLoader) {
@@ -198,6 +198,7 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 
 	/**
 	 * Override the default naming policy.
+	 *
 	 * @param namingPolicy the custom policy, or null to use the default
 	 * @see DefaultNamingPolicy
 	 */
@@ -292,6 +293,7 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 	 * Default implementation returns <code>null</code> for using a default protection domain. Sub-classes may
 	 * override to use a more specific protection domain.
 	 * </p>
+	 *
 	 * @return the protection domain (<code>null</code> for using a default)
 	 */
 	protected ProtectionDomain getProtectionDomain() {
@@ -300,17 +302,28 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 
 	protected Object create(Object key) {
 		try {
+			// 得到类加载器
 			ClassLoader loader = getClassLoader();
 			Map<ClassLoader, ClassLoaderData> cache = CACHE;
+
+			// 从缓存中获取这个类加载器加载了哪些数据
 			ClassLoaderData data = cache.get(loader);
 			if (data == null) {
+				// 即将 write 数据，加锁，避免多线程写
 				synchronized (AbstractClassGenerator.class) {
 					cache = CACHE;
 					data = cache.get(loader);
 					if (data == null) {
+						// 创建一个新的缓存 newCache，将旧的 cache 内容都复制过来
 						Map<ClassLoader, ClassLoaderData> newCache = new WeakHashMap<ClassLoader, ClassLoaderData>(cache);
+
+						// 创建 entry.value
 						data = new ClassLoaderData(loader);
+
+						// 将新数据 put 到新缓存
 						newCache.put(loader, data);
+
+						// 替换 CACHE
 						CACHE = newCache;
 					}
 				}
@@ -326,11 +339,9 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 				return firstInstance((Class) obj);
 			}
 			return nextInstance(obj);
-		}
-		catch (RuntimeException | Error ex) {
+		} catch (RuntimeException | Error ex) {
 			throw ex;
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			throw new CodeGenerationException(ex);
 		}
 	}
@@ -355,8 +366,7 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 				try {
 					gen = classLoader.loadClass(getClassName());
 					return gen;
-				}
-				catch (ClassNotFoundException e) {
+				} catch (ClassNotFoundException e) {
 					// ignore
 				}
 			}
@@ -369,14 +379,11 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 				// SPRING PATCH END
 			}
 			return gen;
-		}
-		catch (RuntimeException | Error ex) {
+		} catch (RuntimeException | Error ex) {
 			throw ex;
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			throw new CodeGenerationException(ex);
-		}
-		finally {
+		} finally {
 			CURRENT.set(save);
 		}
 	}

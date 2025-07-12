@@ -249,6 +249,8 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 	@Nullable
 	public Object getObject() throws BeansException {
 		initializeAdvisorChain();
+
+		// 如果是单例，那么获取一个单例
 		if (isSingleton()) {
 			return getSingletonInstance();
 		}

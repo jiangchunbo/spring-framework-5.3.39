@@ -55,17 +55,26 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 
 	@Override
 	public Advisor wrap(Object adviceObject) throws UnknownAdviceTypeException {
+		// 如果已经是一个 Advisor，直接返回
 		if (adviceObject instanceof Advisor) {
 			return (Advisor) adviceObject;
 		}
+
+		// 剩下的，我就期望你是一个 Advice，如果你甚至连 Advice 都不是，那么我只能抛出异常
 		if (!(adviceObject instanceof Advice)) {
 			throw new UnknownAdviceTypeException(adviceObject);
 		}
+
+		// 强制转换为 Advice
 		Advice advice = (Advice) adviceObject;
+
+		// 如果 Advice 是方法拦截器
 		if (advice instanceof MethodInterceptor) {
 			// So well-known it doesn't even need an adapter.
 			return new DefaultPointcutAdvisor(advice);
 		}
+
+		// 否则，你必须是一些 Advice
 		for (AdvisorAdapter adapter : this.adapters) {
 			// Check that it is supported.
 			if (adapter.supportsAdvice(advice)) {
