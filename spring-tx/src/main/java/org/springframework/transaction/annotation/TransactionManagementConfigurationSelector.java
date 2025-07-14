@@ -29,11 +29,11 @@ import org.springframework.util.ClassUtils;
  *
  * @author Chris Beams
  * @author Juergen Hoeller
- * @since 3.1
  * @see EnableTransactionManagement
  * @see ProxyTransactionManagementConfiguration
  * @see TransactionManagementConfigUtils#TRANSACTION_ASPECT_CONFIGURATION_CLASS_NAME
  * @see TransactionManagementConfigUtils#JTA_TRANSACTION_ASPECT_CONFIGURATION_CLASS_NAME
+ * @since 3.1
  */
 public class TransactionManagementConfigurationSelector extends AdviceModeImportSelector<EnableTransactionManagement> {
 
@@ -49,10 +49,13 @@ public class TransactionManagementConfigurationSelector extends AdviceModeImport
 			case PROXY:
 				// 导入两个一个是用于 bean 后置处理，增加代理的
 				// 另一个是事务相关的各种
-				return new String[] {AutoProxyRegistrar.class.getName(),
-						ProxyTransactionManagementConfiguration.class.getName()};
+				return new String[]{
+						AutoProxyRegistrar.class.getName(), // 注册基础设置
+						ProxyTransactionManagementConfiguration.class.getName()
+				};
 			case ASPECTJ:
-				return new String[] {determineTransactionAspectClass()};
+				// 使用 aspectj 编译
+				return new String[]{determineTransactionAspectClass()};
 			default:
 				return null;
 		}

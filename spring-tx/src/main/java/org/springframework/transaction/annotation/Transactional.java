@@ -104,10 +104,10 @@ import org.springframework.transaction.TransactionDefinition;
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @author Mark Paluch
- * @since 1.2
  * @see org.springframework.transaction.interceptor.TransactionAttribute
  * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute
  * @see org.springframework.transaction.interceptor.RuleBasedTransactionAttribute
+ * @since 1.2
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -117,6 +117,7 @@ public @interface Transactional {
 
 	/**
 	 * Alias for {@link #transactionManager}.
+	 *
 	 * @see #transactionManager
 	 */
 	@AliasFor("transactionManager")
@@ -128,10 +129,11 @@ public @interface Transactional {
 	 * qualifier value (or the bean name) of a specific
 	 * {@link org.springframework.transaction.TransactionManager TransactionManager}
 	 * bean definition.
-	 * @since 4.2
+	 *
 	 * @see #value
 	 * @see org.springframework.transaction.PlatformTransactionManager
 	 * @see org.springframework.transaction.ReactiveTransactionManager
+	 * @since 4.2
 	 */
 	@AliasFor("value")
 	String transactionManager() default "";
@@ -143,14 +145,16 @@ public @interface Transactional {
 	 * purpose or map to pre-defined transaction manager-specific options.
 	 * <p>See the documentation of the actual transaction manager implementation
 	 * for details on how it evaluates transaction labels.
-	 * @since 5.3
+	 *
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#getLabels()
+	 * @since 5.3
 	 */
 	String[] label() default {};
 
 	/**
 	 * The transaction propagation type.
 	 * <p>Defaults to {@link Propagation#REQUIRED}.
+	 *
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getPropagationBehavior()
 	 */
 	Propagation propagation() default Propagation.REQUIRED;
@@ -164,6 +168,7 @@ public @interface Transactional {
 	 * "true" on your transaction manager if you'd like isolation level declarations
 	 * to get rejected when participating in an existing transaction with a different
 	 * isolation level.
+	 *
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getIsolationLevel()
 	 * @see org.springframework.transaction.support.AbstractPlatformTransactionManager#setValidateExistingTransaction
 	 */
@@ -175,6 +180,9 @@ public @interface Transactional {
 	 * <p>Exclusively designed for use with {@link Propagation#REQUIRED} or
 	 * {@link Propagation#REQUIRES_NEW} since it only applies to newly started
 	 * transactions.
+	 *
+	 * 设置超时时间，如果超时，那么执行下一个 SQL 的时候，将会抛出异常，并回滚
+	 *
 	 * @return the timeout in seconds
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getTimeout()
 	 */
@@ -186,9 +194,10 @@ public @interface Transactional {
 	 * <p>Exclusively designed for use with {@link Propagation#REQUIRED} or
 	 * {@link Propagation#REQUIRES_NEW} since it only applies to newly started
 	 * transactions.
+	 *
 	 * @return the timeout in seconds as a String value, e.g. a placeholder
-	 * @since 5.3
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getTimeout()
+	 * @since 5.3
 	 */
 	String timeoutString() default "";
 
@@ -201,6 +210,7 @@ public @interface Transactional {
 	 * A transaction manager which cannot interpret the read-only hint will
 	 * <i>not</i> throw an exception when asked for a read-only transaction
 	 * but rather silently ignore the hint.
+	 *
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#isReadOnly()
 	 * @see org.springframework.transaction.support.TransactionSynchronizationManager#isCurrentTransactionReadOnly()
 	 */
@@ -219,6 +229,7 @@ public @interface Transactional {
 	 * and its nested classes. See the {@linkplain Transactional class-level javadocs}
 	 * for further details on rollback rule semantics and warnings regarding possible
 	 * unintentional matches.
+	 *
 	 * @see #rollbackForClassName
 	 * @see org.springframework.transaction.interceptor.RollbackRuleAttribute#RollbackRuleAttribute(Class)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)
@@ -232,6 +243,7 @@ public @interface Transactional {
 	 * <p>See the {@linkplain Transactional class-level javadocs} for further details
 	 * on rollback rule semantics, patterns, and warnings regarding possible
 	 * unintentional matches.
+	 *
 	 * @see #rollbackFor
 	 * @see org.springframework.transaction.interceptor.RollbackRuleAttribute#RollbackRuleAttribute(String)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)
@@ -247,6 +259,7 @@ public @interface Transactional {
 	 * and its nested classes. See the {@linkplain Transactional class-level javadocs}
 	 * for further details on rollback rule semantics and warnings regarding possible
 	 * unintentional matches.
+	 *
 	 * @see #noRollbackForClassName
 	 * @see org.springframework.transaction.interceptor.NoRollbackRuleAttribute#NoRollbackRuleAttribute(Class)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)
@@ -260,6 +273,7 @@ public @interface Transactional {
 	 * <p>See the {@linkplain Transactional class-level javadocs} for further details
 	 * on rollback rule semantics, patterns, and warnings regarding possible
 	 * unintentional matches.
+	 *
 	 * @see #noRollbackFor
 	 * @see org.springframework.transaction.interceptor.NoRollbackRuleAttribute#NoRollbackRuleAttribute(String)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)

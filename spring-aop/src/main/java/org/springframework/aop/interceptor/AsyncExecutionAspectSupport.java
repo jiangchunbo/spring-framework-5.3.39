@@ -272,6 +272,7 @@ public abstract class AsyncExecutionAspectSupport implements BeanFactoryAware {
 	 */
 	@Nullable
 	protected Object doSubmit(Callable<Object> task, AsyncTaskExecutor executor, Class<?> returnType) {
+		// 如果返回值是这种可编排的
 		if (CompletableFuture.class.isAssignableFrom(returnType)) {
 			return CompletableFuture.supplyAsync(() -> {
 				try {

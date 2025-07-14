@@ -146,6 +146,9 @@ public abstract class AopConfigUtils {
 		// 如果容器中没有 AUTO_PROXY_CREATOR_BEAN_NAME，那么直接注册
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
 		beanDefinition.setSource(source);
+
+		// AopConfigUtils 注册的 Bean 都是最高优先级
+		// 而且注册的都是 AutoProxyCreator
 		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);
 		beanDefinition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
 		registry.registerBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME, beanDefinition);

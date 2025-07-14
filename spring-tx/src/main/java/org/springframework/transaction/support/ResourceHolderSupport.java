@@ -29,9 +29,9 @@ import org.springframework.transaction.TransactionTimedOutException;
  * in order to determine a transactional timeout.
  *
  * @author Juergen Hoeller
- * @since 02.02.2004
  * @see org.springframework.jdbc.datasource.DataSourceTransactionManager#doBegin
  * @see org.springframework.jdbc.datasource.DataSourceUtils#applyTransactionTimeout
+ * @since 02.02.2004
  */
 public abstract class ResourceHolderSupport implements ResourceHolder {
 
@@ -72,8 +72,9 @@ public abstract class ResourceHolderSupport implements ResourceHolder {
 	 * Reset the rollback-only status for this resource transaction.
 	 * <p>Only really intended to be called after custom rollback steps which
 	 * keep the original resource in action, e.g. in case of a savepoint.
-	 * @since 5.0
+	 *
 	 * @see org.springframework.transaction.SavepointManager#rollbackToSavepoint
+	 * @since 5.0
 	 */
 	public void resetRollbackOnly() {
 		this.rollbackOnly = false;
@@ -88,17 +89,21 @@ public abstract class ResourceHolderSupport implements ResourceHolder {
 
 	/**
 	 * Set the timeout for this object in seconds.
+	 *
 	 * @param seconds number of seconds until expiration
 	 */
 	public void setTimeoutInSeconds(int seconds) {
+		// 设置超时时间为毫秒
 		setTimeoutInMillis(seconds * 1000L);
 	}
 
 	/**
 	 * Set the timeout for this object in milliseconds.
+	 *
 	 * @param millis number of milliseconds until expiration
 	 */
 	public void setTimeoutInMillis(long millis) {
+		// 设置截至 Date
 		this.deadline = new Date(System.currentTimeMillis() + millis);
 	}
 
@@ -111,6 +116,7 @@ public abstract class ResourceHolderSupport implements ResourceHolder {
 
 	/**
 	 * Return the expiration deadline of this object.
+	 *
 	 * @return the deadline as Date object
 	 */
 	@Nullable
@@ -121,26 +127,37 @@ public abstract class ResourceHolderSupport implements ResourceHolder {
 	/**
 	 * Return the time to live for this object in seconds.
 	 * Rounds up eagerly, e.g. 9.00001 still to 10.
+	 * <p>
+	 * 剩余时间
+	 *
 	 * @return number of seconds until expiration
 	 * @throws TransactionTimedOutException if the deadline has already been reached
 	 */
 	public int getTimeToLiveInSeconds() {
+		// 获取超时时间，这个方法有可能报错
 		double diff = ((double) getTimeToLiveInMillis()) / 1000;
 		int secs = (int) Math.ceil(diff);
+
 		checkTransactionTimeout(secs <= 0);
 		return secs;
 	}
 
 	/**
 	 * Return the time to live for this object in milliseconds.
+	 *
 	 * @return number of milliseconds until expiration
 	 * @throws TransactionTimedOutException if the deadline has already been reached
 	 */
-	public long getTimeToLiveInMillis() throws TransactionTimedOutException{
+	public long getTimeToLiveInMillis() throws TransactionTimedOutException {
+		// deadline 如果是空，则报错，所以调用这个方法之前一定要设置 timeout
 		if (this.deadline == null) {
 			throw new IllegalStateException("No timeout specified for this resource holder");
 		}
+
+		// 获取一个差值，如果这个差值 <= 0，那么就意味着已经达到了超时时间
 		long timeToLive = this.deadline.getTime() - System.currentTimeMillis();
+
+		// 检查上面是否达到超时时间，若已经超时，那么设置当前回滚，且抛出异常
 		checkTransactionTimeout(timeToLive <= 0);
 		return timeToLive;
 	}

@@ -110,8 +110,10 @@ public class AsyncExecutionInterceptor extends AsyncExecutionAspectSupport imple
 					"No executor specified and no default executor set on AsyncExecutionInterceptor either");
 		}
 
+		// 使用 Callable 包装
 		Callable<Object> task = () -> {
 			try {
+				// 继续往下执行，如果你还有事务，那么会执行事务
 				Object result = invocation.proceed();
 				if (result instanceof Future) {
 					return ((Future<?>) result).get();

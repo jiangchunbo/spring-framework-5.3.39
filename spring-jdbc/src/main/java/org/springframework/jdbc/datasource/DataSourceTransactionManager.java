@@ -302,6 +302,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 			prepareTransactionalConnection(con, definition);
 			txObject.getConnectionHolder().setTransactionActive(true);
 
+			// 确定超时时间 --> 如果不是设置的 -1，那么就设置超时时间
 			int timeout = determineTimeout(definition);
 			if (timeout != TransactionDefinition.TIMEOUT_DEFAULT) {
 				txObject.getConnectionHolder().setTimeoutInSeconds(timeout);

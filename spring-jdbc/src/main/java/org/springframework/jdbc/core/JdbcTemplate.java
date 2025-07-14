@@ -643,7 +643,10 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		Connection con = DataSourceUtils.getConnection(obtainDataSource());
 		PreparedStatement ps = null;
 		try {
+			// 创建一个 Statement
 			ps = psc.createPreparedStatement(con);
+
+			// 设置 Statement
 			applyStatementSettings(ps);
 			T result = action.doInPreparedStatement(ps);
 			handleWarnings(ps);
@@ -1462,14 +1465,19 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	 * @see org.springframework.jdbc.datasource.DataSourceUtils#applyTransactionTimeout
 	 */
 	protected void applyStatementSettings(Statement stmt) throws SQLException {
+		// 设置 fetchSize
 		int fetchSize = getFetchSize();
 		if (fetchSize != -1) {
 			stmt.setFetchSize(fetchSize);
 		}
+
+		// 设置 maxRows
 		int maxRows = getMaxRows();
 		if (maxRows != -1) {
 			stmt.setMaxRows(maxRows);
 		}
+
+		// 设置超时时间
 		DataSourceUtils.applyTimeout(stmt, getDataSource(), getQueryTimeout());
 	}
 

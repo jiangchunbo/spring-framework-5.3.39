@@ -70,21 +70,33 @@ public class SpringTransactionAnnotationParser implements TransactionAnnotationP
 	protected TransactionAttribute parseTransactionAnnotation(AnnotationAttributes attributes) {
 		RuleBasedTransactionAttribute rbta = new RuleBasedTransactionAttribute();
 
+		// 1. 传播机制
 		Propagation propagation = attributes.getEnum("propagation");
 		rbta.setPropagationBehavior(propagation.value());
+
+		// 2. 隔离级别
 		Isolation isolation = attributes.getEnum("isolation");
 		rbta.setIsolationLevel(isolation.value());
 
+		// 设置超时时间，执行SQL之前都会检查一下超时时间，如果超时，就报错
+		// 3. 超时时间
 		rbta.setTimeout(attributes.getNumber("timeout").intValue());
+
 		String timeoutString = attributes.getString("timeoutString");
 		Assert.isTrue(!StringUtils.hasText(timeoutString) || rbta.getTimeout() < 0,
 				"Specify 'timeout' or 'timeoutString', not both");
 		rbta.setTimeoutString(timeoutString);
 
+		// 4. 设置是否只读
 		rbta.setReadOnly(attributes.getBoolean("readOnly"));
+
+		// 5. 设置事务管理器
 		rbta.setQualifier(attributes.getString("value"));
+
+		// 6. 设置 label
 		rbta.setLabels(Arrays.asList(attributes.getStringArray("label")));
 
+		// 7. 设置针对哪些异常回滚；针对哪些异常不回滚
 		List<RollbackRuleAttribute> rollbackRules = new ArrayList<>();
 		for (Class<?> rbRule : attributes.getClassArray("rollbackFor")) {
 			rollbackRules.add(new RollbackRuleAttribute(rbRule));
