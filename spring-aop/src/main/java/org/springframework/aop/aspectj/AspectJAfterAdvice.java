@@ -45,6 +45,7 @@ public class AspectJAfterAdvice extends AbstractAspectJAdvice
 	@Override
 	@Nullable
 	public Object invoke(MethodInvocation mi) throws Throwable {
+		// 先执行方法，再调用 advice
 		try {
 			return mi.proceed();
 		}

@@ -143,11 +143,14 @@ public class StandardBeanExpressionResolver implements BeanExpressionResolver {
 			return value;
 		}
 		try {
+			// 获得一个表达式
 			Expression expr = this.expressionCache.get(value);
 			if (expr == null) {
 				expr = this.expressionParser.parseExpression(value, this.beanExpressionParserContext);
 				this.expressionCache.put(value, expr);
 			}
+
+			// 获得一个上下文，上下文提供属性来源
 			StandardEvaluationContext sec = this.evaluationCache.get(beanExpressionContext);
 			if (sec == null) {
 				sec = new StandardEvaluationContext(beanExpressionContext);

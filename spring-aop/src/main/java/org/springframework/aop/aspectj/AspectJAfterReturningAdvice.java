@@ -62,6 +62,7 @@ public class AspectJAfterReturningAdvice extends AbstractAspectJAdvice
 
 	@Override
 	public void afterReturning(@Nullable Object returnValue, Method method, Object[] args, @Nullable Object target) throws Throwable {
+		// 这是一个有条件的 afterReturning 调用
 		if (shouldInvokeOnReturnValueOf(method, returnValue)) {
 			invokeAdviceMethod(getJoinPointMatch(), returnValue, null);
 		}
@@ -73,12 +74,17 @@ public class AspectJAfterReturningAdvice extends AbstractAspectJAdvice
 	 * advice is only invoked if the returned value is an instance of the given
 	 * returning type and generic type parameters, if any, match the assignment
 	 * rules. If the returning type is Object, the advice is *always* invoked.
+	 *
 	 * @param returnValue the return value of the target method
 	 * @return whether to invoke the advice method for the given return value
 	 */
 	private boolean shouldInvokeOnReturnValueOf(Method method, @Nullable Object returnValue) {
+		// 获取被发现的返回类型，用户指定的？
 		Class<?> type = getDiscoveredReturningType();
+
+		// 获取发现的返回泛型类型，用户指定的？
 		Type genericType = getDiscoveredReturningGenericType();
+
 		// If we aren't dealing with a raw type, check if generic parameters are assignable.
 		return (matchesReturnValue(type, method, returnValue) &&
 				(genericType == null || genericType == type ||
@@ -90,18 +96,22 @@ public class AspectJAfterReturningAdvice extends AbstractAspectJAdvice
 	 * then the return type of target method should be used to determine whether advice
 	 * is invoked or not. Also, even if the return type is void, if the type of argument
 	 * declared in the advice method is Object, then the advice must still get invoked.
-	 * @param type the type of argument declared in advice method
-	 * @param method the advice method
+	 *
+	 * @param type        the type of argument declared in advice method
+	 * @param method      the advice method
 	 * @param returnValue the return value of the target method
 	 * @return whether to invoke the advice method for the given return value and type
 	 */
 	private boolean matchesReturnValue(Class<?> type, Method method, @Nullable Object returnValue) {
+		// 如果方法返回值不是 null
 		if (returnValue != null) {
 			return ClassUtils.isAssignableValue(type, returnValue);
 		}
+		// 如果 advice 方法声明的参数类型是 Object，但是方法返回值是 void，也算匹配
 		else if (Object.class == type && void.class == method.getReturnType()) {
 			return true;
 		}
+		// 方法
 		else {
 			return ClassUtils.isAssignable(type, method.getReturnType());
 		}

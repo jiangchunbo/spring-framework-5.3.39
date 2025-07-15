@@ -81,6 +81,7 @@ public abstract class AbstractAdvisingBeanPostProcessor extends ProxyProcessorSu
 			// 如果代理对象没有冻结，并且，有资格处理
 			if (!advised.isFrozen() && isEligible(AopUtils.getTargetClass(bean))) {
 				// Add our local Advisor to the existing proxy's Advisor chain...
+				// 将我们当前的 advisor 添加到现有的 proxy advisor 链前面
 				if (this.beforeExistingAdvisors) {
 					advised.addAdvisor(0, this.advisor);
 				} else {
@@ -90,6 +91,7 @@ public abstract class AbstractAdvisingBeanPostProcessor extends ProxyProcessorSu
 			}
 		}
 
+		// 是否有资格切
 		if (isEligible(bean, beanName)) {
 			ProxyFactory proxyFactory = prepareProxyFactory(bean, beanName);
 			if (!proxyFactory.isProxyTargetClass()) {
@@ -146,6 +148,8 @@ public abstract class AbstractAdvisingBeanPostProcessor extends ProxyProcessorSu
 		if (this.advisor == null) {
 			return false;
 		}
+
+		// 返回值是一个 true 或者 false
 		eligible = AopUtils.canApply(this.advisor, targetClass);
 		this.eligibleBeans.put(targetClass, eligible);
 		return eligible;
@@ -168,6 +172,7 @@ public abstract class AbstractAdvisingBeanPostProcessor extends ProxyProcessorSu
 	 */
 	protected ProxyFactory prepareProxyFactory(Object bean, String beanName) {
 		ProxyFactory proxyFactory = new ProxyFactory();
+		// 本身这个 bean post processor 也是一个 proxy config
 		proxyFactory.copyFrom(this);
 		proxyFactory.setTarget(bean);
 		return proxyFactory;

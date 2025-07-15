@@ -1322,23 +1322,23 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// 初始化参数名发现器
 		descriptor.initParameterNameDiscovery(getParameterNameDiscoverer());
 
-		// 如果依赖项的类型是 Optional
+		// 1. 如果依赖项的类型是 Optional
 		if (Optional.class == descriptor.getDependencyType()) {
 			return createOptionalDependency(descriptor, requestingBeanName);
 		}
 
-		// 如果依赖项的类型是 ObjectFactory 或 ObjectProvider
+		// 2. 如果依赖项的类型是 ObjectFactory 或 ObjectProvider
 		else if (ObjectFactory.class == descriptor.getDependencyType() ||
 				ObjectProvider.class == descriptor.getDependencyType()) {
 			return new DependencyObjectProvider(descriptor, requestingBeanName);
 		}
 
-		// 是否是 JSR-330 的注解 Provider
+		// 3. 是否是 JSR-330 的注解 Provider
 		else if (javaxInjectProviderClass == descriptor.getDependencyType()) {
 			return new Jsr330Factory().createDependencyProvider(descriptor, requestingBeanName);
 		}
 
-		// 大多数依赖走得分支
+		// 4. 大多数依赖走得分支
 		else {
 			// 惰性解析
 			Object result = getAutowireCandidateResolver().getLazyResolutionProxyIfNecessary(descriptor, requestingBeanName);
@@ -1355,20 +1355,31 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);
 		try {
+			// 解析捷径
 			Object shortcut = descriptor.resolveShortcut(this);
 			if (shortcut != null) {
 				return shortcut;
 			}
 
+			// 依赖项类型
 			Class<?> type = descriptor.getDependencyType();
+
+			// 解析 @Value 注解里面的值，可能来自于直接注解，也可能来自于方法参数
+			// 也可能没有 @Value
 			Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
+
+			// 如果使用了 @Value
 			if (value != null) {
+				// 如果解析出来是 String (一般这里就是 String，因为 @Value 返回值就是 String)
 				if (value instanceof String) {
+					// 解析嵌入值
 					String strVal = resolveEmbeddedValue((String) value);
 					BeanDefinition bd = (beanName != null && containsBean(beanName) ?
 							getMergedBeanDefinition(beanName) : null);
 					value = evaluateBeanDefinitionString(strVal, bd);
 				}
+
+				// 类型转换器
 				TypeConverter converter = (typeConverter != null ? typeConverter : getTypeConverter());
 				try {
 					return converter.convertIfNecessary(value, type, descriptor.getTypeDescriptor());
@@ -1380,7 +1391,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 
+			// 解析类型是 集合、数组、Map 那些
 			Object multipleBeans = resolveMultipleBeans(descriptor, beanName, autowiredBeanNames, typeConverter);
+
+			// 如果类型不匹配，就不会那么快返回
 			if (multipleBeans != null) {
 				return multipleBeans;
 			}
@@ -1445,8 +1459,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	private Object resolveMultipleBeans(DependencyDescriptor descriptor, @Nullable String beanName,
 										@Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) {
 
+		// 获得类型
 		Class<?> type = descriptor.getDependencyType();
 
+		// 1. 流？
 		if (descriptor instanceof StreamDependencyDescriptor) {
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
 			if (autowiredBeanNames != null) {
@@ -1459,7 +1475,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				stream = stream.sorted(adaptOrderComparator(matchingBeans));
 			}
 			return stream;
-		} else if (type.isArray()) {
+		}
+		// 2. 数组
+		else if (type.isArray()) {
 			Class<?> componentType = type.getComponentType();
 			ResolvableType resolvableType = descriptor.getResolvableType();
 			Class<?> resolvedArrayType = resolvableType.resolve(type);
@@ -1486,7 +1504,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			return result;
-		} else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
+		}
+		// 3. 集合
+		else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
 			Class<?> elementType = descriptor.getResolvableType().asCollection().resolveGeneric();
 			if (elementType == null) {
 				return null;
@@ -1510,7 +1530,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			return result;
-		} else if (Map.class == type) {
+		}
+		// 4. Map
+		else if (Map.class == type) {
 			ResolvableType mapType = descriptor.getResolvableType().asMap();
 			Class<?> keyType = mapType.resolveGeneric(0);
 			if (String.class != keyType) {
@@ -1584,8 +1606,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	protected Map<String, Object> findAutowireCandidates(
 			@Nullable String beanName, Class<?> requiredType, DependencyDescriptor descriptor) {
 
+		// 给定类型，找 beanName
 		String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 				this, requiredType, true, descriptor.isEager());
+
+		//
 		Map<String, Object> result = CollectionUtils.newLinkedHashMap(candidateNames.length);
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
 			Class<?> autowiringType = classObjectEntry.getKey();

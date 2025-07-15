@@ -146,7 +146,7 @@ public class ProxyConfig implements Serializable {
 	/**
 	 * Return whether the config is frozen, and no advice changes can be made.
 	 * <p>
-	 * 如果返回 true，说明配置被丁姐，不可以进行任何修改；
+	 * 如果返回 true，说明配置被冻结，不可以进行任何修改；
 	 * <p>
 	 * 如果返回 false，说明配置可以变化，可以调整 advice
 	 */
