@@ -201,13 +201,14 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		Object target = null;
 
 		try {
+			// 如果自己没有实现 equals 方法，但是这是一个 equals，那么就交给自己处理
 			if (!this.equalsDefined && AopUtils.isEqualsMethod(method)) {
 				// The target does not implement the equals(Object) method itself.
-				// 如果自己没有实现 equals 方法，但是这是一个 equals，那么就交给自己处理
 				return equals(args[0]);
-			} else if (!this.hashCodeDefined && AopUtils.isHashCodeMethod(method)) {
+			}
+			// 如果自己没有实现 hashCode，但是这是一个 hashCode，自己处理
+			else if (!this.hashCodeDefined && AopUtils.isHashCodeMethod(method)) {
 				// The target does not implement the hashCode() method itself.
-				// 如果自己没有实现 hashCode，但是这是一个 hashCode，自己处理
 				return hashCode();
 			} else if (method.getDeclaringClass() == DecoratingProxy.class) {
 				// There is only getDecoratedClass() declared -> dispatch to proxy config.
@@ -221,9 +222,9 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 			Object retVal;
 
+			// 暴露 Proxy
 			if (this.advised.exposeProxy) {
 				// Make invocation available if necessary.
-				// 暴露 Proxy
 				oldProxy = AopContext.setCurrentProxy(proxy);
 				setProxyContext = true;
 			}
