@@ -39,6 +39,9 @@ import org.springframework.lang.Nullable;
  */
 public abstract class AbstractCacheManager implements CacheManager, InitializingBean {
 
+	/**
+	 * 一个缓存，不知道做什么，通过 name -> Cache  找到 Cache
+	 */
 	private final ConcurrentMap<String, Cache> cacheMap = new ConcurrentHashMap<>(16);
 
 	private volatile Set<String> cacheNames = Collections.emptySet();
@@ -88,12 +91,14 @@ public abstract class AbstractCacheManager implements CacheManager, Initializing
 	@Nullable
 	public Cache getCache(String name) {
 		// Quick check for existing cache...
+		// 快速找到现存的缓存
 		Cache cache = this.cacheMap.get(name);
 		if (cache != null) {
 			return cache;
 		}
 
 		// The provider may support on-demand cache creation...
+		// 缓存 Provider 可能按需创建
 		Cache missingCache = getMissingCache(name);
 		if (missingCache != null) {
 			// Fully synchronize now for missing cache registration

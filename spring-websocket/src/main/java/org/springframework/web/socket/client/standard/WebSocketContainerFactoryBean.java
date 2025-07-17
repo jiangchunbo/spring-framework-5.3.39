@@ -25,6 +25,8 @@ import org.springframework.beans.factory.FactoryBean;
  * A FactoryBean for creating and configuring a {@link javax.websocket.WebSocketContainer}
  * through Spring XML configuration. In Java configuration, ignore this class and use
  * {@code ContainerProvider.getWebSocketContainer()} instead.
+ * <p>
+ * 一个经典的 FactoryBean，而且它能够产生一个 WebSocketContainer 对象
  *
  * @author Rossen Stoyanchev
  * @since 4.0
