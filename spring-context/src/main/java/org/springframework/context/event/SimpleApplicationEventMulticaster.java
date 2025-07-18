@@ -84,9 +84,10 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 	 * until all listeners have been executed. However, note that asynchronous execution
 	 * will not participate in the caller's thread context (class loader, transaction context)
 	 * unless the TaskExecutor explicitly supports this.
-	 * @since 2.0
+	 *
 	 * @see org.springframework.core.task.SyncTaskExecutor
 	 * @see org.springframework.core.task.SimpleAsyncTaskExecutor
+	 * @since 2.0
 	 */
 	public void setTaskExecutor(@Nullable Executor taskExecutor) {
 		this.taskExecutor = taskExecutor;
@@ -94,6 +95,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 
 	/**
 	 * Return the current task executor for this multicaster.
+	 *
 	 * @since 2.0
 	 */
 	@Nullable
@@ -114,6 +116,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 	 * {@link org.springframework.scheduling.support.TaskUtils#LOG_AND_SUPPRESS_ERROR_HANDLER})
 	 * or an implementation that logs exceptions while nevertheless propagating them
 	 * (e.g. {@link org.springframework.scheduling.support.TaskUtils#LOG_AND_PROPAGATE_ERROR_HANDLER}).
+	 *
 	 * @since 4.1
 	 */
 	public void setErrorHandler(@Nullable ErrorHandler errorHandler) {
@@ -122,6 +125,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 
 	/**
 	 * Return the current error handler for this multicaster.
+	 *
 	 * @since 4.1
 	 */
 	@Nullable
@@ -149,9 +153,11 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 
 		// 通知每一个监听器
 		for (ApplicationListener<?> listener : listeners) {
+			// 异步
 			if (executor != null) {
 				executor.execute(() -> invokeListener(listener, event));
 			}
+			// 同步
 			else {
 				invokeListener(listener, event);
 			}
@@ -164,21 +170,25 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 
 	/**
 	 * Invoke the given listener with the given event.
+	 * <p>
+	 * 给定一个事件，调用给定的 listener
+	 *
 	 * @param listener the ApplicationListener to invoke
-	 * @param event the current event to propagate
+	 * @param event    the current event to propagate
 	 * @since 4.1
 	 */
 	protected void invokeListener(ApplicationListener<?> listener, ApplicationEvent event) {
 		ErrorHandler errorHandler = getErrorHandler();
 		if (errorHandler != null) {
 			try {
+				// 调用 listener
 				doInvokeListener(listener, event);
-			}
-			catch (Throwable err) {
+			} catch (Throwable err) {
+				// 错误处理器，大概率没有
 				errorHandler.handleError(err);
 			}
-		}
-		else {
+		} else {
+			// 调用 listener，反正不管怎么样，一定要 listener
 			doInvokeListener(listener, event);
 		}
 	}
@@ -187,8 +197,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 	private void doInvokeListener(ApplicationListener listener, ApplicationEvent event) {
 		try {
 			listener.onApplicationEvent(event);
-		}
-		catch (ClassCastException ex) {
+		} catch (ClassCastException ex) {
 			String msg = ex.getMessage();
 			if (msg == null || matchesClassCastMessage(msg, event.getClass()) ||
 					(event instanceof PayloadApplicationEvent &&
@@ -203,8 +212,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 				if (loggerToUse.isTraceEnabled()) {
 					loggerToUse.trace("Non-matching event type for listener: " + listener, ex);
 				}
-			}
-			else {
+			} else {
 				throw ex;
 			}
 		}

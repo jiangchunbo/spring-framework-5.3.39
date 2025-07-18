@@ -413,14 +413,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
-	 * Return the timestamp (ms) when this context was first loaded.
-	 */
-	@Override
-	public long getStartupDate() {
-		return this.startupDate;
-	}
-
-	/**
 	 * Publish the given event to all listeners.
 	 * <p>Note: Listeners get initialized after the MessageSource, to be able
 	 * to access it within listener implementations. Thus, MessageSource
@@ -435,12 +427,20 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * Return the timestamp (ms) when this context was first loaded.
+	 */
+	@Override
+	public long getStartupDate() {
+		return this.startupDate;
+	}
+
+	/**
 	 * Publish the given event to all listeners.
 	 * <p>Note: Listeners get initialized after the MessageSource, to be able
 	 * to access it within listener implementations. Thus, MessageSource
 	 * implementations cannot publish events.
 	 * <p>
-	 * 给定一个任意的对象，发布事件。
+	 * 给定一个任意的对象，发布事件，给所有的监听器
 	 * <p>
 	 * 你可能发布的刚好是一个 ApplicationEvent 的实现类，也可能是一个与 ApplicationEvent 毫无继承关系的类
 	 *
@@ -467,6 +467,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Decorate event as an ApplicationEvent if necessary
 		ApplicationEvent applicationEvent;
+
 		// 如果你刚好发布的是一个 ApplicationEvent
 		if (event instanceof ApplicationEvent) {
 			applicationEvent = (ApplicationEvent) event;
@@ -642,6 +643,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				// 初始化事件多播器，馈赠给这个 context
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
@@ -879,14 +881,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see org.springframework.context.event.SimpleApplicationEventMulticaster
 	 */
 	protected void initApplicationEventMulticaster() {
+		// 获得 bean factory
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+
+		// 当前 context 是否包含 <beanName>
 		if (beanFactory.containsLocalBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)) {
+			// 拿到这个 bean
 			this.applicationEventMulticaster =
 					beanFactory.getBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, ApplicationEventMulticaster.class);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Using ApplicationEventMulticaster [" + this.applicationEventMulticaster + "]");
 			}
-		} else {
+		}
+		// 当前 context 不包含 <beanName> --> 创建 SimpleApplicationEventMulticaster
+		// ！！！ 除非自定义，否则一律使用 SimpleApplicationEventMulticaster
+		else {
 			this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
 			beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
 			if (logger.isTraceEnabled()) {
