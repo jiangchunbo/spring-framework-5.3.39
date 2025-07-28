@@ -318,15 +318,24 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	protected CacheOperationMetadata getCacheOperationMetadata(
 			CacheOperation operation, Method method, Class<?> targetClass) {
 
+		// 构造一个 cache key
 		CacheOperationCacheKey cacheKey = new CacheOperationCacheKey(operation, method, targetClass);
+
+		// 典型的操作，缓存不存在就创建
 		CacheOperationMetadata metadata = this.metadataCache.get(cacheKey);
+
 		if (metadata == null) {
+
+			// 如果你的操作指定了 key generator，那么就从 bean factory 中获取你自己的
+			// 如果没有指定，那么就用这个类提供的默认的，而且每次都会 new 一个 SimpleKeyGenerator
 			KeyGenerator operationKeyGenerator;
 			if (StringUtils.hasText(operation.getKeyGenerator())) {
 				operationKeyGenerator = getBean(operation.getKeyGenerator(), KeyGenerator.class);
 			} else {
 				operationKeyGenerator = getKeyGenerator();
 			}
+
+			// 缓存解析器
 			CacheResolver operationCacheResolver;
 			if (StringUtils.hasText(operation.getCacheResolver())) {
 				operationCacheResolver = getBean(operation.getCacheResolver(), CacheResolver.class);
@@ -337,6 +346,9 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 				operationCacheResolver = getCacheResolver();
 				Assert.state(operationCacheResolver != null, "No CacheResolver/CacheManager set");
 			}
+
+
+			// 创建一个新的 缓存操作 metadata，并放到缓存中
 			metadata = new CacheOperationMetadata(operation, method, targetClass,
 					operationKeyGenerator, operationCacheResolver);
 			this.metadataCache.put(cacheKey, metadata);
@@ -390,7 +402,8 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 				Collection<CacheOperation> operations = cacheOperationSource.getCacheOperations(method, targetClass);
 				if (!CollectionUtils.isEmpty(operations)) {
 
-					// 构建一个一系列上下文，然后执行方法
+					// 构建一个 CacheOperationContexts
+					// 然后执行方法
 					return execute(invoker, method,
 							new CacheOperationContexts(operations, method, args, target, targetClass));
 				}
@@ -424,7 +437,10 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	private Object execute(final CacheOperationInvoker invoker, Method method, CacheOperationContexts contexts) {
 		// Special handling of synchronized invocation
 		if (contexts.isSynchronized()) {
+			// 获取 Cacheable 对应的 context
 			CacheOperationContext context = contexts.get(CacheableOperation.class).iterator().next();
+
+			// 条件是否通过
 			if (isConditionPassing(context, CacheOperationExpressionEvaluator.NO_RESULT)) {
 				Object key = generateKey(context, CacheOperationExpressionEvaluator.NO_RESULT);
 				Cache cache = context.getCaches().iterator().next();

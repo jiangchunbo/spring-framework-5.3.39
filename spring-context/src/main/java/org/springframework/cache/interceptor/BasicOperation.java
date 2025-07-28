@@ -20,6 +20,8 @@ import java.util.Set;
 
 /**
  * The base interface that all cache operations must implement.
+ * <p>
+ * 所有缓存必须实现的基础接口
  *
  * @author Stephane Nicoll
  * @since 4.1
@@ -28,6 +30,8 @@ public interface BasicOperation {
 
 	/**
 	 * Return the cache name(s) associated with the operation.
+	 * <p>
+	 * 返回与这个操作相关的缓存名称
 	 */
 	Set<String> getCacheNames();
 
