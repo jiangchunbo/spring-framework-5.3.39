@@ -85,10 +85,16 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	/**
+	 * 元数据缓存
+	 */
 	private final Map<CacheOperationCacheKey, CacheOperationMetadata> metadataCache = new ConcurrentHashMap<>(1024);
 
 	private final CacheOperationExpressionEvaluator evaluator = new CacheOperationExpressionEvaluator();
 
+	/**
+	 * 缓存操作的源，一个典型的实现就是基于注解的缓存操作源，从注解种读取缓存的操作
+	 */
 	@Nullable
 	private CacheOperationSource cacheOperationSource;
 
@@ -100,12 +106,16 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	@Nullable
 	private BeanFactory beanFactory;
 
+	/**
+	 * 是否初始化完毕，防止在还没有初始化的时候就调用里面的缓存逻辑
+	 */
 	private boolean initialized = false;
 
 
 	/**
 	 * Configure this aspect with the given error handler, key generator and cache resolver/manager
 	 * suppliers, applying the corresponding default if a supplier is not resolvable.
+	 *
 	 * @since 5.1
 	 */
 	public void configure(
@@ -123,6 +133,9 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	 * Set one or more cache operation sources which are used to find the cache
 	 * attributes. If more than one source is provided, they will be aggregated
 	 * using a {@link CompositeCacheOperationSource}.
+	 * <p>
+	 * 自己定制化缓存操作源？
+	 *
 	 * @see #setCacheOperationSource
 	 */
 	public void setCacheOperationSources(CacheOperationSource... cacheOperationSources) {
@@ -133,8 +146,11 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 
 	/**
 	 * Set the CacheOperationSource for this cache aspect.
-	 * @since 5.1
+	 * <p>
+	 * 仅仅设置 1 个缓存操作源
+	 *
 	 * @see #setCacheOperationSources
+	 * @since 5.1
 	 */
 	public void setCacheOperationSource(@Nullable CacheOperationSource cacheOperationSource) {
 		this.cacheOperationSource = cacheOperationSource;
@@ -142,6 +158,8 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 
 	/**
 	 * Return the CacheOperationSource for this cache aspect.
+	 * <p>
+	 * 返回设置好的属性操作源
 	 */
 	@Nullable
 	public CacheOperationSource getCacheOperationSource() {
@@ -152,6 +170,8 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	 * Set the default {@link KeyGenerator} that this cache aspect should delegate to
 	 * if no specific key generator has been set for the operation.
 	 * <p>The default is a {@link SimpleKeyGenerator}.
+	 * <p>
+	 * Key 生成器
 	 */
 	public void setKeyGenerator(KeyGenerator keyGenerator) {
 		this.keyGenerator = SingletonSupplier.of(keyGenerator);
@@ -169,6 +189,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	 * to if no specific cache resolver has been set for the operation.
 	 * <p>The default resolver resolves the caches against their names and the
 	 * default cache manager.
+	 *
 	 * @see #setCacheManager
 	 * @see SimpleCacheResolver
 	 */
@@ -187,6 +208,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	/**
 	 * Set the {@link CacheManager} to use to create a default {@link CacheResolver}.
 	 * Replace the current {@link CacheResolver}, if any.
+	 *
 	 * @see #setCacheResolver
 	 * @see SimpleCacheResolver
 	 */
@@ -197,6 +219,9 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	/**
 	 * Set the containing {@link BeanFactory} for {@link CacheManager} and other
 	 * service lookups.
+	 * <p>
+	 * BeanFactory 的感知回调
+	 *
 	 * @since 4.3
 	 */
 	@Override
@@ -207,10 +232,14 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 
 	@Override
 	public void afterPropertiesSet() {
+		// 必须设置缓存操作源
 		Assert.state(getCacheOperationSource() != null, "The 'cacheOperationSources' property is required: " +
 				"If there are no cacheable methods, then don't use a cache aspect.");
 	}
 
+	/**
+	 * 在所有单例都创建完毕
+	 */
 	@Override
 	public void afterSingletonsInstantiated() {
 		if (getCacheResolver() == null) {
@@ -218,16 +247,16 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 			Assert.state(this.beanFactory != null, "CacheResolver or BeanFactory must be set on cache aspect");
 			try {
 				setCacheManager(this.beanFactory.getBean(CacheManager.class));
-			}
-			catch (NoUniqueBeanDefinitionException ex) {
+			} catch (NoUniqueBeanDefinitionException ex) {
 				throw new IllegalStateException("No CacheResolver specified, and no unique bean of type " +
 						"CacheManager found. Mark one as primary or declare a specific CacheManager to use.", ex);
-			}
-			catch (NoSuchBeanDefinitionException ex) {
+			} catch (NoSuchBeanDefinitionException ex) {
 				throw new IllegalStateException("No CacheResolver specified, and no bean of type CacheManager found. " +
 						"Register a CacheManager bean or remove the @EnableCaching annotation from your configuration.", ex);
 			}
 		}
+
+		// 所有单例创建完毕，置换 initialized
 		this.initialized = true;
 	}
 
@@ -236,7 +265,8 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	 * Convenience method to return a String representation of this Method
 	 * for use in logging. Can be overridden in subclasses to provide a
 	 * different identifier for the given method.
-	 * @param method the method we're interested in
+	 *
+	 * @param method      the method we're interested in
 	 * @param targetClass class the method is on
 	 * @return log message identifying this method
 	 * @see org.springframework.util.ClassUtils#getQualifiedMethodName
@@ -258,10 +288,20 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 		return caches;
 	}
 
+
+	/**
+	 * 构造一个操作上下文
+	 */
 	protected CacheOperationContext getOperationContext(
 			CacheOperation operation, Method method, Object[] args, Object target, Class<?> targetClass) {
 
+		// 一个什么缓存操作元数据，为什么叫元数据呢，因为这部分是固定的，静态的
 		CacheOperationMetadata metadata = getCacheOperationMetadata(operation, method, targetClass);
+
+		// 创建一个操作上下文，元数据 + args + taget
+		// 为什么 target 和 args 都算动态？
+		// - 因为可能你在抽象类或者接口定义了 @Cache，但是实现类可以是不同的，因此 target 动态
+		// - args 方法传参是动态就不用说了
 		return new CacheOperationContext(metadata, args, target);
 	}
 
@@ -269,8 +309,9 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	 * Return the {@link CacheOperationMetadata} for the specified operation.
 	 * <p>Resolve the {@link CacheResolver} and the {@link KeyGenerator} to be
 	 * used for the operation.
-	 * @param operation the operation
-	 * @param method the method on which the operation is invoked
+	 *
+	 * @param operation   the operation
+	 * @param method      the method on which the operation is invoked
 	 * @param targetClass the target type
 	 * @return the resolved metadata for the operation
 	 */
@@ -283,19 +324,16 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 			KeyGenerator operationKeyGenerator;
 			if (StringUtils.hasText(operation.getKeyGenerator())) {
 				operationKeyGenerator = getBean(operation.getKeyGenerator(), KeyGenerator.class);
-			}
-			else {
+			} else {
 				operationKeyGenerator = getKeyGenerator();
 			}
 			CacheResolver operationCacheResolver;
 			if (StringUtils.hasText(operation.getCacheResolver())) {
 				operationCacheResolver = getBean(operation.getCacheResolver(), CacheResolver.class);
-			}
-			else if (StringUtils.hasText(operation.getCacheManager())) {
+			} else if (StringUtils.hasText(operation.getCacheManager())) {
 				CacheManager cacheManager = getBean(operation.getCacheManager(), CacheManager.class);
 				operationCacheResolver = new SimpleCacheResolver(cacheManager);
-			}
-			else {
+			} else {
 				operationCacheResolver = getCacheResolver();
 				Assert.state(operationCacheResolver != null, "No CacheResolver/CacheManager set");
 			}
@@ -309,7 +347,8 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	/**
 	 * Retrieve a bean with the specified name and type.
 	 * Used to resolve services that are referenced by name in a {@link CacheOperation}.
-	 * @param name the name of the bean, as defined by the cache operation
+	 *
+	 * @param name        the name of the bean, as defined by the cache operation
 	 * @param serviceType the type expected by the operation's service reference
 	 * @return the bean matching the expected type, qualified by the given name
 	 * @throws org.springframework.beans.factory.NoSuchBeanDefinitionException if such bean does not exist
@@ -336,12 +375,22 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	@Nullable
 	protected Object execute(CacheOperationInvoker invoker, Object target, Method method, Object[] args) {
 		// Check whether aspect is enabled (to cope with cases where the AJ is pulled in automatically)
+
+		// 如果初始化完毕，则有机会进入缓存的逻辑
 		if (this.initialized) {
+			// 获得 targetClass
 			Class<?> targetClass = getTargetClass(target);
+			// 获得能够获取缓存操作的源，一般就是基于注解的
 			CacheOperationSource cacheOperationSource = getCacheOperationSource();
+
+			// 一般不可能是 null，因为 afterPropertiesSet 都校验了非 null
 			if (cacheOperationSource != null) {
+
+				// 从这个类和方法获取一系列缓存操作
 				Collection<CacheOperation> operations = cacheOperationSource.getCacheOperations(method, targetClass);
 				if (!CollectionUtils.isEmpty(operations)) {
+
+					// 构建一个一系列上下文，然后执行方法
 					return execute(invoker, method,
 							new CacheOperationContexts(operations, method, args, target, targetClass));
 				}
@@ -357,6 +406,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	 * {@link CacheOperationInvoker.ThrowableWrapper}: the exception can be handled
 	 * or modified but it <em>must</em> be wrapped in a
 	 * {@link CacheOperationInvoker.ThrowableWrapper} as well.
+	 *
 	 * @param invoker the invoker handling the operation being cached
 	 * @return the result of the invocation
 	 * @see CacheOperationInvoker#invoke()
@@ -380,14 +430,12 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 				Cache cache = context.getCaches().iterator().next();
 				try {
 					return wrapCacheValue(method, handleSynchronizedGet(invoker, key, cache));
-				}
-				catch (Cache.ValueRetrievalException ex) {
+				} catch (Cache.ValueRetrievalException ex) {
 					// Directly propagate ThrowableWrapper from the invoker,
 					// or potentially also an IllegalArgumentException etc.
 					ReflectionUtils.rethrowRuntimeException(ex.getCause());
 				}
-			}
-			else {
+			} else {
 				// No caching required, just call the underlying method
 				return invokeOperation(invoker);
 			}
@@ -414,8 +462,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 			// If there are no put requests, just use the cache hit
 			cacheValue = cacheHit.get();
 			returnValue = wrapCacheValue(method, cacheValue);
-		}
-		else {
+		} else {
 			// Invoke the method if we don't have a cache hit
 			returnValue = invokeOperation(invoker);
 			cacheValue = unwrapReturnValue(returnValue);
@@ -474,8 +521,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 				if (!context.isConditionPassing(CacheOperationExpressionEvaluator.RESULT_UNAVAILABLE)) {
 					excluded.add(context);
 				}
-			}
-			catch (VariableNotAvailableException ex) {
+			} catch (VariableNotAvailableException ex) {
 				// Ignoring failure due to missing result, consider the cache put has to proceed
 			}
 		}
@@ -502,8 +548,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 			if (operation.isCacheWide()) {
 				logInvalidating(context, operation, null);
 				doClear(cache, operation.isBeforeInvocation());
-			}
-			else {
+			} else {
 				if (key == null) {
 					key = generateKey(context, result);
 				}
@@ -522,6 +567,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 
 	/**
 	 * Find a cached value only for {@link CacheableOperation} that passes the condition.
+	 *
 	 * @param contexts the cacheable operations
 	 * @return a {@link Cache.ValueWrapper} holding the cached value,
 	 * or {@code null} if none is found
@@ -535,8 +581,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 				Cache.ValueWrapper cached = findInCaches(context, key);
 				if (cached != null) {
 					return cached;
-				}
-				else {
+				} else {
 					if (logger.isTraceEnabled()) {
 						logger.trace("No cache entry for key '" + key + "' in cache(s) " + context.getCacheNames());
 					}
@@ -549,12 +594,13 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 	/**
 	 * Collect a {@link CachePutRequest} for every {@link CacheOperation}
 	 * using the specified result value.
-	 * @param contexts the contexts to handle
-	 * @param result the result value
+	 *
+	 * @param contexts    the contexts to handle
+	 * @param result      the result value
 	 * @param putRequests the collection to update
 	 */
 	private void collectPutRequests(Collection<CacheOperationContext> contexts,
-			@Nullable Object result, Collection<CachePutRequest> putRequests) {
+									@Nullable Object result, Collection<CachePutRequest> putRequests) {
 
 		for (CacheOperationContext context : contexts) {
 			if (isConditionPassing(context, result)) {
@@ -602,15 +648,24 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 
 	private class CacheOperationContexts {
 
+		/**
+		 * 这是一个一对多的 Map。key 是 缓存操作，map 是缓存操作的上下文
+		 */
 		private final MultiValueMap<Class<? extends CacheOperation>, CacheOperationContext> contexts;
 
 		private final boolean sync;
 
 		public CacheOperationContexts(Collection<? extends CacheOperation> operations, Method method,
-				Object[] args, Object target, Class<?> targetClass) {
+									  Object[] args, Object target, Class<?> targetClass) {
 
+			// 传入了多少个缓存操作就创建多少个
+			// 反正这里是尽量往大的创建，一般不会定义相同的两个注解？两个 @Cacheable 有病？
 			this.contexts = new LinkedMultiValueMap<>(operations.size());
+
+			// 遍历所有的操作
 			for (CacheOperation op : operations) {
+				// key: op.getClass 这种操作的类型
+				// value: 一种上下文对象
 				this.contexts.add(op.getClass(), getOperationContext(op, method, args, target, targetClass));
 			}
 			this.sync = determineSyncFlag(method);
@@ -685,7 +740,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 		private final CacheResolver cacheResolver;
 
 		public CacheOperationMetadata(CacheOperation operation, Method method, Class<?> targetClass,
-				KeyGenerator keyGenerator, CacheResolver cacheResolver) {
+									  KeyGenerator keyGenerator, CacheResolver cacheResolver) {
 
 			this.operation = operation;
 			this.method = BridgeMethodResolver.findBridgedMethod(method);
@@ -762,8 +817,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 					EvaluationContext evaluationContext = createEvaluationContext(result);
 					this.conditionPassing = evaluator.condition(this.metadata.operation.getCondition(),
 							this.metadata.methodKey, evaluationContext);
-				}
-				else {
+				} else {
 					this.conditionPassing = true;
 				}
 			}
@@ -774,8 +828,7 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 			String unless = "";
 			if (this.metadata.operation instanceof CacheableOperation) {
 				unless = ((CacheableOperation) this.metadata.operation).getUnless();
-			}
-			else if (this.metadata.operation instanceof CachePutOperation) {
+			} else if (this.metadata.operation instanceof CachePutOperation) {
 				unless = ((CachePutOperation) this.metadata.operation).getUnless();
 			}
 			if (StringUtils.hasText(unless)) {

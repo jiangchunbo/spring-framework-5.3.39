@@ -32,6 +32,9 @@ public interface KeyGenerator {
 
 	/**
 	 * Generate a key for the given method and its parameters.
+	 * <p>
+	 * 给定一个 target 对象，以及一个方法，和参数构造一个 key
+	 *
 	 * @param target the target instance
 	 * @param method the method being called
 	 * @param params the method parameters (with any var-args expanded)
