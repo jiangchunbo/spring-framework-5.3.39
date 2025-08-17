@@ -1312,6 +1312,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * AutowireCapableBeanFactory 的接口能力
 	 *
+	 * @param requestingBeanName 正在请求的 bean 的 name
+	 *                           如果正在创建一个 @Bean 实例，那么 requestingBeanName 就是方法名
 	 * @return 返回值可能还是一个 Collection Map 等
 	 */
 	@Override
@@ -1391,14 +1393,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 
-			// 解析类型是 集合、数组、Map 那些
+			// 解析类型是 集合、数组、Map -> 里面会快速判断依赖的类型
 			Object multipleBeans = resolveMultipleBeans(descriptor, beanName, autowiredBeanNames, typeConverter);
-
-			// 如果类型不匹配，就不会那么快返回
 			if (multipleBeans != null) {
 				return multipleBeans;
 			}
 
+			// 寻找类型匹配的 bean。其实这个方法上面 resolveMultipleBeans 里面也会调用 findAutowireCandidates
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
 			if (matchingBeans.isEmpty()) {
 				if (isRequired(descriptor)) {
@@ -1610,8 +1611,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 				this, requiredType, true, descriptor.isEager());
 
-		//
+		// 创建一个 Map，存放找到的 candidate
+		// 名字叫 result，一般就是用作返回值
 		Map<String, Object> result = CollectionUtils.newLinkedHashMap(candidateNames.length);
+
+		// resolvableDependencies: 通过类型直接找到对应的 bean
+		// 1. 查找 resolvableDependencies 是否有匹配的
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
 			Class<?> autowiringType = classObjectEntry.getKey();
 			if (autowiringType.isAssignableFrom(requiredType)) {
@@ -1623,12 +1628,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 		}
+
+
 		for (String candidate : candidateNames) {
 			// 如果不是自我引用，什么意思，比如我自己就是个 RouteDefinitionLocator 接口，然后我想注入 List<RouteDefinitionLocator> 那么 List 中不会包含我
 			if (!isSelfReference(beanName, candidate) && isAutowireCandidate(candidate, descriptor)) {
 				addCandidateEntry(result, candidate, descriptor, requiredType);
 			}
 		}
+
+
 		if (result.isEmpty()) {
 			boolean multiple = indicatesMultipleBeans(requiredType);
 			// Consider fallback matches if the first pass failed to find anything...
@@ -1835,8 +1844,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * Determine whether the given beanName/candidateName pair indicates a self reference,
 	 * i.e. whether the candidate points back to the original bean or to a factory method
 	 * on the original bean.
+	 * <p>
+	 * 判定是否给定的 beanName/candidateName 这一对是一个自引用，
+	 * 例如，是否 candidate 指回到最初的 bean，或者指回到一个最初 bean 的一个工厂方法
+	 *
+	 * @param beanName requesting -> 表示正在寻找依赖的 bean 名字
+	 * @param candidateName 正在寻找的依赖项的 beanName
 	 */
 	private boolean isSelfReference(@Nullable String beanName, @Nullable String candidateName) {
+		// 情况一 我正在找我自己
+		// 情况二 我自己是工厂，我正在寻找我自己内部定义的 bean。例如，@Configuration 使用 @Autowired 注入的 bean 是自己的 @Bean
 		return (beanName != null && candidateName != null &&
 				(beanName.equals(candidateName) || (containsBeanDefinition(candidateName) &&
 						beanName.equals(getMergedLocalBeanDefinition(candidateName).getFactoryBeanName()))));
