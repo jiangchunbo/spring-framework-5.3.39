@@ -57,8 +57,8 @@ import org.springframework.web.util.pattern.PathPattern;
  * period for served resources.
  *
  * @author Rossen Stoyanchev
- * @since 3.1
  * @see DefaultServletHandlerConfigurer
+ * @since 3.1
  */
 public class ResourceHandlerRegistry {
 
@@ -76,11 +76,11 @@ public class ResourceHandlerRegistry {
 
 	private int order = Ordered.LOWEST_PRECEDENCE - 1;
 
-
 	/**
 	 * Create a new resource handler registry for the given application context.
+	 *
 	 * @param applicationContext the Spring application context
-	 * @param servletContext the corresponding Servlet context
+	 * @param servletContext     the corresponding Servlet context
 	 */
 	public ResourceHandlerRegistry(ApplicationContext applicationContext, ServletContext servletContext) {
 		this(applicationContext, servletContext, null);
@@ -88,13 +88,14 @@ public class ResourceHandlerRegistry {
 
 	/**
 	 * Create a new resource handler registry for the given application context.
-	 * @param applicationContext the Spring application context
-	 * @param servletContext the corresponding Servlet context
+	 *
+	 * @param applicationContext        the Spring application context
+	 * @param servletContext            the corresponding Servlet context
 	 * @param contentNegotiationManager the content negotiation manager to use
 	 * @since 4.3
 	 */
 	public ResourceHandlerRegistry(ApplicationContext applicationContext, ServletContext servletContext,
-			@Nullable ContentNegotiationManager contentNegotiationManager) {
+								   @Nullable ContentNegotiationManager contentNegotiationManager) {
 
 		this(applicationContext, servletContext, contentNegotiationManager, null);
 	}
@@ -103,10 +104,11 @@ public class ResourceHandlerRegistry {
 	 * A variant of
 	 * {@link #ResourceHandlerRegistry(ApplicationContext, ServletContext, ContentNegotiationManager)}
 	 * that also accepts the {@link UrlPathHelper} used for mapping requests to static resources.
+	 *
 	 * @since 4.3.13
 	 */
 	public ResourceHandlerRegistry(ApplicationContext applicationContext, ServletContext servletContext,
-			@Nullable ContentNegotiationManager contentNegotiationManager, @Nullable UrlPathHelper pathHelper) {
+								   @Nullable ContentNegotiationManager contentNegotiationManager, @Nullable UrlPathHelper pathHelper) {
 
 		Assert.notNull(applicationContext, "ApplicationContext is required");
 		this.applicationContext = applicationContext;
@@ -114,7 +116,6 @@ public class ResourceHandlerRegistry {
 		this.contentNegotiationManager = contentNegotiationManager;
 		this.pathHelper = pathHelper;
 	}
-
 
 	/**
 	 * Add a resource handler to serve static resources. The handler is invoked
@@ -125,8 +126,12 @@ public class ResourceHandlerRegistry {
 	 * are {@link PathMatchConfigurer#setPatternParser enabled} or
 	 * {@link AntPathMatcher} otherwise. The syntax is largely the same with
 	 * {@link PathPattern} more tailored for web usage and more efficient.
+	 * <p>
+	 * 添加一个资源处理器，用于对外提供静态资源服务
 	 */
 	public ResourceHandlerRegistration addResourceHandler(String... pathPatterns) {
+		// 将多个 path pattern 封装为一个 ResourceHandlerRegistration
+		// ResourceHandlerRegistration 资源处理器的注册信息
 		ResourceHandlerRegistration registration = new ResourceHandlerRegistration(pathPatterns);
 		this.registrations.add(registration);
 		return registration;
@@ -160,12 +165,19 @@ public class ResourceHandlerRegistry {
 	 */
 	@Nullable
 	protected AbstractHandlerMapping getHandlerMapping() {
+		// 若没有注册资源，那么返回 null
 		if (this.registrations.isEmpty()) {
 			return null;
 		}
+
+		// Url:String ->  HttpRequestHandler
+		// 其实，全都是 ResourceHandlerRegistration 这个类型
 		Map<String, HttpRequestHandler> urlMap = new LinkedHashMap<>();
 		for (ResourceHandlerRegistration registration : this.registrations) {
+			// 创建一个新的 ResourceHttpRequestHandler
 			ResourceHttpRequestHandler handler = getRequestHandler(registration);
+
+			// 添加到映射中
 			for (String pathPattern : registration.getPathPatterns()) {
 				urlMap.put(pathPattern, handler);
 			}
@@ -186,8 +198,7 @@ public class ResourceHandlerRegistry {
 		handler.setApplicationContext(this.applicationContext);
 		try {
 			handler.afterPropertiesSet();
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			throw new BeanInitializationException("Failed to init ResourceHttpRequestHandler", ex);
 		}
 		return handler;

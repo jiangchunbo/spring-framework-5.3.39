@@ -229,7 +229,6 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 		kotlinSerializationJsonPresent = ClassUtils.isPresent("kotlinx.serialization.json.Json", classLoader);
 	}
 
-
 	@Nullable
 	private ApplicationContext applicationContext;
 
@@ -259,7 +258,6 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 
 	@Nullable
 	private AsyncSupportConfigurer asyncSupportConfigurer;
-
 
 	/**
 	 * Set the Spring {@link ApplicationContext}, e.g. for resource loading.
@@ -297,7 +295,6 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	public final ServletContext getServletContext() {
 		return this.servletContext;
 	}
-
 
 	/**
 	 * Return a {@link RequestMappingHandlerMapping} ordered at 0 for mapping
@@ -610,6 +607,8 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	 * Return a handler mapping ordered at Integer.MAX_VALUE-1 with mapped
 	 * resource handlers. To configure resource handling, override
 	 * {@link #addResourceHandlers}.
+	 *
+	 * 这是 Spring 向容器中注册的一个 Bean，用于映射 request -> resource
 	 */
 	@Bean
 	@Nullable
@@ -1247,7 +1246,6 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 		return new DefaultRequestToViewNameTranslator();
 	}
 
-
 	private static final class NoOpValidator implements Validator {
 
 		@Override
@@ -1258,6 +1256,7 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 		@Override
 		public void validate(@Nullable Object target, Errors errors) {
 		}
+
 	}
 
 }
