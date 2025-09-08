@@ -38,6 +38,11 @@ import org.springframework.web.servlet.ModelAndView;
  */
 public class SimpleControllerHandlerAdapter implements HandlerAdapter {
 
+	// >>>>>>>>>>>>>>>>>>>>>>>
+	// 用于支持实现了 Controller 接口的处理器
+	// 其实跟 HttpRequestHandler 这种接口差不多
+	// 但是，这个方法有返回值 ModelAndView
+
 	@Override
 	public boolean supports(Object handler) {
 		return (handler instanceof Controller);
@@ -47,7 +52,7 @@ public class SimpleControllerHandlerAdapter implements HandlerAdapter {
 	@Nullable
 	public ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+		// 调用 request 并返回一个视图
 		return ((Controller) handler).handleRequest(request, response);
 	}
 

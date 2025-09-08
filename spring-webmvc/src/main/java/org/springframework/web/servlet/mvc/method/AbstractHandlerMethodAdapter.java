@@ -37,16 +37,15 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 
 	private int order = Ordered.LOWEST_PRECEDENCE;
 
-
 	public AbstractHandlerMethodAdapter() {
 		// no restriction of HTTP methods by default
 		super(false);
 	}
 
-
 	/**
 	 * Specify the order value for this HandlerAdapter bean.
 	 * <p>The default value is {@code Ordered.LOWEST_PRECEDENCE}, meaning non-ordered.
+	 *
 	 * @see org.springframework.core.Ordered#getOrder()
 	 */
 	public void setOrder(int order) {
@@ -58,9 +57,11 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 		return this.order;
 	}
 
-
 	/**
 	 * This implementation expects the handler to be an {@link HandlerMethod}.
+	 * <p>
+	 * 这里的实现期望 handler 至少是一个 HandlerMethod，其他条件还要看 supportsInternal
+	 *
 	 * @param handler the handler instance to check
 	 * @return whether this adapter can adapt the given handler
 	 */
@@ -71,6 +72,7 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 
 	/**
 	 * Given a handler method, return whether this adapter can support it.
+	 *
 	 * @param handlerMethod the handler method to check
 	 * @return whether this adapter can adapt the given method
 	 */
@@ -89,17 +91,18 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 
 	/**
 	 * Use the given handler method to handle the request.
-	 * @param request current HTTP request
-	 * @param response current HTTP response
+	 *
+	 * @param request       current HTTP request
+	 * @param response      current HTTP response
 	 * @param handlerMethod handler method to use. This object must have previously been passed to the
-	 * {@link #supportsInternal(HandlerMethod)} this interface, which must have returned {@code true}.
+	 *                      {@link #supportsInternal(HandlerMethod)} this interface, which must have returned {@code true}.
 	 * @return a ModelAndView object with the name of the view and the required model data,
 	 * or {@code null} if the request has been handled directly
 	 * @throws Exception in case of errors
 	 */
 	@Nullable
 	protected abstract ModelAndView handleInternal(HttpServletRequest request,
-			HttpServletResponse response, HandlerMethod handlerMethod) throws Exception;
+												   HttpServletResponse response, HandlerMethod handlerMethod) throws Exception;
 
 	/**
 	 * This implementation expects the handler to be an {@link HandlerMethod}.
@@ -112,7 +115,8 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 
 	/**
 	 * Same contract as for {@link javax.servlet.http.HttpServlet#getLastModified(HttpServletRequest)}.
-	 * @param request current HTTP request
+	 *
+	 * @param request       current HTTP request
 	 * @param handlerMethod handler method to use
 	 * @return the lastModified value for the given handler
 	 * @deprecated as of 5.3.9 along with

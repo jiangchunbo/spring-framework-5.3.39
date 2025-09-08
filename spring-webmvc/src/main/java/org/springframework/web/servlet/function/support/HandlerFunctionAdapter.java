@@ -93,6 +93,7 @@ public class HandlerFunctionAdapter implements HandlerAdapter, Ordered {
 			HttpServletResponse servletResponse,
 			Object handler) throws Exception {
 
+		// 支持异步
 		WebAsyncManager asyncManager = getWebAsyncManager(servletRequest, servletResponse);
 		servletResponse = getWrappedResponse(asyncManager);
 
@@ -104,6 +105,8 @@ public class HandlerFunctionAdapter implements HandlerAdapter, Ordered {
 		}
 		else {
 			HandlerFunction<?> handlerFunction = (HandlerFunction<?>) handler;
+
+			// 处理完毕返回一个
 			serverResponse = handlerFunction.handle(serverRequest);
 		}
 

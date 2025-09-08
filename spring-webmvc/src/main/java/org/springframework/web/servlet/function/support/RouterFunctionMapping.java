@@ -155,6 +155,8 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 	 * application context.
 	 */
 	private void initRouterFunctions() {
+
+		// 从 ApplicationContext 中寻找 RouterFunction 这种类型的 bean
 		List<RouterFunction<?>> routerFunctions = obtainApplicationContext()
 				.getBeanProvider(RouterFunction.class)
 				.orderedStream()
@@ -162,7 +164,7 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 				.collect(Collectors.toList());
 
 		// 如果不需要父容器的，那么就 remove
-		// 所以上一个步骤太强了，把父子容器的 RouterFunction 都拿过来了
+		// >>> 上一个步骤太强了，把父子容器的 RouterFunction 都拿过来了
 		ApplicationContext parentContext = obtainApplicationContext().getParent();
 		if (parentContext != null && !this.detectHandlerFunctionsInAncestorContexts) {
 			parentContext.getBeanProvider(RouterFunction.class).stream().forEach(routerFunctions::remove);
@@ -219,8 +221,12 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 	@Nullable
 	protected Object getHandlerInternal(HttpServletRequest servletRequest) throws Exception {
 		if (this.routerFunction != null) {
+			// 将 ServletRequest 转化为 Spring 自己定义的一个 ServerRequest
+
 			ServerRequest request = ServerRequest.create(servletRequest, this.messageConverters);
 			HandlerFunction<?> handlerFunction = this.routerFunction.route(request).orElse(null);
+
+			// 设置属性，其中就包括这个 ServletRequest
 			setAttributes(servletRequest, request, handlerFunction);
 			return handlerFunction;
 		}
@@ -239,6 +245,8 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 			servletRequest.setAttribute(BEST_MATCHING_PATTERN_ATTRIBUTE, matchingPattern.getPatternString());
 		}
 		servletRequest.setAttribute(BEST_MATCHING_HANDLER_ATTRIBUTE, handlerFunction);
+
+		// 将 Spring 自己的请求对象设置到 ServletRequest 属性中
 		servletRequest.setAttribute(RouterFunctions.REQUEST_ATTRIBUTE, request);
 	}
 

@@ -63,7 +63,6 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	private Class<? extends Annotation> valueAnnotationType = Value.class;
 
-
 	/**
 	 * Create a new QualifierAnnotationAutowireCandidateResolver
 	 * for Spring's standard {@link Qualifier} annotation.
@@ -102,7 +101,6 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 		this.qualifierTypes.addAll(qualifierTypes);
 	}
 
-
 	/**
 	 * Register the given type to be used as a qualifier when autowiring.
 	 * <p>This identifies qualifier annotations for direct use (on fields,
@@ -130,7 +128,6 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	public void setValueAnnotationType(Class<? extends Annotation> valueAnnotationType) {
 		this.valueAnnotationType = valueAnnotationType;
 	}
-
 
 	/**
 	 * Determine whether the provided bean definition is an autowire candidate.
@@ -312,7 +309,6 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 		return (resolvedFactoryMethod != null ? AnnotationUtils.getAnnotation(resolvedFactoryMethod, type) : null);
 	}
 
-
 	/**
 	 * Determine whether the given dependency declares an autowired annotation,
 	 * checking its required flag.
@@ -376,9 +372,12 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	@Nullable
 	protected Object findValue(Annotation[] annotationsToSearch) {
 		if (annotationsToSearch.length > 0) {   // qualifier annotations have to be local
+
+			// AnnotationAttributes --> 其实这就是一个 Map -> LinkedHashMap<String, Object>
 			AnnotationAttributes attr = AnnotatedElementUtils.getMergedAnnotationAttributes(
 					AnnotatedElementUtils.forAnnotations(annotationsToSearch), this.valueAnnotationType);
 			if (attr != null) {
+				// 从 Map 中获取 key="value" 的值
 				return extractValue(attr);
 			}
 		}
@@ -391,6 +390,7 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	 * @since 4.3
 	 */
 	protected Object extractValue(AnnotationAttributes attr) {
+		// 只关心 value，而且没有获取到，则抛出异常
 		Object value = attr.get(AnnotationUtils.VALUE);
 		if (value == null) {
 			throw new IllegalStateException("Value annotation must have a value attribute");

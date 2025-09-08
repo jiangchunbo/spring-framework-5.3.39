@@ -39,8 +39,12 @@ import org.springframework.web.servlet.ModelAndView;
  */
 public class HttpRequestHandlerAdapter implements HandlerAdapter {
 
+	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	// 这个类是用于支持特定接口的 HttpRequestHandler
+
 	@Override
 	public boolean supports(Object handler) {
+		// 如果 handler 是 HttpRequestHandler 实现类而已~~
 		return (handler instanceof HttpRequestHandler);
 	}
 
@@ -48,7 +52,8 @@ public class HttpRequestHandlerAdapter implements HandlerAdapter {
 	@Nullable
 	public ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+		// 调用接口的 [唯一方法] 而已
+		// 而且，没有返回值，因为期望这个接口完全处理 response 的写入
 		((HttpRequestHandler) handler).handleRequest(request, response);
 		return null;
 	}

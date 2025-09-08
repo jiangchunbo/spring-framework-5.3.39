@@ -33,6 +33,9 @@ import org.springframework.web.context.request.WebRequest;
  */
 public class DefaultSessionAttributeStore implements SessionAttributeStore {
 
+	// >>>>>>>>>>>>>>>>
+	// 这个类就是负责存储属性
+
 	private String attributeNamePrefix = "";
 
 
@@ -51,7 +54,12 @@ public class DefaultSessionAttributeStore implements SessionAttributeStore {
 		Assert.notNull(request, "WebRequest must not be null");
 		Assert.notNull(attributeName, "Attribute name must not be null");
 		Assert.notNull(attributeValue, "Attribute value must not be null");
+
+		// 计算得到一个 attributeName
 		String storeAttributeName = getAttributeNameInSession(request, attributeName);
+
+		// 请注意第 3 个参数
+		// 将属性存入 session
 		request.setAttribute(storeAttributeName, attributeValue, WebRequest.SCOPE_SESSION);
 	}
 

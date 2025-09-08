@@ -245,6 +245,9 @@ public class ContextLoader {
 	 * @see #CONFIG_LOCATION_PARAM
 	 */
 	public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
+		// 如果这个属性不为 null，就需要立即报错
+		// --> 这个方法会填充这个属性，但是这个方法不可以调用多次
+		// 也就是，开发者不可以自己调用这个方法，只能由 Servlet 调用
 		if (servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE) != null) {
 			throw new IllegalStateException(
 					"Cannot initialize context because there is already a root application context present - " +

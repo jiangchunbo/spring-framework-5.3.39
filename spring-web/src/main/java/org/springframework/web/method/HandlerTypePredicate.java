@@ -156,10 +156,19 @@ public final class HandlerTypePredicate implements Predicate<Class<?>> {
 	 */
 	public static class Builder {
 
+		/**
+		 * 收集支持的 basePackage
+		 */
 		private final Set<String> basePackages = new LinkedHashSet<>();
 
+		/**
+		 * 收集支持的 “基类”
+		 */
 		private final List<Class<?>> assignableTypes = new ArrayList<>();
 
+		/**
+		 * 收集支持的注解
+		 */
 		private final List<Class<? extends Annotation>> annotations = new ArrayList<>();
 
 		/**
