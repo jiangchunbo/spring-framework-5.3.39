@@ -79,14 +79,12 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		ALLOW_CORS_CONFIG.setAllowCredentials(true);
 	}
 
-
 	private boolean detectHandlerMethodsInAncestorContexts = false;
 
 	@Nullable
 	private HandlerMethodMappingNamingStrategy<T> namingStrategy;
 
 	private final MappingRegistry mappingRegistry = new MappingRegistry();
-
 
 	@Override
 	public void setPatternParser(@Nullable PathPatternParser patternParser) {
@@ -191,7 +189,6 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		this.mappingRegistry.unregister(mapping);
 	}
 
-
 	// Handler method detection
 
 	/**
@@ -201,6 +198,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	@Override
 	public void afterPropertiesSet() {
+		// 寻找 HandlerMethod
 		initHandlerMethods();
 	}
 
@@ -218,9 +216,14 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			// 也就是隐藏在背后的 bean 是以 scopedTarget. 开头的
 			// 似乎跟 AOP 不同，AOP 直接都不会注册 target 对象
 			if (!beanName.startsWith(SCOPED_TARGET_NAME_PREFIX)) {
+
+				// 处理这个 beanName
 				processCandidateBean(beanName);
 			}
 		}
+
+		// handler method 初始化完毕之后
+		// >>> 其实没做什么事情
 		handlerMethodsInitialized(getHandlerMethods());
 	}
 
@@ -263,10 +266,9 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		}
 
 		// 如果有 @Controller 或者 @RequestMapping，那么就认为是 handler
-		// 意思就是说可以直接用单个注解 @Controller
-		// 也可以使用 @Component + @RequestMapping 的组合方式
-		// 如果你单单只有一个 @RequestMapping，是无法有用的，因为这根本不是一个 bean
 		if (beanType != null && isHandler(beanType)) {
+
+			// 只有当你 bean 有资格成为一个 handler，才进一步去侦测这些方法
 			detectHandlerMethods(beanName);
 		}
 	}
@@ -287,10 +289,13 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 
 		if (handlerType != null) {
 			Class<?> userType = ClassUtils.getUserClass(handlerType);
+
+			// 扫描所有方法
 			Map<Method, T> methods = MethodIntrospector.selectMethods(userType,
 					(MethodIntrospector.MetadataLookup<T>) method -> {
 						try {
-							// 处理每一个方法，最终会汇总成为 Map
+							// 每个方法扫描时都会调用以下方法
+							// <<<< 之所以这么写，是因为为了 catch 异常，否则一行就写完了
 							return getMappingForMethod(method, userType);
 						} catch (Throwable ex) {
 							throw new IllegalStateException("Invalid mapping on handler class [" +
@@ -307,8 +312,9 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 
 			// 上面 select 出来的一些方法
 			methods.forEach((method, mapping) -> {
-				// 搜索一下方法，可能得到了一个接口声明的 method
+				// method 可能是接口方法，需要转换为实际的方法
 				Method invocableMethod = AopUtils.selectInvocableMethod(method, userType);
+
 				// 注册 handlerMethod
 				registerHandlerMethod(handler, invocableMethod, mapping);
 			});
@@ -386,7 +392,6 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		}
 	}
 
-
 	// Handler method lookup
 
 	/**
@@ -426,8 +431,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
 		List<Match> matches = new ArrayList<>();
 
-		// 通过直接匹配，直接匹配也有可能拿到多个 T，因为仅仅是一个 path 还是太粗糙了
-		// 拿到多个 RequestMappingInfo
+		// 1. 通过直接匹配，也就是 URL 是明确的那些 Mapping，得到若干个 匹配项
 		List<T> directPathMatches = this.mappingRegistry.getMappingsByDirectPath(lookupPath);
 		if (directPathMatches != null) {
 			addMatchingMappings(directPathMatches, matches, request);
@@ -437,7 +441,6 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		if (matches.isEmpty()) {
 			addMatchingMappings(this.mappingRegistry.getRegistrations().keySet(), matches, request);
 		}
-
 
 		if (!matches.isEmpty()) {
 			Match bestMatch = matches.get(0);
@@ -539,11 +542,14 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		return corsConfig;
 	}
 
-
 	// Abstract template methods
 
 	/**
 	 * Whether the given type is a handler with handler methods.
+	 * <p>
+	 * 是否给定的类型是带有 handler method 的 handler
+	 * <p>
+	 * 不是说带有注解的 method 所在的类就是 handler，而是 handler 本身也有一些要求
 	 *
 	 * @param beanType the type of the bean being checked
 	 * @return "true" if this a handler type, "false" otherwise.
@@ -608,7 +614,6 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 * @return the comparator (never {@code null})
 	 */
 	protected abstract Comparator<T> getMappingComparator(HttpServletRequest request);
-
 
 	/**
 	 * A registry that maintains all mappings to handler methods, exposing methods
@@ -687,7 +692,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				// 创建一个 HandlerMethod
 				HandlerMethod handlerMethod = createHandlerMethod(handler, method);
 
-				// 验证
+				// 验证是否已经注册过
 				validateMethodMapping(handlerMethod, mapping);
 
 				// 获得直接路径，直接添加到 pathLookup
@@ -728,7 +733,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			// 从注册信息获取 HandlerMethod
 			HandlerMethod existingHandlerMethod = (registration != null ? registration.getHandlerMethod() : null);
 
-			// 只有 bean 和 Method 相同才认为是同一个 HandlerMethod
+			// 当你定义了两个相同的 Handler Method，
 			if (existingHandlerMethod != null && !existingHandlerMethod.equals(handlerMethod)) {
 				throw new IllegalStateException(
 						"Ambiguous mapping. Cannot map '" + handlerMethod.getBean() + "' method \n" +
@@ -806,8 +811,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			}
 			this.nameLookup.put(name, newList);
 		}
-	}
 
+	}
 
 	static class MappingRegistration<T> {
 
@@ -854,8 +859,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		public boolean hasCorsConfig() {
 			return this.corsConfig;
 		}
-	}
 
+	}
 
 	/**
 	 * A thin wrapper around a matched HandlerMethod and its mapping, for the purpose of
@@ -884,8 +889,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		public String toString() {
 			return this.mapping.toString();
 		}
-	}
 
+	}
 
 	private class MatchComparator implements Comparator<Match> {
 
@@ -899,8 +904,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		public int compare(Match match1, Match match2) {
 			return this.comparator.compare(match1.mapping, match2.mapping);
 		}
-	}
 
+	}
 
 	private static class EmptyHandler {
 
@@ -908,6 +913,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		public void handle() {
 			throw new UnsupportedOperationException("Not implemented");
 		}
+
 	}
 
 }

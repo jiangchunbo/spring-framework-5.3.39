@@ -28,12 +28,14 @@ import org.springframework.util.Assert;
 /**
  * Simple {@link Pointcut} that looks for a specific annotation being present on a
  * {@linkplain #forClassAnnotation class} or {@linkplain #forMethodAnnotation method}.
+ * <p>
+ * 这是一个简单的切点，用于寻找指定的注解，是否存在于类上，或者存在于方法上
  *
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 2.0
  * @see AnnotationClassFilter
  * @see AnnotationMethodMatcher
+ * @since 2.0
  */
 public class AnnotationMatchingPointcut implements Pointcut {
 
@@ -41,9 +43,11 @@ public class AnnotationMatchingPointcut implements Pointcut {
 
 	private final MethodMatcher methodMatcher;
 
-
 	/**
 	 * Create a new AnnotationMatchingPointcut for the given annotation type.
+	 * <p>
+	 * 既然是寻找注解，那么不管什么构造函数，注解类型一定要传入
+	 *
 	 * @param classAnnotationType the annotation type to look for at the class level
 	 */
 	public AnnotationMatchingPointcut(Class<? extends Annotation> classAnnotationType) {
@@ -52,62 +56,64 @@ public class AnnotationMatchingPointcut implements Pointcut {
 
 	/**
 	 * Create a new AnnotationMatchingPointcut for the given annotation type.
+	 *
 	 * @param classAnnotationType the annotation type to look for at the class level
-	 * @param checkInherited whether to also check the superclasses and interfaces
-	 * as well as meta-annotations for the annotation type
+	 * @param checkInherited      whether to also check the superclasses and interfaces
+	 *                            as well as meta-annotations for the annotation type
 	 * @see AnnotationClassFilter#AnnotationClassFilter(Class, boolean)
 	 */
 	public AnnotationMatchingPointcut(Class<? extends Annotation> classAnnotationType, boolean checkInherited) {
+		// 只是检查 class 级别是否有这个注解
 		this.classFilter = new AnnotationClassFilter(classAnnotationType, checkInherited);
 		this.methodMatcher = MethodMatcher.TRUE;
 	}
 
 	/**
 	 * Create a new AnnotationMatchingPointcut for the given annotation types.
-	 * @param classAnnotationType the annotation type to look for at the class level
-	 * (can be {@code null})
+	 *
+	 * @param classAnnotationType  the annotation type to look for at the class level
+	 *                             (can be {@code null})
 	 * @param methodAnnotationType the annotation type to look for at the method level
-	 * (can be {@code null})
+	 *                             (can be {@code null})
 	 */
 	public AnnotationMatchingPointcut(@Nullable Class<? extends Annotation> classAnnotationType,
-			@Nullable Class<? extends Annotation> methodAnnotationType) {
+									  @Nullable Class<? extends Annotation> methodAnnotationType) {
 
+		// 不仅检查 class 级别的注解，还检查 method 级别的注解
 		this(classAnnotationType, methodAnnotationType, false);
 	}
 
 	/**
 	 * Create a new AnnotationMatchingPointcut for the given annotation types.
-	 * @param classAnnotationType the annotation type to look for at the class level
-	 * (can be {@code null})
+	 *
+	 * @param classAnnotationType  the annotation type to look for at the class level
+	 *                             (can be {@code null})
 	 * @param methodAnnotationType the annotation type to look for at the method level
-	 * (can be {@code null})
-	 * @param checkInherited whether to also check the superclasses and interfaces
-	 * as well as meta-annotations for the annotation type
-	 * @since 5.0
+	 *                             (can be {@code null})
+	 * @param checkInherited       whether to also check the superclasses and interfaces
+	 *                             as well as meta-annotations for the annotation type
 	 * @see AnnotationClassFilter#AnnotationClassFilter(Class, boolean)
 	 * @see AnnotationMethodMatcher#AnnotationMethodMatcher(Class, boolean)
+	 * @since 5.0
 	 */
 	public AnnotationMatchingPointcut(@Nullable Class<? extends Annotation> classAnnotationType,
-			@Nullable Class<? extends Annotation> methodAnnotationType, boolean checkInherited) {
+									  @Nullable Class<? extends Annotation> methodAnnotationType, boolean checkInherited) {
 
 		Assert.isTrue((classAnnotationType != null || methodAnnotationType != null),
 				"Either Class annotation type or Method annotation type needs to be specified (or both)");
 
 		if (classAnnotationType != null) {
 			this.classFilter = new AnnotationClassFilter(classAnnotationType, checkInherited);
-		}
-		else {
+		} else {
 			this.classFilter = new AnnotationCandidateClassFilter(methodAnnotationType);
 		}
 
 		if (methodAnnotationType != null) {
 			this.methodMatcher = new AnnotationMethodMatcher(methodAnnotationType, checkInherited);
-		}
-		else {
+		} else {
 			this.methodMatcher = MethodMatcher.TRUE;
 		}
 	}
-
 
 	@Override
 	public ClassFilter getClassFilter() {
@@ -145,6 +151,7 @@ public class AnnotationMatchingPointcut implements Pointcut {
 	/**
 	 * Factory method for an AnnotationMatchingPointcut that matches
 	 * for the specified annotation at the class level.
+	 *
 	 * @param annotationType the annotation type to look for at the class level
 	 * @return the corresponding AnnotationMatchingPointcut
 	 */
@@ -156,6 +163,7 @@ public class AnnotationMatchingPointcut implements Pointcut {
 	/**
 	 * Factory method for an AnnotationMatchingPointcut that matches
 	 * for the specified annotation at the method level.
+	 *
 	 * @param annotationType the annotation type to look for at the method level
 	 * @return the corresponding AnnotationMatchingPointcut
 	 */
@@ -164,10 +172,14 @@ public class AnnotationMatchingPointcut implements Pointcut {
 		return new AnnotationMatchingPointcut(null, annotationType);
 	}
 
-
 	/**
 	 * {@link ClassFilter} that delegates to {@link AnnotationUtils#isCandidateClass}
 	 * for filtering classes whose methods are not worth searching to begin with.
+	 * <p>
+	 * 这个 ClassFilter 仅仅只是检查 class 是否有资格，或者有可能存在这个注解，并不会验证
+	 * <p>
+	 * 而且，如果 class 有可能存在这个注解，不一定在类上，可能在方法上
+	 *
 	 * @since 5.2
 	 */
 	private static class AnnotationCandidateClassFilter implements ClassFilter {

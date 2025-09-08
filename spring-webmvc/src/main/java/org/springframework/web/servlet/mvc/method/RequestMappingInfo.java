@@ -65,6 +65,10 @@ import org.springframework.web.util.pattern.PathPatternParser;
  */
 public final class RequestMappingInfo implements RequestCondition<RequestMappingInfo> {
 
+	// >>>>>>>>>>>>>>>>>>>>>>>>
+	// 关注
+	// equals 方法
+
 	private static final PathPatternsRequestCondition EMPTY_PATH_PATTERNS = new PathPatternsRequestCondition();
 
 	private static final PatternsRequestCondition EMPTY_PATTERNS = new PatternsRequestCondition();
@@ -495,6 +499,15 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 			return false;
 		}
 		RequestMappingInfo otherInfo = (RequestMappingInfo) other;
+
+
+		// methods
+		// params
+		// headers
+		// consumes
+		// produces
+		// customCondition
+
 		return (getActivePatternsCondition().equals(otherInfo.getActivePatternsCondition()) &&
 				this.methodsCondition.equals(otherInfo.methodsCondition) &&
 				this.paramsCondition.equals(otherInfo.paramsCondition) &&

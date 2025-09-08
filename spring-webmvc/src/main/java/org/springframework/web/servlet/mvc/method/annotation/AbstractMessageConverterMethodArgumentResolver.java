@@ -151,6 +151,9 @@ public abstract class AbstractMessageConverterMethodArgumentResolver implements 
 	protected <T> Object readWithMessageConverters(HttpInputMessage inputMessage, MethodParameter parameter,
 												   Type targetType) throws IOException, HttpMediaTypeNotSupportedException, HttpMessageNotReadableException {
 
+		// 1. 推断 ContentType
+		// --> 从请求头中获取 ContentType
+		// --> 默认 application/octet-stream
 		MediaType contentType;
 		boolean noContentType = false;
 		try {
@@ -175,16 +178,25 @@ public abstract class AbstractMessageConverterMethodArgumentResolver implements 
 
 		EmptyBodyCheckingHttpInputMessage message = null;
 		try {
+			// 又包装了一层，而且这是一个内部类
+			// 本质上都是 HttpInputMessage
 			message = new EmptyBodyCheckingHttpInputMessage(inputMessage);
 
+			// 调用所有的消息转换器
 			for (HttpMessageConverter<?> converter : this.messageConverters) {
 				Class<HttpMessageConverter<?>> converterType = (Class<HttpMessageConverter<?>>) converter.getClass();
+
+				// 1. 判断是否是 Generic 这种泛型的转换器，如果不是就是 null，进一步就无法处理
 				GenericHttpMessageConverter<?> genericConverter =
 						(converter instanceof GenericHttpMessageConverter ? (GenericHttpMessageConverter<?>) converter : null);
+
+				// 2. 进一步判断 canRead
 				if (genericConverter != null ? genericConverter.canRead(targetType, contextClass, contentType) :
 						(targetClass != null && converter.canRead(targetClass, contentType))) {
 					if (message.hasBody()) {
-						// beforeBodyRead
+
+						// beforeBodyRead --> 在真正读取 Body 之前
+						// getAdvice 其实拿到的是一个 chain，里面可能有多个 advice
 						HttpInputMessage msgToUse = getAdvice().beforeBodyRead(message, parameter, targetType, converterType);
 
 						// read

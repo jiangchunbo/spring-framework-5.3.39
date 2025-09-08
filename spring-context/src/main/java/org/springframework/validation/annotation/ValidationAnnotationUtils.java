@@ -48,12 +48,17 @@ public abstract class ValidationAnnotationUtils {
 	@Nullable
 	public static Object[] determineValidationHints(Annotation ann) {
 		// Direct presence of @Validated ?
+		// 存在 @Validated
 		if (ann instanceof Validated) {
+			// @Validated.value() 实际上是分组
 			return ((Validated) ann).value();
 		}
+
 		// Direct presence of @Valid ?
+		// 存在 @Valid
 		Class<? extends Annotation> annotationType = ann.annotationType();
 		if ("javax.validation.Valid".equals(annotationType.getName())) {
+			// 这里返回空数组，因为 @Valid 不具备分组的能力
 			return EMPTY_OBJECT_ARRAY;
 		}
 		// Meta presence of @Validated ?

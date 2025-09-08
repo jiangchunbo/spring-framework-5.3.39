@@ -75,10 +75,15 @@ import org.springframework.util.TypeUtils;
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
  * @author Sebastien Deleuze
- * @since 4.1
  * @see MappingJackson2HttpMessageConverter
+ * @since 4.1
  */
 public abstract class AbstractJackson2HttpMessageConverter extends AbstractGenericHttpMessageConverter<Object> {
+
+	// @@@@@@@@@@@@@
+	// AbstractJackson2HttpMessageConverter 是为 Jackson2 准备的抽象父类
+	// 因为，Jackson2 支持的序列化类型太多了，例如：XML、Smile、CBOR、Http
+	// @@@@@@@@@@@@@
 
 	private static final Map<String, JsonEncoding> ENCODINGS;
 
@@ -90,14 +95,12 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 		ENCODINGS.put("US-ASCII", JsonEncoding.UTF8);
 	}
 
-
 	/**
 	 * The default charset used by the converter.
 	 */
 	@Nullable
 	@Deprecated
 	public static final Charset DEFAULT_CHARSET = null;
-
 
 	protected ObjectMapper defaultObjectMapper;
 
@@ -110,7 +113,6 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	@Nullable
 	private PrettyPrinter ssePrettyPrinter;
 
-
 	protected AbstractJackson2HttpMessageConverter(ObjectMapper objectMapper) {
 		this.defaultObjectMapper = objectMapper;
 		DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
@@ -118,16 +120,29 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 		this.ssePrettyPrinter = prettyPrinter;
 	}
 
+	/**
+	 * 这个构造器被 Cbor 和 Smile 使用，因为它们只有一种 MediaType，分别是
+	 * --> application/cbor
+	 * --> application/x-jackson-smile
+	 *
+	 * @param objectMapper       ObjectMapper
+	 * @param supportedMediaType 支持的 MediaType
+	 */
 	protected AbstractJackson2HttpMessageConverter(ObjectMapper objectMapper, MediaType supportedMediaType) {
 		this(objectMapper);
 		setSupportedMediaTypes(Collections.singletonList(supportedMediaType));
 	}
 
+	/**
+	 * 这个构造器被 Json 和 XML 使用，因为受支持的 MediaType 写法有很多
+	 *
+	 * @param objectMapper        ObjectMapper
+	 * @param supportedMediaTypes 支持的 MediaType
+	 */
 	protected AbstractJackson2HttpMessageConverter(ObjectMapper objectMapper, MediaType... supportedMediaTypes) {
 		this(objectMapper);
 		setSupportedMediaTypes(Arrays.asList(supportedMediaTypes));
 	}
-
 
 	/**
 	 * Configure the main {@code ObjectMapper} to use for Object conversion.
@@ -139,6 +154,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	 * Another option for refining the serialization process is to use Jackson's
 	 * provided annotations on the types to be serialized, in which case a
 	 * custom-configured ObjectMapper is unnecessary.
+	 *
 	 * @see #registerObjectMappersForType(Class, Consumer)
 	 */
 	public void setObjectMapper(ObjectMapper objectMapper) {
@@ -165,9 +181,10 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	 * class. Therefore it is important for the mappings configured here to
 	 * {@link MediaType#includes(MediaType) include} every MediaType that must
 	 * be supported for the given class.
-	 * @param clazz the type of Object to register ObjectMapper instances for
+	 *
+	 * @param clazz     the type of Object to register ObjectMapper instances for
 	 * @param registrar a consumer to populate or otherwise update the
-	 * MediaType-to-ObjectMapper associations for the given Class
+	 *                  MediaType-to-ObjectMapper associations for the given Class
 	 * @since 5.3.4
 	 */
 	public void registerObjectMappersForType(Class<?> clazz, Consumer<Map<MediaType, ObjectMapper>> registrar) {
@@ -181,6 +198,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 
 	/**
 	 * Return ObjectMapper registrations for the given class, if any.
+	 *
 	 * @param clazz the class to look up for registrations for
 	 * @return a map with registered MediaType-to-ObjectMapper registrations,
 	 * or empty if in case of no registrations for the given class.
@@ -232,7 +250,6 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 		}
 	}
 
-
 	@Override
 	public boolean canRead(Class<?> clazz, @Nullable MediaType mediaType) {
 		return canRead(clazz, null, mediaType);
@@ -240,14 +257,21 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 
 	@Override
 	public boolean canRead(Type type, @Nullable Class<?> contextClass, @Nullable MediaType mediaType) {
+		// 判断是否支持这种 MediaType
 		if (!canRead(mediaType)) {
 			return false;
 		}
+
+		// 得到一个所谓的 JavaType
 		JavaType javaType = getJavaType(type, contextClass);
+
+		// 挑选一个 ObjectMapper (因为实现类有很多个)
 		ObjectMapper objectMapper = selectObjectMapper(javaType.getRawClass(), mediaType);
 		if (objectMapper == null) {
 			return false;
 		}
+
+		// 判断 javaType 能否序列化
 		AtomicReference<Throwable> causeRef = new AtomicReference<>();
 		if (objectMapper.canDeserialize(javaType, causeRef)) {
 			return true;
@@ -286,9 +310,14 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	 */
 	@Nullable
 	private ObjectMapper selectObjectMapper(Class<?> targetType, @Nullable MediaType targetMediaType) {
+		// 默认都是走这个
+		// 因为，一般不会定义 objectMapperRegistrations
 		if (targetMediaType == null || CollectionUtils.isEmpty(this.objectMapperRegistrations)) {
 			return this.defaultObjectMapper;
 		}
+
+
+		// 如果定义了 objectMapperRegistrations，那么下面就要选择用哪个
 		for (Map.Entry<Class<?>, Map<MediaType, ObjectMapper>> typeEntry : getObjectMapperRegistrations().entrySet()) {
 			if (typeEntry.getKey().isAssignableFrom(targetType)) {
 				for (Map.Entry<MediaType, ObjectMapper> objectMapperEntry : typeEntry.getValue().entrySet()) {
@@ -307,9 +336,10 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	/**
 	 * Determine whether to log the given exception coming from a
 	 * {@link ObjectMapper#canDeserialize} / {@link ObjectMapper#canSerialize} check.
-	 * @param type the class that Jackson tested for (de-)serializability
+	 *
+	 * @param type  the class that Jackson tested for (de-)serializability
 	 * @param cause the Jackson-thrown exception to evaluate
-	 * (typically a {@link JsonMappingException})
+	 *              (typically a {@link JsonMappingException})
 	 * @since 4.3
 	 */
 	protected void logWarningIfNecessary(Type type, @Nullable Throwable cause) {
@@ -325,11 +355,9 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 					"serialization for type [" + type + "]";
 			if (debugLevel) {
 				logger.debug(msg, cause);
-			}
-			else if (logger.isDebugEnabled()) {
+			} else if (logger.isDebugEnabled()) {
 				logger.warn(msg, cause);
-			}
-			else {
+			} else {
 				logger.warn(msg + ": " + cause);
 			}
 		}
@@ -369,8 +397,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 					ObjectReader objectReader = objectMapper.readerWithView(deserializationView).forType(javaType);
 					if (isUnicode) {
 						return objectReader.readValue(inputStream);
-					}
-					else {
+					} else {
 						Reader reader = new InputStreamReader(inputStream, charset);
 						return objectReader.readValue(reader);
 					}
@@ -378,16 +405,13 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 			}
 			if (isUnicode) {
 				return objectMapper.readValue(inputStream, javaType);
-			}
-			else {
+			} else {
 				Reader reader = new InputStreamReader(inputStream, charset);
 				return objectMapper.readValue(reader, javaType);
 			}
-		}
-		catch (InvalidDefinitionException ex) {
+		} catch (InvalidDefinitionException ex) {
 			throw new HttpMessageConversionException("Type definition error: " + ex.getType(), ex);
-		}
-		catch (JsonProcessingException ex) {
+		} catch (JsonProcessingException ex) {
 			throw new HttpMessageNotReadableException("JSON parse error: " + ex.getOriginalMessage(), ex, inputMessage);
 		}
 	}
@@ -396,6 +420,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	 * Determine the charset to use for JSON input.
 	 * <p>By default this is either the charset from the input {@code MediaType}
 	 * or otherwise falling back on {@code UTF-8}. Can be overridden in subclasses.
+	 *
 	 * @param contentType the content type of the HTTP input message
 	 * @return the charset to use
 	 * @since 5.1.18
@@ -403,8 +428,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 	protected Charset getCharset(@Nullable MediaType contentType) {
 		if (contentType != null && contentType.getCharset() != null) {
 			return contentType.getCharset();
-		}
-		else {
+		} else {
 			return StandardCharsets.UTF_8;
 		}
 	}
@@ -457,36 +481,37 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 
 			writeSuffix(generator, object);
 			generator.flush();
-		}
-		catch (InvalidDefinitionException ex) {
+		} catch (InvalidDefinitionException ex) {
 			throw new HttpMessageConversionException("Type definition error: " + ex.getType(), ex);
-		}
-		catch (JsonProcessingException ex) {
+		} catch (JsonProcessingException ex) {
 			throw new HttpMessageNotWritableException("Could not write JSON: " + ex.getOriginalMessage(), ex);
 		}
 	}
 
 	/**
 	 * Write a prefix before the main content.
+	 *
 	 * @param generator the generator to use for writing content.
-	 * @param object the object to write to the output message.
+	 * @param object    the object to write to the output message.
 	 */
 	protected void writePrefix(JsonGenerator generator, Object object) throws IOException {
 	}
 
 	/**
 	 * Write a suffix after the main content.
+	 *
 	 * @param generator the generator to use for writing content.
-	 * @param object the object to write to the output message.
+	 * @param object    the object to write to the output message.
 	 */
 	protected void writeSuffix(JsonGenerator generator, Object object) throws IOException {
 	}
 
 	/**
 	 * Return the Jackson {@link JavaType} for the specified type and context class.
-	 * @param type the generic type to return the Jackson JavaType for
+	 *
+	 * @param type         the generic type to return the Jackson JavaType for
 	 * @param contextClass a context class for the target type, for example a class
-	 * in which the target type appears in a method signature (can be {@code null})
+	 *                     in which the target type appears in a method signature (can be {@code null})
 	 * @return the Jackson JavaType
 	 */
 	protected JavaType getJavaType(Type type, @Nullable Class<?> contextClass) {
@@ -495,6 +520,7 @@ public abstract class AbstractJackson2HttpMessageConverter extends AbstractGener
 
 	/**
 	 * Determine the JSON encoding to use for the given content type.
+	 *
 	 * @param contentType the media type as requested by the caller
 	 * @return the JSON encoding to use (never {@code null})
 	 */

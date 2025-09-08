@@ -62,7 +62,6 @@ public class MethodParameter {
 
 	private static final Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
 
-
 	private final Executable executable;
 
 	private final int parameterIndex;
@@ -104,7 +103,6 @@ public class MethodParameter {
 
 	@Nullable
 	private volatile MethodParameter nestedMethodParameter;
-
 
 	/**
 	 * Create a new {@code MethodParameter} for the given method, with nesting level 1.
@@ -199,7 +197,6 @@ public class MethodParameter {
 		this.parameterNameDiscoverer = original.parameterNameDiscoverer;
 		this.parameterName = original.parameterName;
 	}
-
 
 	/**
 	 * Return the wrapped Method, if any.
@@ -496,6 +493,8 @@ public class MethodParameter {
 	 * @see #getDeclaringClass()
 	 */
 	public Class<?> getContainingClass() {
+		// 优先返回 containingClass
+		// 如果没有设置 containingClass，那么就使用 声明类（谁的声明类，该方法的声明类）
 		Class<?> containingClass = this.containingClass;
 		return (containingClass != null ? containingClass : getDeclaringClass());
 	}
@@ -759,7 +758,6 @@ public class MethodParameter {
 		return this.parameterName;
 	}
 
-
 	/**
 	 * A template method to post-process a given annotation instance before
 	 * returning it to the caller.
@@ -785,7 +783,6 @@ public class MethodParameter {
 	protected Annotation[] adaptAnnotationArray(Annotation[] annotations) {
 		return annotations;
 	}
-
 
 	@Override
 	public boolean equals(@Nullable Object other) {
@@ -819,7 +816,6 @@ public class MethodParameter {
 	public MethodParameter clone() {
 		return new MethodParameter(this);
 	}
-
 
 	/**
 	 * Create a new MethodParameter for the given method or constructor.
@@ -899,7 +895,6 @@ public class MethodParameter {
 				() -> "Parameter index needs to be between -1 and " + (count - 1));
 		return parameterIndex;
 	}
-
 
 	/**
 	 * Inner class to avoid a hard dependency on Kotlin at runtime.
@@ -981,6 +976,7 @@ public class MethodParameter {
 			}
 			return method.getReturnType();
 		}
+
 	}
 
 }

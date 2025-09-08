@@ -137,6 +137,8 @@ public class ServletServerHttpRequest implements ServerHttpRequest {
 	@Override
 	public HttpHeaders getHeaders() {
 		if (this.headers == null) {
+			// @@@@ 解析 HTTP Header
+
 			this.headers = new HttpHeaders();
 
 			for (Enumeration<?> names = this.servletRequest.getHeaderNames(); names.hasMoreElements();) {

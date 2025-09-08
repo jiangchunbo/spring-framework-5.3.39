@@ -88,6 +88,10 @@ class RequestResponseBodyAdviceChain implements RequestBodyAdvice, ResponseBodyA
 			Type targetType, Class<? extends HttpMessageConverter<?>> converterType) throws IOException {
 
 		for (RequestBodyAdvice advice : getMatchingAdvice(parameter, RequestBodyAdvice.class)) {
+
+			// 是否支持
+			// parameter: 方法参数
+			// targetType:
 			if (advice.supports(parameter, targetType, converterType)) {
 				request = advice.beforeBodyRead(request, parameter, targetType, converterType);
 			}
@@ -147,15 +151,16 @@ class RequestResponseBodyAdviceChain implements RequestBodyAdvice, ResponseBodyA
 
 	@SuppressWarnings("unchecked")
 	private <A> List<A> getMatchingAdvice(MethodParameter parameter, Class<? extends A> adviceType) {
-		//
+		// getAdvice 是一个非常简单的策略模式，if else 写法，只支持 2 种
+		// 默认，这里应该有 1 个元素，用于支持 @JsonView
 		List<Object> availableAdvice = getAdvice(adviceType);
 
-		//
+		// 如果没有什么 advice，那么不用执行
 		if (CollectionUtils.isEmpty(availableAdvice)) {
 			return Collections.emptyList();
 		}
 
-		//
+		// 接下来，执行所有 advice
 		List<A> result = new ArrayList<>(availableAdvice.size());
 		for (Object advice : availableAdvice) {
 			if (advice instanceof ControllerAdviceBean) {

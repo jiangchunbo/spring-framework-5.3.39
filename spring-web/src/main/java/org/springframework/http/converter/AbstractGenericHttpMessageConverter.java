@@ -68,6 +68,11 @@ public abstract class AbstractGenericHttpMessageConverter<T> extends AbstractHtt
 
 	@Override
 	public boolean canRead(Type type, @Nullable Class<?> contextClass, @Nullable MediaType mediaType) {
+		// 实际上没有用到 contextClass
+
+		// AbstractGenericHttpMessageConverter 继承了 AbstractHttpMessageConverter
+		// 因为，他要复用 AbstractHttpMessageConverter 的 canRead(Class, MediaType) 方法
+
 		return (type instanceof Class ? canRead((Class<?>) type, mediaType) : canRead(mediaType));
 	}
 

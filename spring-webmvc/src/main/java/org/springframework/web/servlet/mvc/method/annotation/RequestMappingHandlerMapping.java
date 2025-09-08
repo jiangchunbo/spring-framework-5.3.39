@@ -282,6 +282,11 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	 */
 	@Override
 	protected boolean isHandler(Class<?> beanType) {
+
+		// 可以直接用单个注解 @Controller
+		// 也可以使用 @Component + @RequestMapping 的组合方式
+		// 如果你单单只有一个 @RequestMapping，是无法有用的，因为这根本不是一个 bean
+
 		return (AnnotatedElementUtils.hasAnnotation(beanType, Controller.class) ||
 				AnnotatedElementUtils.hasAnnotation(beanType, RequestMapping.class));
 	}
@@ -298,14 +303,14 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 	@Override
 	@Nullable
 	protected RequestMappingInfo getMappingForMethod(Method method, Class<?> handlerType) {
-		// 传入方法，创建一个请求映射的信息，其实就是解析方法上面的注解
-		// >>>>>>>>>>>>>>> 如果方法上面没有注解 RequestMapping，就是返回 null，不用处理了
+		// 1. 解析 method 上面的 @RequestMapping
 		RequestMappingInfo info = createRequestMappingInfo(method);
+
 		if (info != null) {
-			// 类上面也创建一个映射信息，可能需要一些前缀
+			// 2. 解析 class 上面的 @RequestMapping
 			RequestMappingInfo typeInfo = createRequestMappingInfo(handlerType);
 
-			// 把类级别的信息和方法级别的信息合并
+			// 3. 把类级别的信息和方法级别的信息合并
 			if (typeInfo != null) {
 				info = typeInfo.combine(info);
 			}
