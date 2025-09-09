@@ -68,6 +68,9 @@ public class HandlerMethod {
 	/** Logger that is available to subclasses. */
 	protected static final Log logger = LogFactory.getLog(HandlerMethod.class);
 
+	/**
+	 * Handler 对象，也就是持有 Method 方法的对象
+	 */
 	private final Object bean;
 
 	@Nullable
@@ -76,12 +79,21 @@ public class HandlerMethod {
 	@Nullable
 	private final MessageSource messageSource;
 
+	/**
+	 * 由 bean 对象推理出来的类型
+	 */
 	private final Class<?> beanType;
 
+	/**
+	 * Handler Method，本质上是 Java 反射对象
+	 */
 	private final Method method;
 
 	private final Method bridgedMethod;
 
+	/**
+	 * 方法参数
+	 */
 	private final MethodParameter[] parameters;
 
 	@Nullable

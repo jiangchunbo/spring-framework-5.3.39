@@ -315,7 +315,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				// method 可能是接口方法，需要转换为实际的方法
 				Method invocableMethod = AopUtils.selectInvocableMethod(method, userType);
 
-				// 注册 handlerMethod
+				// 注册 handler Method
 				registerHandlerMethod(handler, invocableMethod, mapping);
 			});
 		}
@@ -351,6 +351,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	protected void registerHandlerMethod(Object handler, Method method, T mapping) {
 		// 注册 handler method
+		// 传入了 3 个元素：handler 对象、method 对象、mapping 映射信息
+
 		this.mappingRegistry.register(mapping, handler, method);
 	}
 
@@ -403,7 +405,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		// 拿到 lookupPath
 		String lookupPath = initLookupPath(request);
 
-		// 加锁
+		// 寻找 handler method 的过程中需要加锁
 		this.mappingRegistry.acquireReadLock();
 		try {
 			// 寻找处理方法 HandlerMethod
@@ -431,17 +433,23 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
 		List<Match> matches = new ArrayList<>();
 
-		// 1. 通过直接匹配，也就是 URL 是明确的那些 Mapping，得到若干个 匹配项
+		// (1) (2) 其实都是在找 List<Match>
+
+		// 1. 通过直接匹配，得到若干个 RequestMappingInfo
 		List<T> directPathMatches = this.mappingRegistry.getMappingsByDirectPath(lookupPath);
+
+		// 找到了只是第 1 步
+		// 接下来要获取 [交集]
 		if (directPathMatches != null) {
 			addMatchingMappings(directPathMatches, matches, request);
 		}
 
-		// 如果无法通过 direct path 获得匹配到的 mapping
+		// 2. 如果无法通过 Direct Path 找到映射信息，只能遍历所有的 Mapping [效率非常差]
 		if (matches.isEmpty()) {
 			addMatchingMappings(this.mappingRegistry.getRegistrations().keySet(), matches, request);
 		}
 
+		// 3. 如果存在任何匹配信息，继续寻找最好的
 		if (!matches.isEmpty()) {
 			Match bestMatch = matches.get(0);
 
@@ -484,7 +492,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	private void addMatchingMappings(Collection<T> mappings, List<Match> matches, HttpServletRequest request) {
 		for (T mapping : mappings) {
-			// 传入一个 mapping 然后又得到一个 match 这也是一个 mapping
+			// 获取当前 request 与 mapping 的交集部分
 			T match = getMatchingMapping(mapping, request);
 
 			// 只有匹配上了，才会得到一个 match
@@ -581,12 +589,18 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 
 	/**
 	 * Return the request mapping paths that are not patterns.
+	 * <p>
+	 * 返回当前 mapping 映射信息中 [直接映射] 的 path 路径字符串
 	 *
 	 * @since 5.3
 	 */
 	protected Set<String> getDirectPaths(T mapping) {
 		Set<String> urls = Collections.emptySet();
+
+		// getMappingPathPatterns 这个方法好像是获取了所有的 path
 		for (String path : getMappingPathPatterns(mapping)) {
+
+			// 检查是否 "非pattern"
 			if (!getPathMatcher().isPattern(path)) {
 				urls = (urls.isEmpty() ? new HashSet<>(1) : urls);
 				urls.add(path);
@@ -623,8 +637,18 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	class MappingRegistry {
 
+		/**
+		 * 所有 Mapping 的注册中心
+		 */
 		private final Map<T, MappingRegistration<T>> registry = new HashMap<>();
 
+		/**
+		 * Direct Path 映射
+		 * <p>
+		 * 这个算是一个快速路径。通过 URL 直接找到 Mapping
+		 * <p>
+		 * 通过路径字符串，可以找到映射信息，因为可能找到多个 mapping，所以要进一步比较
+		 */
 		private final MultiValueMap<String, T> pathLookup = new LinkedMultiValueMap<>();
 
 		private final Map<String, List<HandlerMethod>> nameLookup = new ConcurrentHashMap<>();
@@ -689,14 +713,19 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			// 注册的时候加 write 锁，因为要进行 write 操作了，不允许读写
 			this.readWriteLock.writeLock().lock();
 			try {
-				// 创建一个 HandlerMethod
+				// 创建一个 HandlerMethod 对象
 				HandlerMethod handlerMethod = createHandlerMethod(handler, method);
 
 				// 验证是否已经注册过
 				validateMethodMapping(handlerMethod, mapping);
 
-				// 获得直接路径，直接添加到 pathLookup
+				// 获得 direct path
 				Set<String> directPaths = AbstractHandlerMethodMapping.this.getDirectPaths(mapping);
+
+				// 一个 mapping 可能包含多个 URL 注册
+				// 所以，这里可能是
+				// - "/user1" -> mapping
+				// - "/user2" -> mapping
 				for (String path : directPaths) {
 					this.pathLookup.add(path, mapping);
 				}
@@ -814,6 +843,11 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 
 	}
 
+	/**
+	 * Mapping 注册信息
+	 *
+	 * @param <T>
+	 */
 	static class MappingRegistration<T> {
 
 		private final T mapping;

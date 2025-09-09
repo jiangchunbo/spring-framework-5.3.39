@@ -66,7 +66,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
 public final class RequestMappingInfo implements RequestCondition<RequestMappingInfo> {
 
 	// >>>>>>>>>>>>>>>>>>>>>>>>
-	// 关注
+	// 这个类是请求映射信息，其实就是 Key !!!
 	// equals 方法
 
 	private static final PathPatternsRequestCondition EMPTY_PATH_PATTERNS = new PathPatternsRequestCondition();
