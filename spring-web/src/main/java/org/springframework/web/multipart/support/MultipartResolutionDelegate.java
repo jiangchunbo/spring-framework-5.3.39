@@ -99,8 +99,15 @@ public final class MultipartResolutionDelegate {
 
 	public static boolean isMultipartArgument(MethodParameter parameter) {
 		Class<?> paramType = parameter.getNestedParameterType();
+		// 1. MultipartFile
+		// 2. Collection<MultipartFile> List<MultipartFile>
+		// 3. MultipartFile[]
+		// 4. Part
+		// 5. Collection<Part> List<Part>
+		// 6. Part[]
 		return (MultipartFile.class == paramType ||
-				isMultipartFileCollection(parameter) || isMultipartFileArray(parameter) ||
+				isMultipartFileCollection(parameter) ||
+				isMultipartFileArray(parameter) ||
 				(Part.class == paramType || isPartCollection(parameter) || isPartArray(parameter)));
 	}
 
@@ -185,6 +192,9 @@ public final class MultipartResolutionDelegate {
 	@Nullable
 	private static Class<?> getCollectionParameterType(MethodParameter methodParam) {
 		Class<?> paramType = methodParam.getNestedParameterType();
+
+		// 不支持 Set
+		// 多文件需要确保顺序
 		if (Collection.class == paramType || List.class.isAssignableFrom(paramType)) {
 			Class<?> valueType = ResolvableType.forMethodParameter(methodParam).asCollection().resolveGeneric();
 			if (valueType != null) {

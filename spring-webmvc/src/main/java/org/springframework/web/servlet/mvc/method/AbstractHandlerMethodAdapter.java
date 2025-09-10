@@ -67,6 +67,8 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 	 */
 	@Override
 	public final boolean supports(Object handler) {
+
+		// supportsInternal 算是一个扩展点，但是 Spring WebMvc 其实还没有用到
 		return (handler instanceof HandlerMethod && supportsInternal((HandlerMethod) handler));
 	}
 

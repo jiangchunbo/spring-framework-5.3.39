@@ -84,7 +84,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 	private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
 
 	/**
-	 * 是否使用默认解析，TODO 还不清出什么用
+	 * 是否启用默认解析模式
 	 */
 	private final boolean useDefaultResolution;
 
@@ -143,15 +143,19 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 				return true;
 			}
 		} else {
+			// 因为这个方法参数解析器是解析 @RequestParam 的，所以如果有注解 @RequestPart 就不解析（显式注解）
 			if (parameter.hasParameterAnnotation(RequestPart.class)) {
 				return false;
 			}
 
-			// 下面就是一些不带注解的参数。MultipartFile、Part、简单类型
+			// 不带注解，但是类型很特殊
 			parameter = parameter.nestedIfOptional();
+			// MultipartFile、Part
 			if (MultipartResolutionDelegate.isMultipartArgument(parameter)) {
 				return true;
-			} else if (this.useDefaultResolution) {
+			}
+			// 开启默认解析
+			else if (this.useDefaultResolution) {
 				// 如果使用默认解析，那么简单类型也可以处理
 				return BeanUtils.isSimpleProperty(parameter.getNestedParameterType());
 			} else {

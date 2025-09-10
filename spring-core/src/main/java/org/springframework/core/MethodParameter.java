@@ -582,6 +582,9 @@ public class MethodParameter {
 	 * @since 3.1
 	 */
 	public Class<?> getNestedParameterType() {
+		// nestingLevel 默认是 1
+		// 只有调用 nested 此类方法，才会更进一步深入
+
 		if (this.nestingLevel > 1) {
 			Type type = getGenericParameterType();
 			for (int i = 2; i <= this.nestingLevel; i++) {
