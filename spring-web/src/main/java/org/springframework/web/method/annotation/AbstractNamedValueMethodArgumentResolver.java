@@ -73,7 +73,6 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 
 	private final Map<MethodParameter, NamedValueInfo> namedValueInfoCache = new ConcurrentHashMap<>(256);
 
-
 	public AbstractNamedValueMethodArgumentResolver() {
 		this.configurableBeanFactory = null;
 		this.expressionContext = null;
@@ -92,16 +91,15 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 				(beanFactory != null ? new BeanExpressionContext(beanFactory, new RequestScope()) : null);
 	}
 
-
 	@Override
 	@Nullable
 	public final Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
 										NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception {
 
-		// 从方法参数中获取 NamedValueInfo
+		// 从方法参数中解析 NamedValueInfo，也就是 name、required、default 此类
 		NamedValueInfo namedValueInfo = getNamedValueInfo(parameter);
 
-		// 抽取 Optional 泛型
+		// 剥离 Optional
 		MethodParameter nestedParameter = parameter.nestedIfOptional();
 
 		// 解析嵌入值和表达式（不是所有都支持）
@@ -111,7 +109,10 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 					"Specified name must not resolve to null: [" + namedValueInfo.name + "]");
 		}
 
+		// 尝试从 uri variables 中获取 value
 		Object arg = resolveName(resolvedName.toString(), nestedParameter, webRequest);
+
+		// 没有解析到值，尝试使用默认值
 		if (arg == null) {
 			// 若请求没有值，那么检查是否是否设置了默认值
 			// 不是每个注解都有默认值
@@ -138,9 +139,13 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 				throw new MethodArgumentTypeMismatchException(arg, ex.getRequiredType(),
 						namedValueInfo.name, parameter, ex.getCause());
 			}
+
+			// 在对入参进行转换之后，再次校验 null
 			// Check for null value after conversion of incoming argument value
 			if (arg == null && namedValueInfo.defaultValue == null &&
 					namedValueInfo.required && !nestedParameter.isOptional()) {
+
+				// 处理找不到 value
 				handleMissingValueAfterConversion(namedValueInfo.name, nestedParameter, webRequest);
 			}
 		}
@@ -180,10 +185,8 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	 * Create a new NamedValueInfo based on the given NamedValueInfo with sanitized values.
 	 */
 	private NamedValueInfo updateNamedValueInfo(MethodParameter parameter, NamedValueInfo info) {
+		// 1. 获取 name > 先从 info 找 > 再从 parameter name 找
 		String name = info.name;
-
-		// 如果解析出来 name 是个空字符串
-		// assert info.name != null
 		if (info.name.isEmpty()) {
 
 			// 如果 name 是空字符串，则从 parameter name 拿到 name（一般这是反射之类的）
@@ -195,7 +198,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 			}
 		}
 
-		// 如果没有设置 default value，就使用 null，否则用 defaultValue
+		// 2. 解析默认值如果没有设置 default value，就使用 null，否则用 defaultValue
 		String defaultValue = (ValueConstants.DEFAULT_NONE.equals(info.defaultValue) ? null : info.defaultValue);
 		return new NamedValueInfo(name, info.required, defaultValue);
 	}
@@ -236,6 +239,8 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	/**
 	 * Invoked when a named value is required, but {@link #resolveName(String, MethodParameter, NativeWebRequest)}
 	 * returned {@code null} and there is no default value. Subclasses typically throw an exception in this case.
+	 * <p>
+	 * 比较新的方法，它比以前的方法多了一个 request 参数
 	 *
 	 * @param name      the name for the value
 	 * @param parameter the method parameter
@@ -244,6 +249,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	 */
 	protected void handleMissingValue(String name, MethodParameter parameter, NativeWebRequest request)
 			throws Exception {
+
 		// 默认抛出一个 ServletRequestBindingException
 		handleMissingValue(name, parameter);
 	}
@@ -251,6 +257,8 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	/**
 	 * Invoked when a named value is required, but {@link #resolveName(String, MethodParameter, NativeWebRequest)}
 	 * returned {@code null} and there is no default value. Subclasses typically throw an exception in this case.
+	 * <p>
+	 * 这个方法应该非常古老，只有两个参数
 	 *
 	 * @param name      the name for the value
 	 * @param parameter the method parameter
@@ -271,6 +279,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	protected void handleMissingValueAfterConversion(String name, MethodParameter parameter, NativeWebRequest request)
 			throws Exception {
 
+		// 这个方法其实是一个公共方法，它不仅可以在 after conversion 调用，还在 required 且不是 Optional 又没有解析到 value 时被调用
 		handleMissingValue(name, parameter, request);
 	}
 
@@ -304,16 +313,26 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 									   @Nullable ModelAndViewContainer mavContainer, NativeWebRequest webRequest) {
 	}
 
-
 	/**
 	 * Represents the information about a named value, including name, whether it's required and a default value.
+	 * <p>
+	 * 表示一个有名字的 value 信息。属性就是 name、是否必需和一个默认值
 	 */
 	protected static class NamedValueInfo {
 
+		/**
+		 * value 的名字
+		 */
 		private final String name;
 
+		/**
+		 * value 是否是必需
+		 */
 		private final boolean required;
 
+		/**
+		 * 默认值，可能是 null
+		 */
 		@Nullable
 		private final String defaultValue;
 
@@ -322,6 +341,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 			this.required = required;
 			this.defaultValue = defaultValue;
 		}
+
 	}
 
 }

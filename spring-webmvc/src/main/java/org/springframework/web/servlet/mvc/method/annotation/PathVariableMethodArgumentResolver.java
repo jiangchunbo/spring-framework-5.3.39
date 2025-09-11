@@ -74,7 +74,8 @@ public class PathVariableMethodArgumentResolver extends AbstractNamedValueMethod
 			return false;
 		}
 
-		// 剥离可能的 Optional，取出参数类型，如果是 Map
+		// 处理 Map 并且不能设置 name
+		// 这个情况几乎不会出现，因为解析得到 value 之后，你需要想办法转换为 Map，否则就会把报错
 		if (Map.class.isAssignableFrom(parameter.nestedIfOptional().getNestedParameterType())) {
 			PathVariable pathVariable = parameter.getParameterAnnotation(PathVariable.class);
 			return (pathVariable != null && StringUtils.hasText(pathVariable.value()));
@@ -93,11 +94,14 @@ public class PathVariableMethodArgumentResolver extends AbstractNamedValueMethod
 	@SuppressWarnings("unchecked")
 	@Nullable
 	protected Object resolveName(String name, MethodParameter parameter, NativeWebRequest request) throws Exception {
-		// 拿到了一个 uriTemplateVariables 之类的东西
-		// 估计里面是关于 uri 中 {} 包裹的各种信息吧
+		// URI_TEMPLATE_VARIABLES_ATTRIBUTE 是一个 Map
+		// 包含了从真实请求路径中解析到的 {} 占位符变量
+
+		// 所以，这个方法其实就是尝试获取 value
 
 		Map<String, String> uriTemplateVars = (Map<String, String>) request.getAttribute(
 				HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE, RequestAttributes.SCOPE_REQUEST);
+
 		return (uriTemplateVars != null ? uriTemplateVars.get(name) : null);
 	}
 
