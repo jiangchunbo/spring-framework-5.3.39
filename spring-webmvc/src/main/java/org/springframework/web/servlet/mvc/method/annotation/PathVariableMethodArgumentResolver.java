@@ -73,6 +73,8 @@ public class PathVariableMethodArgumentResolver extends AbstractNamedValueMethod
 		if (!parameter.hasParameterAnnotation(PathVariable.class)) {
 			return false;
 		}
+
+		// 剥离可能的 Optional，取出参数类型，如果是 Map
 		if (Map.class.isAssignableFrom(parameter.nestedIfOptional().getNestedParameterType())) {
 			PathVariable pathVariable = parameter.getParameterAnnotation(PathVariable.class);
 			return (pathVariable != null && StringUtils.hasText(pathVariable.value()));

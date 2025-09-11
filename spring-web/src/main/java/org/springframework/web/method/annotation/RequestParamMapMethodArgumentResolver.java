@@ -63,9 +63,11 @@ public class RequestParamMapMethodArgumentResolver implements HandlerMethodArgum
 
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
-		// @RequestParam，且类型是 Map，而且没有设置注解的 name
-		// 这是什么意思
-		// 我希望使用这个 Map 来接收许多参数？
+		// 1. @RequestParam
+		// 2. 类型是 Map
+		// 3. 没有指定 name
+
+		// 这些条件组合在一起表示开发者希望用一个 Map 接收一组参数
 		RequestParam requestParam = parameter.getParameterAnnotation(RequestParam.class);
 		return (requestParam != null && Map.class.isAssignableFrom(parameter.getParameterType()) &&
 				!StringUtils.hasText(requestParam.name()));
