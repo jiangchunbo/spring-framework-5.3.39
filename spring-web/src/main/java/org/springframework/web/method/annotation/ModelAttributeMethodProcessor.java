@@ -87,6 +87,9 @@ public class ModelAttributeMethodProcessor implements HandlerMethodArgumentResol
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	/**
+	 * 解析方法参数时，是否需要注解
+	 */
 	private final boolean annotationNotRequired;
 
 	/**

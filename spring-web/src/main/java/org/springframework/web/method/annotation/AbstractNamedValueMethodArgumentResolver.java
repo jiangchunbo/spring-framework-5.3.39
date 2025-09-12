@@ -114,13 +114,17 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 
 		// 没有解析到值，尝试使用默认值
 		if (arg == null) {
-			// 若请求没有值，那么检查是否是否设置了默认值
-			// 不是每个注解都有默认值
+
+			// 是否存在默认值
 			if (namedValueInfo.defaultValue != null) {
+				// 如果解析完 value 得到的 arg 还是 null，就会走下面的 handleNullValue
 				arg = resolveEmbeddedValuesAndExpressions(namedValueInfo.defaultValue);
 			} else if (namedValueInfo.required && !nestedParameter.isOptional()) {
+				// 抛异常
 				handleMissingValue(namedValueInfo.name, nestedParameter, webRequest);
 			}
+
+			// 这条语句，仅当 name 找不到 arg 而且 defaultValue 也是 null 才会抛出异常
 			arg = handleNullValue(namedValueInfo.name, arg, nestedParameter.getNestedParameterType());
 		} else if ("".equals(arg) && namedValueInfo.defaultValue != null) {
 			arg = resolveEmbeddedValuesAndExpressions(namedValueInfo.defaultValue);
