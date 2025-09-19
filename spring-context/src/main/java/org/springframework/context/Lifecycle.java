@@ -49,6 +49,11 @@ package org.springframework.context;
  */
 public interface Lifecycle {
 
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	// 有一些 bean 需要 "开" "关" 操作，可以实现这个接口
+
+	// 逻辑需要在 bean 完全创建之后再异步运行
+
 	/**
 	 * Start this component.
 	 * <p>Should not throw an exception if the component is already running.

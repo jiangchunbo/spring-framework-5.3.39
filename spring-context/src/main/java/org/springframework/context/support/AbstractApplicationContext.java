@@ -914,6 +914,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @since 3.0
 	 */
 	protected void initLifecycleProcessor() {
+		// @@@@@@@@@
+		// 这个方法就是找到或者创建一个 ListableBeanFactory 并赋值给 ApplicationContext
+
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 		if (beanFactory.containsLocalBean(LIFECYCLE_PROCESSOR_BEAN_NAME)) {
 			this.lifecycleProcessor = beanFactory.getBean(LIFECYCLE_PROCESSOR_BEAN_NAME, LifecycleProcessor.class);
@@ -1022,12 +1025,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		clearResourceCaches();
 
 		// Initialize lifecycle processor for this context.
+		// 从 BeanFactory 获取并赋值给自己的属性 lifecycleProcessor
 		initLifecycleProcessor();
 
 		// Propagate refresh to lifecycle processor first.
+		// onRefresh 因为上面的步骤已经获取了 lifecycle processor 这里就是调用 onRefresh
 		getLifecycleProcessor().onRefresh();
 
 		// Publish the final event.
+		// 发布最后的事件 ContextRefreshedEvent
 		publishEvent(new ContextRefreshedEvent(this));
 
 		// Participate in LiveBeansView MBean, if active.

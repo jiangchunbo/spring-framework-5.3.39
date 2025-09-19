@@ -219,7 +219,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private final ThreadLocal<Object> prototypesCurrentlyInCreation =
 			new NamedThreadLocal<>("Prototype beans currently in creation");
 
-
 	/**
 	 * Create a new AbstractBeanFactory.
 	 */
@@ -235,7 +234,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	public AbstractBeanFactory(@Nullable BeanFactory parentBeanFactory) {
 		this.parentBeanFactory = parentBeanFactory;
 	}
-
 
 	//---------------------------------------------------------------------
 	// Implementation of BeanFactory interface
@@ -615,7 +613,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Class<?>[] typesToMatch = (FactoryBean.class == classToMatch ?
 				new Class<?>[]{classToMatch} : new Class<?>[]{FactoryBean.class, classToMatch});
 
-
 		// Attempt to predict the bean type
 		Class<?> predictedType = null;
 
@@ -779,7 +776,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return StringUtils.toStringArray(aliases);
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation of HierarchicalBeanFactory interface
 	//---------------------------------------------------------------------
@@ -796,7 +792,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return ((containsSingleton(beanName) || containsBeanDefinition(beanName)) &&
 				(!BeanFactoryUtils.isFactoryDereference(name) || isFactoryBean(beanName)));
 	}
-
 
 	//---------------------------------------------------------------------
 	// Implementation of ConfigurableBeanFactory interface
@@ -1163,8 +1158,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return getMergedLocalBeanDefinition(beanName);
 	}
 
+	/**
+	 * 检查是否是 factory bean
+	 * <p>
+	 * 而且请注意，这个方法仅仅 bean name 就能判断是否是 factory bean
+	 *
+	 * @param name the name of the bean to check
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	public boolean isFactoryBean(String name) throws NoSuchBeanDefinitionException {
+		// 删除前缀 & 然后翻译别名
 		String beanName = transformedBeanName(name);
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null) {
@@ -1275,7 +1280,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation methods
 	//---------------------------------------------------------------------
@@ -1360,7 +1364,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					registry.registerCustomEditor(requiredType, BeanUtils.instantiateClass(editorClass)));
 		}
 	}
-
 
 	/**
 	 * Return a merged RootBeanDefinition, traversing the parent bean definition
@@ -1665,7 +1668,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 		return this.beanExpressionResolver.evaluate(value, new BeanExpressionContext(this, scope));
 	}
-
 
 	/**
 	 * Predict the eventual bean type (of the processed bean instance) for the
@@ -1989,7 +1991,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 	}
 
-
 	//---------------------------------------------------------------------
 	// Abstract methods to be implemented by subclasses
 	//---------------------------------------------------------------------
@@ -2047,7 +2048,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	protected abstract Object createBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 			throws BeanCreationException;
-
 
 	/**
 	 * CopyOnWriteArrayList which resets the beanPostProcessorCache field on modification.
@@ -2142,8 +2142,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			super.replaceAll(operator);
 			resetBeanPostProcessorCache();
 		}
-	}
 
+	}
 
 	/**
 	 * Internal cache of pre-filtered post-processors.
@@ -2159,6 +2159,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		final List<DestructionAwareBeanPostProcessor> destructionAware = new ArrayList<>();
 
 		final List<MergedBeanDefinitionPostProcessor> mergedDefinition = new ArrayList<>();
+
 	}
 
 }

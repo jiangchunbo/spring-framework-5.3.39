@@ -75,11 +75,13 @@ class RequestResponseBodyAdviceChain implements RequestBodyAdvice, ResponseBodyA
 
 	@Override
 	public boolean supports(MethodParameter param, Type type, Class<? extends HttpMessageConverter<?>> converterType) {
+		// 为什么没有实现，因为不期望被调用，这个类只是一个组合节点
 		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
 	public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+		// 为什么没有实现，因为不期望被调用，这个类只是一个组合节点
 		throw new UnsupportedOperationException("Not implemented");
 	}
 
@@ -87,12 +89,15 @@ class RequestResponseBodyAdviceChain implements RequestBodyAdvice, ResponseBodyA
 	public HttpInputMessage beforeBodyRead(HttpInputMessage request, MethodParameter parameter,
 			Type targetType, Class<? extends HttpMessageConverter<?>> converterType) throws IOException {
 
+		// 找出所有组件 RequestBodyAdvice
 		for (RequestBodyAdvice advice : getMatchingAdvice(parameter, RequestBodyAdvice.class)) {
 
 			// 是否支持
 			// parameter: 方法参数
 			// targetType:
 			if (advice.supports(parameter, targetType, converterType)) {
+
+				// 执行
 				request = advice.beforeBodyRead(request, parameter, targetType, converterType);
 			}
 		}
