@@ -169,6 +169,7 @@ public class ThreadPoolTaskScheduler extends ExecutorConfigurationSupport
 	protected ExecutorService initializeExecutor(
 			ThreadFactory threadFactory, RejectedExecutionHandler rejectedExecutionHandler) {
 
+		// 默认 poolSize == 1
 		this.scheduledExecutor = createExecutor(this.poolSize, threadFactory, rejectedExecutionHandler);
 
 		if (this.scheduledExecutor instanceof ScheduledThreadPoolExecutor) {

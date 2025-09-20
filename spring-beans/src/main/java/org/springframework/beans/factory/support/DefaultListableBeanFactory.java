@@ -953,6 +953,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	@Override
 	public void preInstantiateSingletons() throws BeansException {
+		// @@@@@@@@@@@@@@@@@@@@@@
+		// 在所有非懒加载的单例 bean 创建之后，这个方法会被调用
+
+
 		if (logger.isTraceEnabled()) {
 			logger.trace("Pre-instantiating singletons in " + this);
 		}

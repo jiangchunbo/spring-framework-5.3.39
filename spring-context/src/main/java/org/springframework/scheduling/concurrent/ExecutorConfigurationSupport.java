@@ -56,8 +56,14 @@ public abstract class ExecutorConfigurationSupport extends CustomizableThreadFac
 
 	private ThreadFactory threadFactory = this;
 
+	/**
+	 * 是否设置了 thread name 前缀，默认是 false 没有设置，这样就会使用 bean name 作为前缀
+	 */
 	private boolean threadNamePrefixSet = false;
 
+	/**
+	 * 拒绝执行的处理器。默认是直接抛出异常。
+	 */
 	private RejectedExecutionHandler rejectedExecutionHandler = new ThreadPoolExecutor.AbortPolicy();
 
 	private boolean waitForTasksToCompleteOnShutdown = false;
@@ -180,12 +186,19 @@ public abstract class ExecutorConfigurationSupport extends CustomizableThreadFac
 	 * Set up the ExecutorService.
 	 */
 	public void initialize() {
+		// @@@@@@@@@
+		// 由 afterPropertiesSet 方法调用
+
 		if (logger.isDebugEnabled()) {
 			logger.debug("Initializing ExecutorService" + (this.beanName != null ? " '" + this.beanName + "'" : ""));
 		}
+
+		// 如果没有设置 thread name 前缀，但是有 bean name，那么就用 bean 那么作为前缀
 		if (!this.threadNamePrefixSet && this.beanName != null) {
 			setThreadNamePrefix(this.beanName + "-");
 		}
+
+		// 得到一个 executor 对象
 		this.executor = initializeExecutor(this.threadFactory, this.rejectedExecutionHandler);
 	}
 

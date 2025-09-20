@@ -33,8 +33,17 @@ import org.springframework.util.ReflectionUtils;
  */
 public class ScheduledMethodRunnable implements Runnable {
 
+	// @@@@@@@@@@@@@@@@@@@
+	// 这个类实现了 Runnable 可以将 @Scheduled 方法包装成这个独享
+
+	/**
+	 * 使用反射调用方法时，作用于哪个对象
+	 */
 	private final Object target;
 
+	/**
+	 * 方法句柄
+	 */
 	private final Method method;
 
 
@@ -80,6 +89,7 @@ public class ScheduledMethodRunnable implements Runnable {
 	@Override
 	public void run() {
 		try {
+			// 确保可以访问
 			ReflectionUtils.makeAccessible(this.method);
 			this.method.invoke(this.target);
 		}
