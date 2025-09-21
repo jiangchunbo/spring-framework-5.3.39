@@ -76,6 +76,9 @@ public class ThreadPoolTaskScheduler extends ExecutorConfigurationSupport
 
 	private Clock clock = Clock.systemDefaultZone();
 
+	/**
+	 * JDK 的具有调度能力的执行器
+	 */
 	@Nullable
 	private ScheduledExecutorService scheduledExecutor;
 

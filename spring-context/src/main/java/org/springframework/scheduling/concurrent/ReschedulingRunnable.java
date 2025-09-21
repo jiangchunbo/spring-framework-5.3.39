@@ -78,7 +78,10 @@ class ReschedulingRunnable extends DelegatingErrorHandlingRunnable implements Sc
 			if (this.scheduledExecutionTime == null) {
 				return null;
 			}
+			// 下一次执行的时刻 - 当前时钟 = 延迟多久执行
 			long delay = this.scheduledExecutionTime.getTime() - this.triggerContext.getClock().millis();
+
+			// 延时调度一次
 			this.currentFuture = this.executor.schedule(this, delay, TimeUnit.MILLISECONDS);
 			return this;
 		}
@@ -91,8 +94,13 @@ class ReschedulingRunnable extends DelegatingErrorHandlingRunnable implements Sc
 
 	@Override
 	public void run() {
+		// 实际执行时刻
 		Date actualExecutionTime = new Date(this.triggerContext.getClock().millis());
+
+		// 执行逻辑
 		super.run();
+
+		// 执行完毕时刻
 		Date completionTime = new Date(this.triggerContext.getClock().millis());
 		synchronized (this.triggerContextMonitor) {
 			Assert.state(this.scheduledExecutionTime != null, "No scheduled execution");

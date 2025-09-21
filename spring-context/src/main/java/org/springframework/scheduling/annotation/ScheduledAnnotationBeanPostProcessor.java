@@ -220,11 +220,15 @@ public class ScheduledAnnotationBeanPostProcessor
 		}
 	}
 
+	/**
+	 * 所有非懒加载 singleton 实例化完毕
+	 */
 	@Override
 	public void afterSingletonsInstantiated() {
 		// Remove resolved singleton classes from cache
+		// 之所以做这个动作，是因为所有 singleton 已经创建完毕，不需要再使用这个容器了
+		// --> 算是一个清理操作吧
 		this.nonAnnotatedClasses.clear();
-
 
 		// 几乎不会走入下面的分支吧
 		// 怎么可能 applicationContext == null
@@ -235,11 +239,15 @@ public class ScheduledAnnotationBeanPostProcessor
 		}
 	}
 
+	/**
+	 * 发布 ContextRefreshedEvent 事件。这个时机比 afterSingletonsInstantiated 晚一些
+	 *
+	 * @param event 事件
+	 */
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		// @@@@@@@@@@@@@@@@@@@
 		// 当前 context refresh 刷新完毕，就被调用，也就是所有非懒加载的单例 bean 都已经创建好
-
 
 		if (event.getApplicationContext() == this.applicationContext) {
 			// Running in an ApplicationContext -> register tasks this late...
@@ -250,10 +258,13 @@ public class ScheduledAnnotationBeanPostProcessor
 	}
 
 	private void finishRegistration() {
+		// 设置 scheduler
+		// 默认这里是不会赋值的，因为没有设置
 		if (this.scheduler != null) {
 			this.registrar.setScheduler(this.scheduler);
 		}
 
+		// 扩展点，可以让其他 bean 获取 registrar
 		if (this.beanFactory instanceof ListableBeanFactory) {
 			Map<String, SchedulingConfigurer> beans =
 					((ListableBeanFactory) this.beanFactory).getBeansOfType(SchedulingConfigurer.class);
@@ -264,8 +275,11 @@ public class ScheduledAnnotationBeanPostProcessor
 			}
 		}
 
+		// 如果存在需要执行的任务，但是没有设置 scheduler，下面将会从 bean factory 中按一定顺序找到 scheduler
 		if (this.registrar.hasTasks() && this.registrar.getScheduler() == null) {
 			Assert.state(this.beanFactory != null, "BeanFactory must be set to find scheduler by type");
+
+			// 1. 尝试 byType 寻找 TaskScheduler
 			try {
 				// Search for TaskScheduler bean...
 				this.registrar.setTaskScheduler(resolveSchedulerBean(this.beanFactory, TaskScheduler.class, false));
@@ -274,6 +288,8 @@ public class ScheduledAnnotationBeanPostProcessor
 					logger.trace("Could not find unique TaskScheduler bean - attempting to resolve by name: " +
 							ex.getMessage());
 				}
+
+				// 2. 尝试 byName 查找类型是 TaskScheduler 同时 beanName == "taskScheduler"
 				try {
 					this.registrar.setTaskScheduler(resolveSchedulerBean(this.beanFactory, TaskScheduler.class, true));
 				} catch (NoSuchBeanDefinitionException ex2) {
@@ -291,6 +307,7 @@ public class ScheduledAnnotationBeanPostProcessor
 							ex.getMessage());
 				}
 				// Search for ScheduledExecutorService bean next...
+				// 3. 尝试查找 ScheduledExecutorService
 				try {
 					this.registrar.setScheduler(resolveSchedulerBean(this.beanFactory, ScheduledExecutorService.class, false));
 				} catch (NoUniqueBeanDefinitionException ex2) {
@@ -298,6 +315,8 @@ public class ScheduledAnnotationBeanPostProcessor
 						logger.trace("Could not find unique ScheduledExecutorService bean - attempting to resolve by name: " +
 								ex2.getMessage());
 					}
+
+					// 4. 查找类型是 ScheduledExecutorService
 					try {
 						this.registrar.setScheduler(resolveSchedulerBean(this.beanFactory, ScheduledExecutorService.class, true));
 					} catch (NoSuchBeanDefinitionException ex3) {
@@ -457,6 +476,7 @@ public class ScheduledAnnotationBeanPostProcessor
 						} else {
 							trigger = new CronTrigger(cron);
 						}
+						// 1. 添加 cron 类型的任务
 						tasks.add(this.registrar.scheduleCronTask(new CronTask(runnable, trigger)));
 					}
 				}
@@ -472,6 +492,7 @@ public class ScheduledAnnotationBeanPostProcessor
 			if (fixedDelay >= 0) {
 				Assert.isTrue(!processedSchedule, errorMessage);
 				processedSchedule = true;
+				// 2. 添加 fixed 类型的任务
 				tasks.add(this.registrar.scheduleFixedDelayTask(new FixedDelayTask(runnable, fixedDelay, initialDelay)));
 			}
 
@@ -489,6 +510,7 @@ public class ScheduledAnnotationBeanPostProcessor
 						throw new IllegalArgumentException(
 								"Invalid fixedDelayString value \"" + fixedDelayString + "\" - cannot parse into long");
 					}
+					// 2. 添加 fixed 类型的任务
 					tasks.add(this.registrar.scheduleFixedDelayTask(new FixedDelayTask(runnable, fixedDelay, initialDelay)));
 				}
 			}
@@ -498,6 +520,8 @@ public class ScheduledAnnotationBeanPostProcessor
 			if (fixedRate >= 0) {
 				Assert.isTrue(!processedSchedule, errorMessage);
 				processedSchedule = true;
+
+				// 3. 添加 fixedRate 类型的任务
 				tasks.add(this.registrar.scheduleFixedRateTask(new FixedRateTask(runnable, fixedRate, initialDelay)));
 			}
 			String fixedRateString = scheduled.fixedRateString();
@@ -514,6 +538,7 @@ public class ScheduledAnnotationBeanPostProcessor
 						throw new IllegalArgumentException(
 								"Invalid fixedRateString value \"" + fixedRateString + "\" - cannot parse into long");
 					}
+					// 3. 添加 fixedRate 类型的任务
 					tasks.add(this.registrar.scheduleFixedRateTask(new FixedRateTask(runnable, fixedRate, initialDelay)));
 				}
 			}
@@ -522,7 +547,9 @@ public class ScheduledAnnotationBeanPostProcessor
 			Assert.isTrue(processedSchedule, errorMessage);
 
 			// Finally register the scheduled tasks
+			// 将上述结果注册到 scheduledTasks
 			synchronized (this.scheduledTasks) {
+				// 一个分组，通过 bean 可以找到有哪些 ScheduledTask
 				Set<ScheduledTask> regTasks = this.scheduledTasks.computeIfAbsent(bean, key -> new LinkedHashSet<>(4));
 				regTasks.addAll(tasks);
 			}
@@ -575,13 +602,20 @@ public class ScheduledAnnotationBeanPostProcessor
 	 */
 	@Override
 	public Set<ScheduledTask> getScheduledTasks() {
+		// 构造了一个 result 结果 Set，待会放进去
 		Set<ScheduledTask> result = new LinkedHashSet<>();
+
+		// 锁定这个对象，防止被其他人写入其他元素
 		synchronized (this.scheduledTasks) {
+
+			// 只是一个 copy 而已
 			Collection<Set<ScheduledTask>> allTasks = this.scheduledTasks.values();
 			for (Set<ScheduledTask> tasks : allTasks) {
 				result.addAll(tasks);
 			}
 		}
+
+		//
 		result.addAll(this.registrar.getScheduledTasks());
 		return result;
 	}

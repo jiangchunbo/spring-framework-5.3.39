@@ -30,6 +30,9 @@ import org.springframework.scheduling.support.CronTrigger;
  */
 public class CronTask extends TriggerTask {
 
+	/**
+	 * Cron 表达式
+	 */
 	private final String expression;
 
 
@@ -39,6 +42,7 @@ public class CronTask extends TriggerTask {
 	 * @param expression the cron expression defining when the task should be executed
 	 */
 	public CronTask(Runnable runnable, String expression) {
+		// 将表达式封装为 CronTrigger
 		this(runnable, new CronTrigger(expression));
 	}
 

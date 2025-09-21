@@ -192,12 +192,14 @@ public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements T
 	public ScheduledFuture<?> schedule(Runnable task, Trigger trigger) {
 		try {
 			if (this.enterpriseConcurrentScheduler) {
-				return new EnterpriseConcurrentTriggerScheduler().schedule(decorateTask(task, true), trigger);
+				return new EnterpriseConcurrentTriggerScheduler()
+						.schedule(decorateTask(task, true), trigger);
 			}
 			else {
 				ErrorHandler errorHandler =
 						(this.errorHandler != null ? this.errorHandler : TaskUtils.getDefaultErrorHandler(true));
-				return new ReschedulingRunnable(task, trigger, this.clock, this.scheduledExecutor, errorHandler).schedule();
+				return new ReschedulingRunnable(task, trigger, this.clock, this.scheduledExecutor, errorHandler)
+						.schedule();
 			}
 		}
 		catch (RejectedExecutionException ex) {
@@ -218,6 +220,7 @@ public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements T
 
 	@Override
 	public ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Date startTime, long period) {
+		// 这个方法有两个 delay：初始 delay、启动 delay
 		long initialDelay = startTime.getTime() - this.clock.millis();
 		try {
 			return this.scheduledExecutor.scheduleAtFixedRate(decorateTask(task, true), initialDelay, period, TimeUnit.MILLISECONDS);

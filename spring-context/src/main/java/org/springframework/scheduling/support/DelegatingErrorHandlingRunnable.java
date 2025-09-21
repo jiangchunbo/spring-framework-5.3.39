@@ -48,6 +48,9 @@ public class DelegatingErrorHandlingRunnable implements Runnable {
 		this.errorHandler = errorHandler;
 	}
 
+	/**
+	 * 这是一个带有错误处理器的 Runnable，因此它的 run 方法帮我们捕捉了异常
+	 */
 	@Override
 	public void run() {
 		try {

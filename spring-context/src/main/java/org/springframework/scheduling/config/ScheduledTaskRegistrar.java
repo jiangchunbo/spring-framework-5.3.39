@@ -69,9 +69,15 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 	 */
 	public static final String CRON_DISABLED = "-";
 
+	/**
+	 * TaskScheduler 是 Spring 的任务调度器
+	 */
 	@Nullable
 	private TaskScheduler taskScheduler;
 
+	/**
+	 * localExecutor 是 JDK 的执行器
+	 */
 	@Nullable
 	private ScheduledExecutorService localExecutor;
 
@@ -287,6 +293,8 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 
 	/**
 	 * Add a {@link CronTask}.
+	 * <p>
+	 * 就是向 cronTasks 添加 CronTask 对象
 	 *
 	 * @since 3.2
 	 */
@@ -378,6 +386,7 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 				addScheduledTask(scheduleTriggerTask(task));
 			}
 		}
+
 		if (this.cronTasks != null) {
 			for (CronTask task : this.cronTasks) {
 				addScheduledTask(scheduleCronTask(task));
@@ -435,9 +444,6 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 	 */
 	@Nullable
 	public ScheduledTask scheduleCronTask(CronTask task) {
-		// @@@@@@@@@@@@@@@@@@@@@@@
-		// 注册一个任务
-
 		ScheduledTask scheduledTask = this.unresolvedTasks.remove(task);
 		boolean newTask = false;
 		if (scheduledTask == null) {
@@ -445,9 +451,13 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 			scheduledTask = new ScheduledTask(task);
 			newTask = true;
 		}
+
+		// 调度
 		if (this.taskScheduler != null) {
 			scheduledTask.future = this.taskScheduler.schedule(task.getRunnable(), task.getTrigger());
-		} else {
+		}
+		// 注册
+		else {
 			addCronTask(task);
 			this.unresolvedTasks.put(task, scheduledTask);
 		}
@@ -487,8 +497,11 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 			scheduledTask = new ScheduledTask(task);
 			newTask = true;
 		}
+
+		// 调度
 		if (this.taskScheduler != null) {
 			if (task.getInitialDelay() > 0) {
+				// 计算开始时间
 				Date startTime = new Date(this.taskScheduler.getClock().millis() + task.getInitialDelay());
 				scheduledTask.future =
 						this.taskScheduler.scheduleAtFixedRate(task.getRunnable(), startTime, task.getInterval());
@@ -496,9 +509,11 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 				scheduledTask.future =
 						this.taskScheduler.scheduleAtFixedRate(task.getRunnable(), task.getInterval());
 			}
-		} else {
-			addFixedRateTask(task);
-			this.unresolvedTasks.put(task, scheduledTask);
+		}
+		// 注册
+		else {
+			addFixedRateTask(task); 						// 投放到对应的任务 List
+			this.unresolvedTasks.put(task, scheduledTask); 	// 通过 task -> 找到 scheduledTask
 		}
 		return (newTask ? scheduledTask : null);
 	}
@@ -536,6 +551,10 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 			scheduledTask = new ScheduledTask(task);
 			newTask = true;
 		}
+
+		// 当 taskScheduler == null 时，表示处于注册状态
+
+		// 调度
 		if (this.taskScheduler != null) {
 			if (task.getInitialDelay() > 0) {
 				Date startTime = new Date(this.taskScheduler.getClock().millis() + task.getInitialDelay());
@@ -545,7 +564,9 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 				scheduledTask.future =
 						this.taskScheduler.scheduleWithFixedDelay(task.getRunnable(), task.getInterval());
 			}
-		} else {
+		}
+		// 注册
+		else {
 			addFixedDelayTask(task);
 			this.unresolvedTasks.put(task, scheduledTask);
 		}
