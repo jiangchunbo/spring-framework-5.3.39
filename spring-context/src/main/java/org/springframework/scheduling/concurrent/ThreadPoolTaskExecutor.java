@@ -84,6 +84,9 @@ import org.springframework.util.concurrent.ListenableFutureTask;
 public class ThreadPoolTaskExecutor extends ExecutorConfigurationSupport
 		implements AsyncListenableTaskExecutor, SchedulingTaskExecutor {
 
+	// @@@@@@@@@@@@@@@@@@@@@@@
+	// 一种基于 ThreadPool 的实现
+
 	private final Object poolSizeMonitor = new Object();
 
 	private int corePoolSize = 1;
@@ -101,6 +104,9 @@ public class ThreadPoolTaskExecutor extends ExecutorConfigurationSupport
 	@Nullable
 	private TaskDecorator taskDecorator;
 
+	/**
+	 * 包装的 ThreadPoolExecutor
+	 */
 	@Nullable
 	private ThreadPoolExecutor threadPoolExecutor;
 
