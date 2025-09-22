@@ -52,6 +52,9 @@ import org.springframework.lang.Nullable;
  */
 final class PostProcessorRegistrationDelegate {
 
+	/**
+	 * 私有构造函数，防止被其他人实例化
+	 */
 	private PostProcessorRegistrationDelegate() {
 	}
 
@@ -71,6 +74,14 @@ final class PostProcessorRegistrationDelegate {
 		// list of all declined PRs involving changes to PostProcessorRegistrationDelegate
 		// to ensure that your proposal does not result in a breaking change:
 		// https://github.com/spring-projects/spring-framework/issues?q=PostProcessorRegistrationDelegate+is%3Aclosed+label%3A%22status%3A+declined%22
+
+		// 警告：尽管乍看之下，这个方法的主体可以轻松重构，以避免使用多次循环和多个 list，
+		// 但这里之所以使用多个 list，并且多次遍历 processor，是“有意为之”
+		//
+		// 我们必须确保遵守 PriorityOrdered 与 Ordered 这两类处理器的契约。
+		// 尤其要注意：绝不能再错误的时机实例化（通过 getBean() 调用）或向 ApplicationContext 注册这些处理器
+
+		// 在提交 Pull Request (RP) 来修改此方法之前，请必须查看所有曾试图更改 PostProcessorRegistrationDelegate 但被拒绝的 PR，确保你的改动不会造成破坏性变更
 
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
 		Set<String> processedBeans = new HashSet<>();
