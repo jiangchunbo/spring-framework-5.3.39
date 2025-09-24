@@ -102,8 +102,12 @@ public class CronTrigger implements Trigger {
 	 */
 	@Override
 	public Date nextExecutionTime(TriggerContext triggerContext) {
+		// 获取上次完成时间，如果初始状态一定是 null
 		Date timestamp = triggerContext.lastCompletionTime();
+
 		if (timestamp != null) {
+			// 校正 timestamp，避免因为各种原因，导致上次执行完成时间还比调度时间早
+			// 这有可能导致接下来的计算得到一个不应该调度的时间，导致任务重复调度
 			Date scheduled = triggerContext.lastScheduledExecutionTime();
 			if (scheduled != null && timestamp.before(scheduled)) {
 				// Previous task apparently executed too early...
@@ -115,9 +119,17 @@ public class CronTrigger implements Trigger {
 		else {
 			timestamp = new Date(triggerContext.getClock().millis());
 		}
+
+		// 得到 Zone
 		ZoneId zone = (this.zoneId != null ? this.zoneId : triggerContext.getClock().getZone());
+
+		// 根据 Zone 得到一个带有时区的时间
 		ZonedDateTime zonedTimestamp = ZonedDateTime.ofInstant(timestamp.toInstant(), zone);
+
+		// 计算从 zonedTimestamp 向后的执行时间
 		ZonedDateTime nextTimestamp = this.expression.next(zonedTimestamp);
+
+		// 转化为 Date
 		return (nextTimestamp != null ? Date.from(nextTimestamp.toInstant()) : null);
 	}
 

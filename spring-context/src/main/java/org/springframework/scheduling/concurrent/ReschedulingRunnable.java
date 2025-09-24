@@ -97,12 +97,14 @@ class ReschedulingRunnable extends DelegatingErrorHandlingRunnable implements Sc
 		// 实际执行时刻
 		Date actualExecutionTime = new Date(this.triggerContext.getClock().millis());
 
-		// 执行逻辑
+		// 执行具体的逻辑 + 异常处理机制
 		super.run();
 
 		// 执行完毕时刻
 		Date completionTime = new Date(this.triggerContext.getClock().millis());
+
 		synchronized (this.triggerContextMonitor) {
+			// 调度时间
 			Assert.state(this.scheduledExecutionTime != null, "No scheduled execution");
 			this.triggerContext.update(this.scheduledExecutionTime, actualExecutionTime, completionTime);
 			if (!obtainCurrentFuture().isCancelled()) {

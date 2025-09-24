@@ -39,14 +39,14 @@ import org.springframework.util.StringUtils;
  * cron even in combination with the optional Quartz-specific L/# expressions.
  *
  * @author Arjen Poutsma
- * @since 5.3
  * @see CronTrigger
+ * @since 5.3
  */
 public final class CronExpression {
 
 	static final int MAX_ATTEMPTS = 366;
 
-	private static final String[] MACROS = new String[] {
+	private static final String[] MACROS = new String[]{
 			"@yearly", "0 0 0 1 1 *",
 			"@annually", "0 0 0 1 1 *",
 			"@monthly", "0 0 0 1 * *",
@@ -56,21 +56,18 @@ public final class CronExpression {
 			"@hourly", "0 0 * * * *"
 	};
 
-
 	private final CronField[] fields;
 
 	private final String expression;
 
-
 	private CronExpression(CronField seconds, CronField minutes, CronField hours,
-			CronField daysOfMonth, CronField months, CronField daysOfWeek, String expression) {
+						   CronField daysOfMonth, CronField months, CronField daysOfWeek, String expression) {
 
 		// Reverse order, to make big changes first.
 		// To make sure we end up at 0 nanos, we add an extra field.
-		this.fields = new CronField[] {daysOfWeek, months, daysOfMonth, hours, minutes, seconds, CronField.zeroNanos()};
+		this.fields = new CronField[]{daysOfWeek, months, daysOfMonth, hours, minutes, seconds, CronField.zeroNanos()};
 		this.expression = expression;
 	}
-
 
 	/**
 	 * Parse the given
@@ -167,10 +164,11 @@ public final class CronExpression {
 	 * <li>{@code "@daily"} (or {@code "@midnight"}) to run once a day, i.e. {@code "0 0 0 * * *"},</li>
 	 * <li>{@code "@hourly"} to run once an hour, i.e. {@code "0 0 * * * *"}.</li>
 	 * </ul>
+	 *
 	 * @param expression the expression string to parse
 	 * @return the parsed {@code CronExpression} object
 	 * @throws IllegalArgumentException in the expression does not conform to
-	 * the cron format
+	 *                                  the cron format
 	 */
 	public static CronExpression parse(String expression) {
 		Assert.hasLength(expression, "Expression must not be empty");
@@ -191,8 +189,7 @@ public final class CronExpression {
 			CronField daysOfWeek = CronField.parseDaysOfWeek(fields[5]);
 
 			return new CronExpression(seconds, minutes, hours, daysOfMonth, months, daysOfWeek, expression);
-		}
-		catch (IllegalArgumentException ex) {
+		} catch (IllegalArgumentException ex) {
 			String msg = ex.getMessage() + " in cron expression \"" + expression + "\"";
 			throw new IllegalArgumentException(msg, ex);
 		}
@@ -200,6 +197,7 @@ public final class CronExpression {
 
 	/**
 	 * Determine whether the given string represents a valid cron expression.
+	 *
 	 * @param expression the expression to evaluate
 	 * @return {@code true} if the given expression is a valid cron expression
 	 * @since 5.3.8
@@ -211,12 +209,10 @@ public final class CronExpression {
 		try {
 			parse(expression);
 			return true;
-		}
-		catch (IllegalArgumentException ex) {
+		} catch (IllegalArgumentException ex) {
 			return false;
 		}
 	}
-
 
 	private static String resolveMacros(String expression) {
 		expression = expression.trim();
@@ -228,19 +224,19 @@ public final class CronExpression {
 		return expression;
 	}
 
-
 	/**
 	 * Calculate the next {@link Temporal} that matches this expression.
+	 *
 	 * @param temporal the seed value
-	 * @param <T> the type of temporal
+	 * @param <T>      the type of temporal
 	 * @return the next temporal that matches this expression, or {@code null}
 	 * if no such temporal can be found
 	 */
 	@Nullable
 	public <T extends Temporal & Comparable<? super T>> T next(T temporal) {
+		// next 或者 same
 		return nextOrSame(ChronoUnit.NANOS.addTo(temporal, 1));
 	}
-
 
 	@Nullable
 	private <T extends Temporal & Comparable<? super T>> T nextOrSame(T temporal) {
@@ -264,7 +260,6 @@ public final class CronExpression {
 		}
 		return temporal;
 	}
-
 
 	@Override
 	public boolean equals(@Nullable Object other) {

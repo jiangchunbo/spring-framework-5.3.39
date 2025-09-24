@@ -146,11 +146,16 @@ final class ProfilesParser {
 
 	private enum Context { NONE, NEGATE, PARENTHESIS }
 
-
+	/**
+	 * Profiles 的组合体
+	 */
 	private static class ParsedProfiles implements Profiles {
 
 		private final Set<String> expressions = new LinkedHashSet<>();
 
+		/**
+		 * 组合了所有的 Profiles
+		 */
 		private final Profiles[] parsed;
 
 		ParsedProfiles(String[] expressions, Profiles[] parsed) {
@@ -158,8 +163,14 @@ final class ProfilesParser {
 			this.parsed = parsed;
 		}
 
+		/**
+		 * 检查是否匹配
+		 */
 		@Override
 		public boolean matches(Predicate<String> activeProfiles) {
+
+			// 其实就是检查是否匹配 any
+
 			for (Profiles candidate : this.parsed) {
 				if (candidate.matches(activeProfiles)) {
 					return true;

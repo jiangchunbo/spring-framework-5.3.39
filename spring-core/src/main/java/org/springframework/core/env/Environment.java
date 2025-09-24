@@ -59,7 +59,6 @@ package org.springframework.core.env;
  * @author Chris Beams
  * @author Phillip Webb
  * @author Sam Brannen
- * @since 3.1
  * @see PropertyResolver
  * @see EnvironmentCapable
  * @see ConfigurableEnvironment
@@ -69,6 +68,7 @@ package org.springframework.core.env;
  * @see org.springframework.context.ConfigurableApplicationContext#getEnvironment
  * @see org.springframework.context.ConfigurableApplicationContext#setEnvironment
  * @see org.springframework.context.support.AbstractApplicationContext#createEnvironment
+ * @since 3.1
  */
 public interface Environment extends PropertyResolver {
 
@@ -81,6 +81,7 @@ public interface Environment extends PropertyResolver {
 	 * {@link ConfigurableEnvironment#setActiveProfiles(String...)}.
 	 * <p>If no profiles have explicitly been specified as active, then any
 	 * {@linkplain #getDefaultProfiles() default profiles} will automatically be activated.
+	 *
 	 * @see #getDefaultProfiles
 	 * @see ConfigurableEnvironment#setActiveProfiles
 	 * @see AbstractEnvironment#ACTIVE_PROFILES_PROPERTY_NAME
@@ -90,6 +91,7 @@ public interface Environment extends PropertyResolver {
 	/**
 	 * Return the set of profiles to be active by default when no active profiles have
 	 * been set explicitly.
+	 *
 	 * @see #getActiveProfiles
 	 * @see ConfigurableEnvironment#setDefaultProfiles
 	 * @see AbstractEnvironment#DEFAULT_PROFILES_PROPERTY_NAME
@@ -107,9 +109,10 @@ public interface Environment extends PropertyResolver {
 	 * expression syntax.
 	 * <p>This method is a convenient shortcut for
 	 * {@code env.acceptsProfiles(Profiles.of(profileExpressions))}.
-	 * @since 5.3.28
+	 *
 	 * @see Profiles#of(String...)
 	 * @see #acceptsProfiles(Profiles)
+	 * @since 5.3.28
 	 */
 	default boolean matchesProfiles(String... profileExpressions) {
 		return acceptsProfiles(Profiles.of(profileExpressions));
@@ -124,9 +127,10 @@ public interface Environment extends PropertyResolver {
 	 * will return {@code true} if the given profile is <em>not</em> active. For
 	 * example, {@code env.acceptsProfiles("p1", "!p2")} will return {@code true}
 	 * if profile 'p1' is active or 'p2' is not active.
+	 *
 	 * @throws IllegalArgumentException if called with a {@code null} array, an
-	 * empty array, zero arguments or if any profile is {@code null}, empty, or
-	 * whitespace only
+	 *                                  empty array, zero arguments or if any profile is {@code null}, empty, or
+	 *                                  whitespace only
 	 * @see #getActiveProfiles
 	 * @see #getDefaultProfiles
 	 * @see #matchesProfiles(String...)
@@ -144,9 +148,10 @@ public interface Environment extends PropertyResolver {
 	 * matches the {@linkplain #getDefaultProfiles() default profiles}.
 	 * <p>If you wish provide profile expressions directly as strings, use
 	 * {@link #matchesProfiles(String...)} instead.
-	 * @since 5.1
+	 *
 	 * @see #matchesProfiles(String...)
 	 * @see Profiles#of(String...)
+	 * @since 5.1
 	 */
 	boolean acceptsProfiles(Profiles profiles);
 
