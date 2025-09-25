@@ -419,9 +419,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return adaptBeanInstance(name, beanInstance, requiredType);
 	}
 
+	/**
+	 * 类型适配
+	 */
 	@SuppressWarnings("unchecked")
 	<T> T adaptBeanInstance(String name, Object bean, @Nullable Class<?> requiredType) {
 		// Check if required type matches the type of the actual bean instance.
+
+		// 1. 如果用户对类型没有要求，那么直接返回即可
+		// 2. 如果用户对类型有要求，并且类型是兼容的，那么强制准换
+		// 3. 如果用户对类型有要求，类型不兼容，那么使用转换器
+
 		if (requiredType != null && !requiredType.isInstance(bean)) {
 			try {
 				Object convertedBean = getTypeConverter().convertIfNecessary(bean, requiredType);
