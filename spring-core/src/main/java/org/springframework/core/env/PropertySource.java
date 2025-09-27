@@ -63,6 +63,9 @@ public abstract class PropertySource<T> {
 
 	protected final String name;
 
+	/**
+	 * 属性源
+	 */
 	protected final T source;
 
 

@@ -117,6 +117,9 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	 */
 	private final MutablePropertySources propertySources;
 
+	/**
+	 * Environment 内部的组件，会将获取属性的能力交给 ConfigurablePropertyResolver
+	 */
 	private final ConfigurablePropertyResolver propertyResolver;
 
 
