@@ -46,6 +46,8 @@ public abstract class AbstractFileResolvingResource extends AbstractResource {
 	public boolean exists() {
 		try {
 			URL url = getURL();
+
+			// 如果 URL 是文件协议，使用 File.exists
 			if (ResourceUtils.isFileURL(url)) {
 				// Proceed with file system resolution
 				return getFile().exists();
@@ -140,9 +142,13 @@ public abstract class AbstractFileResolvingResource extends AbstractResource {
 	public boolean isFile() {
 		try {
 			URL url = getURL();
+
+			// 针对 JBoss 的路径
 			if (url.getProtocol().startsWith(ResourceUtils.URL_PROTOCOL_VFS)) {
 				return VfsResourceDelegate.getResource(url).isFile();
 			}
+
+			// 如果协议是 file 就是文件
 			return ResourceUtils.URL_PROTOCOL_FILE.equals(url.getProtocol());
 		}
 		catch (IOException ex) {

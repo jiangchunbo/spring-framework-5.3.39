@@ -154,6 +154,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 			}
 		}
 
+		// 没有前缀的寻址，具体看实现类是哪种，例如 ServletContextResourceLoader
 		if (location.startsWith("/")) {
 			return getResourceByPath(location);
 		}
