@@ -93,6 +93,7 @@ public class InputStreamResource extends AbstractResource {
 	 */
 	@Override
 	public InputStream getInputStream() throws IOException, IllegalStateException {
+		// 只允许调用一次该方法
 		if (this.read) {
 			throw new IllegalStateException("InputStream has already been read - " +
 					"do not use InputStreamResource if a stream needs to be read multiple times");

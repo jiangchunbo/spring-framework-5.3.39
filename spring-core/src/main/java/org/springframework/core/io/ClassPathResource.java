@@ -45,6 +45,9 @@ import org.springframework.util.StringUtils;
  */
 public class ClassPathResource extends AbstractFileResolvingResource {
 
+	/**
+	 * 第一个字符一定不是 "/"
+	 */
 	private final String path;
 
 	@Nullable
@@ -65,6 +68,7 @@ public class ClassPathResource extends AbstractFileResolvingResource {
 	 * @see org.springframework.util.ClassUtils#getDefaultClassLoader()
 	 */
 	public ClassPathResource(String path) {
+		// 这里必须类型强制转换，否则无法辨别使用哪个构造器
 		this(path, (ClassLoader) null);
 	}
 
@@ -79,6 +83,8 @@ public class ClassPathResource extends AbstractFileResolvingResource {
 	 */
 	public ClassPathResource(String path, @Nullable ClassLoader classLoader) {
 		Assert.notNull(path, "Path must not be null");
+
+		// 类路径资源，path 一定不要以 / 开头
 		String pathToUse = StringUtils.cleanPath(path);
 		if (pathToUse.startsWith("/")) {
 			pathToUse = pathToUse.substring(1);
@@ -163,9 +169,11 @@ public class ClassPathResource extends AbstractFileResolvingResource {
 	@Nullable
 	protected URL resolveURL() {
 		try {
+			// 使用 clazz 加载资源，根据当前类所在包相对寻址
 			if (this.clazz != null) {
 				return this.clazz.getResource(this.path);
 			}
+			// 使用 classLoader 加载资源，绝对寻址
 			else if (this.classLoader != null) {
 				return this.classLoader.getResource(this.path);
 			}
