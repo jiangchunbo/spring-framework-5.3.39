@@ -36,4 +36,6 @@ import org.springframework.core.convert.converter.ConverterRegistry;
  */
 public interface ConfigurableConversionService extends ConversionService, ConverterRegistry {
 
+	// 似乎是一个组合接口，将可配置的转换器与转换服务聚合在一起
+
 }
