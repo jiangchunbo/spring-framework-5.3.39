@@ -86,11 +86,10 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageConverterM
 	 * {@code ResponseBodyAdvice}.
 	 */
 	public RequestPartMethodArgumentResolver(List<HttpMessageConverter<?>> messageConverters,
-			List<Object> requestResponseBodyAdvice) {
+											 List<Object> requestResponseBodyAdvice) {
 
 		super(messageConverters, requestResponseBodyAdvice);
 	}
-
 
 	/**
 	 * Whether the given {@linkplain MethodParameter method parameter} is
@@ -104,21 +103,25 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageConverterM
 	 */
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
+		// 基本思想就是包含 @RequestPart 一定归这个解析器解析
+
 		if (parameter.hasParameterAnnotation(RequestPart.class)) {
 			return true;
 		}
-		else {
-			if (parameter.hasParameterAnnotation(RequestParam.class)) {
-				return false;
-			}
-			return MultipartResolutionDelegate.isMultipartArgument(parameter.nestedIfOptional());
+
+		// 如果显式写了 @RequestParam 说明这不是我的领域，我不应该触碰
+		if (parameter.hasParameterAnnotation(RequestParam.class)) {
+			return false;
 		}
+
+		// 最后，让我们看看 multipart 类型参数
+		return MultipartResolutionDelegate.isMultipartArgument(parameter.nestedIfOptional());
 	}
 
 	@Override
 	@Nullable
 	public Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
-			NativeWebRequest request, @Nullable WebDataBinderFactory binderFactory) throws Exception {
+								  NativeWebRequest request, @Nullable WebDataBinderFactory binderFactory) throws Exception {
 
 		HttpServletRequest servletRequest = request.getNativeRequest(HttpServletRequest.class);
 		Assert.state(servletRequest != null, "No HttpServletRequest");
@@ -133,8 +136,7 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageConverterM
 		Object mpArg = MultipartResolutionDelegate.resolveMultipartArgument(name, parameter, servletRequest);
 		if (mpArg != MultipartResolutionDelegate.UNRESOLVABLE) {
 			arg = mpArg;
-		}
-		else {
+		} else {
 			try {
 				HttpInputMessage inputMessage = new RequestPartServletServerHttpRequest(servletRequest, name);
 				arg = readWithMessageConverters(inputMessage, parameter, parameter.getNestedGenericParameterType());
@@ -150,8 +152,7 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageConverterM
 						mavContainer.addAttribute(BindingResult.MODEL_KEY_PREFIX + name, binder.getBindingResult());
 					}
 				}
-			}
-			catch (MissingServletRequestPartException | MultipartException ex) {
+			} catch (MissingServletRequestPartException | MultipartException ex) {
 				if (isRequired) {
 					throw ex;
 				}
@@ -161,8 +162,7 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageConverterM
 		if (arg == null && isRequired) {
 			if (!MultipartResolutionDelegate.isMultipartRequest(servletRequest)) {
 				throw new MultipartException("Current request is not a multipart request");
-			}
-			else {
+			} else {
 				throw new MissingServletRequestPartException(name);
 			}
 		}
@@ -189,8 +189,7 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageConverterM
 		// in order to prevent file descriptor leaks.
 		try {
 			body.close();
-		}
-		catch (IOException ex) {
+		} catch (IOException ex) {
 			// ignore
 		}
 	}

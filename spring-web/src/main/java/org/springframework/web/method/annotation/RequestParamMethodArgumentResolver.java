@@ -78,6 +78,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethodArgumentResolver
 		implements UriComponentsContributor {
 
+	// 简单理解就是用于解析 @RequestParam 这一类的方法参数的
+
 	/**
 	 * 表示字符串类型的类型描述器
 	 */
@@ -87,7 +89,6 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 	 * 是否启用默认解析模式
 	 */
 	private final boolean useDefaultResolution;
-
 
 	/**
 	 * Create a new {@link RequestParamMethodArgumentResolver} instance.
@@ -119,7 +120,6 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 		this.useDefaultResolution = useDefaultResolution;
 	}
 
-
 	/**
 	 * Supports the following:
 	 * <ul>
@@ -133,34 +133,37 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 	 */
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
+		// 是否能够解析这种方法参数
+
 		// 一般我们认为有 @RequestParam 这个解析器就能处理
 		// 还有一种情况是如果你给一个 Map 加注解。 @Request Map
 		if (parameter.hasParameterAnnotation(RequestParam.class)) {
 			if (Map.class.isAssignableFrom(parameter.nestedIfOptional().getNestedParameterType())) {
 				RequestParam requestParam = parameter.getParameterAnnotation(RequestParam.class);
 				return (requestParam != null && StringUtils.hasText(requestParam.name()));
-			} else {
-				return true;
 			}
-		} else {
-			// 因为这个方法参数解析器是解析 @RequestParam 的，所以如果有注解 @RequestPart 就不解析（显式注解）
-			if (parameter.hasParameterAnnotation(RequestPart.class)) {
-				return false;
-			}
+			return true;
+		}
 
-			// 不带注解，但是类型很特殊
-			parameter = parameter.nestedIfOptional();
-			// MultipartFile、Part
-			if (MultipartResolutionDelegate.isMultipartArgument(parameter)) {
-				return true;
-			}
-			// 开启默认解析
-			else if (this.useDefaultResolution) {
-				// 如果使用默认解析，那么简单类型也可以处理
-				return BeanUtils.isSimpleProperty(parameter.getNestedParameterType());
-			} else {
-				return false;
-			}
+		// 不关心 @RequestPart 注解，因为这不是我的领域！！！
+		if (parameter.hasParameterAnnotation(RequestPart.class)) {
+			return false;
+		}
+
+		// 不带注解，但是类型很特殊
+		parameter = parameter.nestedIfOptional();
+
+		// 检查参数的类型，是否是 MultipartFile 或者 Part (支持聚合体)
+		if (MultipartResolutionDelegate.isMultipartArgument(parameter)) {
+			return true;
+		}
+
+		// 开启默认解析
+		else if (this.useDefaultResolution) {
+			// 如果使用默认解析，那么简单类型也可以处理
+			return BeanUtils.isSimpleProperty(parameter.getNestedParameterType());
+		} else {
+			return false;
 		}
 	}
 
@@ -170,7 +173,6 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 		return (ann != null ? new RequestParamNamedValueInfo(ann) : new RequestParamNamedValueInfo());
 	}
 
-
 	/**
 	 * 这个方法的返回值可能是 Collection、数组、单个值、也可能是 String
 	 */
@@ -179,6 +181,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 	protected Object resolveName(String name, MethodParameter parameter, NativeWebRequest request) throws Exception {
 		HttpServletRequest servletRequest = request.getNativeRequest(HttpServletRequest.class);
 
+		// 解析 multipart 参数
 		if (servletRequest != null) {
 			Object mpArg = MultipartResolutionDelegate.resolveMultipartArgument(name, parameter, servletRequest);
 			if (mpArg != MultipartResolutionDelegate.UNRESOLVABLE) {
@@ -186,6 +189,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 			}
 		}
 
+		// 如果是 MultipartRequest 类型
 		Object arg = null;
 		MultipartRequest multipartRequest = request.getNativeRequest(MultipartRequest.class);
 		if (multipartRequest != null) {
@@ -194,6 +198,8 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 				arg = (files.size() == 1 ? files.get(0) : files);
 			}
 		}
+
+		// 依然无法解析，就走 request.getParameterValues
 		if (arg == null) {
 			String[] paramValues = request.getParameterValues(name);
 			if (paramValues != null) {
@@ -290,7 +296,6 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 		}
 	}
 
-
 	private static class RequestParamNamedValueInfo extends NamedValueInfo {
 
 		public RequestParamNamedValueInfo() {
@@ -300,6 +305,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 		public RequestParamNamedValueInfo(RequestParam annotation) {
 			super(annotation.name(), annotation.required(), annotation.defaultValue());
 		}
+
 	}
 
 }

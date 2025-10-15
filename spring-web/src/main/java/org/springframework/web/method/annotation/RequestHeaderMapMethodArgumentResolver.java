@@ -48,6 +48,8 @@ public class RequestHeaderMapMethodArgumentResolver implements HandlerMethodArgu
 
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
+		// @RequestHeader + Map
+
 		return (parameter.hasParameterAnnotation(RequestHeader.class) &&
 				Map.class.isAssignableFrom(parameter.getParameterType()));
 	}

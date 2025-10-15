@@ -72,6 +72,9 @@ public class TypeDescriptor implements Serializable {
 	 */
 	private final Class<?> type;
 
+	/**
+	 * 底层使用 ResolvableType 提供支持
+	 */
 	private final ResolvableType resolvableType;
 
 	private final AnnotatedElementAdapter annotatedElement;
