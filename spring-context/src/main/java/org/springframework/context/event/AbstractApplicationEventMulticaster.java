@@ -69,9 +69,12 @@ public abstract class AbstractApplicationEventMulticaster
 	 */
 	private final DefaultListenerRetriever defaultRetriever = new DefaultListenerRetriever();
 
-
 	/**
-	 * 缓存
+	 * 缓存。这个缓存一旦监听器增加/删除，就会被完全清空。
+	 * <p>
+	 * 因为监听器的增加/删除到底影响了哪些键，很难迅速判断
+	 * <p>
+	 * 而且监听器的注册通常在启动，或者配置变更，频率很低
 	 */
 	final Map<ListenerCacheKey, CachedListenerRetriever> retrieverCache = new ConcurrentHashMap<>(64);
 
@@ -80,7 +83,6 @@ public abstract class AbstractApplicationEventMulticaster
 
 	@Nullable
 	private ConfigurableBeanFactory beanFactory;
-
 
 	@Override
 	public void setBeanClassLoader(ClassLoader classLoader) {
@@ -106,7 +108,6 @@ public abstract class AbstractApplicationEventMulticaster
 		return this.beanFactory;
 	}
 
-
 	/**
 	 * 添加以对象形式存在的监听器
 	 *
@@ -126,6 +127,8 @@ public abstract class AbstractApplicationEventMulticaster
 				this.defaultRetriever.applicationListeners.remove(singletonTarget);
 			}
 			this.defaultRetriever.applicationListeners.add(listener);
+
+			// 清空映射关系
 			this.retrieverCache.clear();
 		}
 	}
@@ -143,7 +146,6 @@ public abstract class AbstractApplicationEventMulticaster
 			this.retrieverCache.clear();
 		}
 	}
-
 
 	/**
 	 * 删除以对象形式注册的监听器
@@ -196,7 +198,6 @@ public abstract class AbstractApplicationEventMulticaster
 		}
 	}
 
-
 	/**
 	 * Return a Collection containing all ApplicationListeners.
 	 *
@@ -227,7 +228,7 @@ public abstract class AbstractApplicationEventMulticaster
 		Object source = event.getSource();
 		Class<?> sourceType = (source != null ? source.getClass() : null);
 
-		// 可以用于构造 Cache
+		// Cache Key 其实就两个东西 sourceType targetType
 		ListenerCacheKey cacheKey = new ListenerCacheKey(eventType, sourceType);
 
 		// Potential new retriever to populate
@@ -274,9 +275,12 @@ public abstract class AbstractApplicationEventMulticaster
 			ResolvableType eventType, @Nullable Class<?> sourceType, @Nullable CachedListenerRetriever retriever) {
 
 		List<ApplicationListener<?>> allListeners = new ArrayList<>();
+
+		// != null 然后 new 。看起来很奇怪， != null 表示 retriever 刚创建的
 		Set<ApplicationListener<?>> filteredListeners = (retriever != null ? new LinkedHashSet<>() : null);
 		Set<String> filteredListenerBeans = (retriever != null ? new LinkedHashSet<>() : null);
 
+		// synchronized 加锁，读取所有现有的监听器
 		Set<ApplicationListener<?>> listeners;
 		Set<String> listenerBeans;
 		synchronized (this.defaultRetriever) {
@@ -418,7 +422,6 @@ public abstract class AbstractApplicationEventMulticaster
 		return (smartListener.supportsEventType(eventType) && smartListener.supportsSourceType(sourceType));
 	}
 
-
 	/**
 	 * Cache key for ListenerRetrievers, based on event type and source type.
 	 */
@@ -472,8 +475,8 @@ public abstract class AbstractApplicationEventMulticaster
 			}
 			return result;
 		}
-	}
 
+	}
 
 	/**
 	 * Helper class that encapsulates a specific set of target listeners,
@@ -482,9 +485,15 @@ public abstract class AbstractApplicationEventMulticaster
 	 */
 	private class CachedListenerRetriever {
 
+		/**
+		 * 有些是引用应用
+		 */
 		@Nullable
 		public volatile Set<ApplicationListener<?>> applicationListeners;
 
+		/**
+		 * 有些是符号引用，后面需要惰性转换
+		 */
 		@Nullable
 		public volatile Set<String> applicationListenerBeans;
 
@@ -528,14 +537,16 @@ public abstract class AbstractApplicationEventMulticaster
 			}
 			return allListeners;
 		}
-	}
 
+	}
 
 	/**
 	 * Helper class that encapsulates a general set of target listeners.
 	 * Helper 类，封装一组通用的监听器，而且 multicaster 直接是直接引用这个对象的字段，所以也没有暴露什么 getter 方法
 	 */
 	private class DefaultListenerRetriever {
+
+		// 注册时候都会写入这个对象中
 
 		public final Set<ApplicationListener<?>> applicationListeners = new LinkedHashSet<>();
 
@@ -563,6 +574,7 @@ public abstract class AbstractApplicationEventMulticaster
 			AnnotationAwareOrderComparator.sort(allListeners);
 			return allListeners;
 		}
+
 	}
 
 }
