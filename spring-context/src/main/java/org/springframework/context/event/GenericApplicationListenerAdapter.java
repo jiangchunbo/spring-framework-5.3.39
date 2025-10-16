@@ -116,6 +116,8 @@ public class GenericApplicationListenerAdapter implements GenericApplicationList
 			eventType = ResolvableType.forClass(listenerType).as(ApplicationListener.class).getGeneric();
 			eventTypeCache.put(listenerType, eventType);
 		}
+
+		// 如果根本没找到泛型参数，就返回 null
 		return (eventType != ResolvableType.NONE ? eventType : null);
 	}
 

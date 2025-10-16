@@ -223,7 +223,7 @@ public abstract class AbstractApplicationEventMulticaster
 	protected Collection<ApplicationListener<?>> getApplicationListeners(
 			ApplicationEvent event, ResolvableType eventType) {
 
-		// 获得事件源，有啥用呢？
+		// 获取 sourceType，也就是事件源的类型
 		// 可以用于构造 ListenerCacheKey --> 一个事件的键由，事件源 + 事件类型组成，如果事件源是 null，那就认为都是来自于同一个地方咯
 		Object source = event.getSource();
 		Class<?> sourceType = (source != null ? source.getClass() : null);
@@ -239,6 +239,8 @@ public abstract class AbstractApplicationEventMulticaster
 		CachedListenerRetriever existingRetriever = this.retrieverCache.get(cacheKey);
 		if (existingRetriever == null) {
 			// Caching a new ListenerRetriever if possible
+			// 1. this.beanClassLoader == null
+			// 2. event 可以被 beanClassLoader 加载，而且 source 也可以被 beanClassLoader 加载
 			if (this.beanClassLoader == null ||
 					(ClassUtils.isCacheSafe(event.getClass(), this.beanClassLoader) &&
 							(sourceType == null || ClassUtils.isCacheSafe(sourceType, this.beanClassLoader)))) {
@@ -250,16 +252,24 @@ public abstract class AbstractApplicationEventMulticaster
 			}
 		}
 
+		// 这里的逻辑有一些让能比较难读懂
+		// existingRetriever != null 意味着 cacheKey 映射发现之前已经有对应的 Value 了
 		if (existingRetriever != null) {
 			// 这里面有一些运算，才能得到 listeners
 			Collection<ApplicationListener<?>> result = existingRetriever.getApplicationListeners();
+
 			if (result != null) {
 				return result;
 			}
+
+			// 有可能因为并发原因，导致即使 existingRetriever 存在，但是还不稳定，因此继续往下走
+
 			// If result is null, the existing retriever is not fully populated yet by another thread.
 			// Proceed like caching wasn't possible for this current local attempt.
 		}
 
+		// 1. existingRetriever == null，确实是第一次 put
+		// 2. existingRetriever != null，但是并发，不稳定
 		return retrieveApplicationListeners(eventType, sourceType, newRetriever);
 	}
 
@@ -274,9 +284,12 @@ public abstract class AbstractApplicationEventMulticaster
 	private Collection<ApplicationListener<?>> retrieveApplicationListeners(
 			ResolvableType eventType, @Nullable Class<?> sourceType, @Nullable CachedListenerRetriever retriever) {
 
+		// retriever != null 意味着 cacheKey 是首次添加到缓存中，Value 刚刚创建出来，需要填充第一次数据
+
+		// 这是 result，最终需要 return 出去
 		List<ApplicationListener<?>> allListeners = new ArrayList<>();
 
-		// != null 然后 new 。看起来很奇怪， != null 表示 retriever 刚创建的
+		// retriever != null 意味着需要填充数据，所以创建两个 Set 准备数据，专门给 retriever 准备的
 		Set<ApplicationListener<?>> filteredListeners = (retriever != null ? new LinkedHashSet<>() : null);
 		Set<String> filteredListenerBeans = (retriever != null ? new LinkedHashSet<>() : null);
 
@@ -291,10 +304,15 @@ public abstract class AbstractApplicationEventMulticaster
 		// Add programmatically registered listeners, including ones coming
 		// from ApplicationListenerDetector (singleton beans and inner beans).
 		for (ApplicationListener<?> listener : listeners) {
+			// 判断是否支持 event 以及 source
 			if (supportsEvent(listener, eventType, sourceType)) {
+
+				// 填充到 retriever
 				if (retriever != null) {
 					filteredListeners.add(listener);
 				}
+
+				// 汇集到 allListeners
 				allListeners.add(listener);
 			}
 		}
@@ -302,13 +320,20 @@ public abstract class AbstractApplicationEventMulticaster
 		// Add listeners by bean name, potentially overlapping with programmatically
 		// registered listeners above - but here potentially with additional metadata.
 		if (!listenerBeans.isEmpty()) {
+			// getBeanFactory 可能还未注入 BeanFactory，因此需要判断非空，避免进入这个逻辑
+
 			ConfigurableBeanFactory beanFactory = getBeanFactory();
 			for (String listenerBeanName : listenerBeans) {
 				try {
+					// 判断是否支持处理这种 event
 					if (supportsEvent(beanFactory, listenerBeanName, eventType)) {
+						// 实例化 listener
 						ApplicationListener<?> listener =
 								beanFactory.getBean(listenerBeanName, ApplicationListener.class);
+
+						// 全新的 listener  &&  支持 source event
 						if (!allListeners.contains(listener) && supportsEvent(listener, eventType, sourceType)) {
+							// 为填充 retriever 做准备
 							if (retriever != null) {
 								if (beanFactory.isSingleton(listenerBeanName)) {
 									filteredListeners.add(listener);
@@ -322,6 +347,8 @@ public abstract class AbstractApplicationEventMulticaster
 						// Remove non-matching listeners that originally came from
 						// ApplicationListenerDetector, possibly ruled out by additional
 						// BeanDefinition metadata (e.g. factory method generics) above.
+
+						// 可能最初使用 ApplicationListenerDetector 探测 listener，但是现在根据 mbd 判断不再匹配事件的监听器
 						Object listener = beanFactory.getSingleton(listenerBeanName);
 						if (retriever != null) {
 							filteredListeners.remove(listener);
@@ -339,7 +366,7 @@ public abstract class AbstractApplicationEventMulticaster
 		if (retriever != null) {
 			if (filteredListenerBeans.isEmpty()) {
 				retriever.applicationListeners = new LinkedHashSet<>(allListeners);
-				retriever.applicationListenerBeans = filteredListenerBeans;
+				retriever.applicationListenerBeans = filteredListenerBeans; // 这个意思不就是赋予一个空给 applicationListenerBeans
 			} else {
 				retriever.applicationListeners = filteredListeners;
 				retriever.applicationListenerBeans = filteredListenerBeans;
@@ -366,17 +393,26 @@ public abstract class AbstractApplicationEventMulticaster
 	private boolean supportsEvent(
 			ConfigurableBeanFactory beanFactory, String listenerBeanName, ResolvableType eventType) {
 
+		// 获取 bean class
 		Class<?> listenerType = beanFactory.getType(listenerBeanName);
+
+		// 如果是 GenericApplicationListener 或者 SmartApplicationListener 此类专业的监听器，则支持
+		// 为什么支持呢，因为他们都是非常宽泛的监听器，需要根据方法返回值进行决策
+		// 有点像一个快速路径，毕竟下面的 !supportsEvent(listenerType, eventType) 也能检查
 		if (listenerType == null || GenericApplicationListener.class.isAssignableFrom(listenerType) ||
 				SmartApplicationListener.class.isAssignableFrom(listenerType)) {
 			return true;
 		}
+
+		// 检查 listener 声明的泛型参数是否兼容 event
 		if (!supportsEvent(listenerType, eventType)) {
 			return false;
 		}
 		try {
 			BeanDefinition bd = beanFactory.getMergedBeanDefinition(listenerBeanName);
 			ResolvableType genericEventType = bd.getResolvableType().as(ApplicationListener.class).getGeneric();
+
+			// 如果没有泛型
 			return (genericEventType == ResolvableType.NONE || genericEventType.isAssignableFrom(eventType));
 		} catch (NoSuchBeanDefinitionException ex) {
 			// Ignore - no need to check resolvable type for manually registered singleton
@@ -397,7 +433,13 @@ public abstract class AbstractApplicationEventMulticaster
 	 * for the given event type
 	 */
 	protected boolean supportsEvent(Class<?> listenerType, ResolvableType eventType) {
+		// 传入的参数 listener 绝对不应该是 SmartApplicationListener 或者 GenericApplicationListener，因为它们的泛型参数都是固定的
+
+		// 解析 ApplicationListener 使用了哪个具体的泛型参数
 		ResolvableType declaredEventType = GenericApplicationListenerAdapter.resolveDeclaredEventType(listenerType);
+
+		// 检查类型兼容性
+		// ==> declaredEventType == null 表示没有泛型参数
 		return (declaredEventType == null || declaredEventType.isAssignableFrom(eventType));
 	}
 
@@ -417,8 +459,12 @@ public abstract class AbstractApplicationEventMulticaster
 	protected boolean supportsEvent(
 			ApplicationListener<?> listener, ResolvableType eventType, @Nullable Class<?> sourceType) {
 
+		// 如果你的监听器不是 GenericApplicationListener，那么就会包装成 GenericApplicationListenerAdapter
+		// 也就是说，如果你的 listener 不是 GenericApplicationListenerAdapter，每次发布事件都会封装一次 listener
 		GenericApplicationListener smartListener = (listener instanceof GenericApplicationListener ?
 				(GenericApplicationListener) listener : new GenericApplicationListenerAdapter(listener));
+
+		// (1) 支持 event (2) 支持 source
 		return (smartListener.supportsEventType(eventType) && smartListener.supportsSourceType(sourceType));
 	}
 
@@ -433,6 +479,8 @@ public abstract class AbstractApplicationEventMulticaster
 		private final Class<?> sourceType;
 
 		public ListenerCacheKey(ResolvableType eventType, @Nullable Class<?> sourceType) {
+			// 传入两个类型，一个是 eventType，另一个是 sourceType
+
 			Assert.notNull(eventType, "Event type must not be null");
 			this.eventType = eventType;
 			this.sourceType = sourceType;
@@ -505,7 +553,7 @@ public abstract class AbstractApplicationEventMulticaster
 			// 这些还是一些符号应用
 			Set<String> applicationListenerBeans = this.applicationListenerBeans;
 
-			// 如果任何一个是 null
+			// 如果任何一个是 null，表示还在抓取 listener 中，可能是第一次并发调用，或者被 clear 之后重建中
 			if (applicationListeners == null || applicationListenerBeans == null) {
 				// Not fully populated yet
 				return null;

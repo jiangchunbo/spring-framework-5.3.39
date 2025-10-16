@@ -426,7 +426,9 @@ public abstract class ClassUtils {
 	public static boolean isCacheSafe(Class<?> clazz, @Nullable ClassLoader classLoader) {
 		Assert.notNull(clazz, "Class must not be null");
 		try {
+			// 获取 clazz 的类加载器
 			ClassLoader target = clazz.getClassLoader();
+
 			// Common cases
 			// 通常的情况，类加载器就是传入的类加载器，或者由 bootstrap 加载
 			if (target == classLoader || target == null) {
@@ -463,7 +465,7 @@ public abstract class ClassUtils {
 
 		// Fallback for ClassLoaders without parent/child relationship:
 		// safe if same Class can be loaded from given ClassLoader
-		// 最后没办法，竟然尝试类加载，如果能加在就 OK
+		// 最后没办法，竟然尝试类加载，如果能加载就 OK
 		return (classLoader != null && isLoadable(clazz, classLoader));
 	}
 
