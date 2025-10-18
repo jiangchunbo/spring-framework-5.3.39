@@ -27,6 +27,14 @@ import org.springframework.util.Assert;
  * Compensates for constraints in Bash and other shells that do not allow for variables
  * containing the period character and/or hyphen character; also allows for uppercase
  * variations on property names for more idiomatic shell use.
+ * <p>
+ * 这个类是 MapPropertySource 的特定实现，用来读取系统环境变量，参见 AbstractEnvironment#getSystemEnvironment()
+ * <p>
+ * 它解决了 Bash 等 shell 的两个限制：
+ * <ol>
+ * <li>变量名不能包含英文句点</li>
+ * <li>shell 中更习惯使用大写变量名</li>
+ * </ol>
  *
  * <p>For example, a call to {@code getProperty("foo.bar")} will attempt to find a value
  * for the original property or any 'equivalent' property, returning the first found:
@@ -37,6 +45,14 @@ import org.springframework.util.Assert;
  * <li>{@code FOO_BAR} - with underscores and upper case</li>
  * </ul>
  * Any hyphen variant of the above would work as well, or even mix dot/hyphen variants.
+ * <p>
+ * 因此，当调用 getProperty("foo.bar") 时，源码会依次尝试以下“等价”属性名
+ * <ol>
+ * <li>foo.bar —— 原始写法</li>
+ * <li>foo_bar —— 将句点替换为下划线</li>
+ * <li>FOO.BAR —— 全部大写</li>
+ * <li>FOO_BAR —— 先替换为下划线再大写</li>
+ * </ol>
  *
  * <p>The same applies for calls to {@link #containsProperty(String)}, which returns
  * {@code true} if any of the above properties are present, otherwise {@code false}.
@@ -45,7 +61,7 @@ import org.springframework.util.Assert;
  * environment variables. The following is not allowable under Bash:
  *
  * <pre class="code">spring.profiles.active=p1 java -classpath ... MyApp</pre>
- *
+ * <p>
  * However, the following syntax is permitted and is also more conventional:
  *
  * <pre class="code">SPRING_PROFILES_ACTIVE=p1 java -classpath ... MyApp</pre>
@@ -58,10 +74,10 @@ import org.springframework.util.Assert;
  *
  * @author Chris Beams
  * @author Juergen Hoeller
- * @since 3.1
  * @see StandardEnvironment
  * @see AbstractEnvironment#getSystemEnvironment()
  * @see AbstractEnvironment#ACTIVE_PROFILES_PROPERTY_NAME
+ * @since 3.1
  */
 public class SystemEnvironmentPropertySource extends MapPropertySource {
 
@@ -72,7 +88,6 @@ public class SystemEnvironmentPropertySource extends MapPropertySource {
 	public SystemEnvironmentPropertySource(String name, Map<String, Object> source) {
 		super(name, source);
 	}
-
 
 	/**
 	 * Return {@code true} if a property with the given name or any underscore/uppercase variant

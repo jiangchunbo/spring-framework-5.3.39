@@ -44,11 +44,22 @@ import org.springframework.util.ObjectUtils;
  */
 public class EncodedResource implements InputStreamSource {
 
+	// 带有编码的字符
+
+	/**
+	 * 资源对象
+	 */
 	private final Resource resource;
 
+	/**
+	 * 早期使用 String 表示的编码
+	 */
 	@Nullable
 	private final String encoding;
 
+	/**
+	 * JDK 1.4 引入的 Charset 类型安全的字符集，更建议使用该属性。
+	 */
 	@Nullable
 	private final Charset charset;
 

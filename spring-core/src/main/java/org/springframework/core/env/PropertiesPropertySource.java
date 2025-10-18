@@ -35,6 +35,9 @@ import java.util.Properties;
  */
 public class PropertiesPropertySource extends MapPropertySource {
 
+	/**
+	 * 接受一个 Properties 作为 T 对象
+	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public PropertiesPropertySource(String name, Properties source) {
 		super(name, (Map) source);

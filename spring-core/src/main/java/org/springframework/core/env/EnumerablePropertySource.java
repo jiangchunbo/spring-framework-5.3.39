@@ -44,6 +44,8 @@ import org.springframework.util.ObjectUtils;
  */
 public abstract class EnumerablePropertySource<T> extends PropertySource<T> {
 
+	// 能够枚举的属性，关键在于可以获取所有属性名字
+
 	/**
 	 * Create a new {@code EnumerablePropertySource} with the given name and source object.
 	 * @param name the associated name
