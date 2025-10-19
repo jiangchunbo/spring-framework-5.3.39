@@ -116,6 +116,7 @@ class TypeConverterDelegate {
 			@Nullable Class<T> requiredType, @Nullable TypeDescriptor typeDescriptor) throws IllegalArgumentException {
 
 		// Custom editor for this type?
+		// 首先寻找 PropertyEditor
 		PropertyEditor editor = this.propertyEditorRegistry.findCustomEditor(requiredType, propertyName);
 
 		ConversionFailedException conversionAttemptEx = null;
@@ -141,11 +142,15 @@ class TypeConverterDelegate {
 
 		// Value not of required type?
 		if (editor != null || (requiredType != null && !ClassUtils.isAssignableValue(requiredType, convertedValue))) {
+
+			// 转换目标类型是 Collection，但是传入的 newValue 是 String
 			if (typeDescriptor != null && requiredType != null && Collection.class.isAssignableFrom(requiredType) &&
 					convertedValue instanceof String) {
+				// 获取元素的类型
 				TypeDescriptor elementTypeDesc = typeDescriptor.getElementTypeDescriptor();
 				if (elementTypeDesc != null) {
 					Class<?> elementType = elementTypeDesc.getType();
+					// 如果是 Collection<Class> 或者 Collection<Enum> 那么就将整个字符串转换为 String[]
 					if (Class.class == elementType || Enum.class.isAssignableFrom(elementType)) {
 						convertedValue = StringUtils.commaDelimitedListToStringArray((String) convertedValue);
 					}

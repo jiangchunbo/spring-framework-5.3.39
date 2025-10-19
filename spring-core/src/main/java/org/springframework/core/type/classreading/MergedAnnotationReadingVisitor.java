@@ -132,6 +132,7 @@ class MergedAnnotationReadingVisitor<A extends Annotation> extends AnnotationVis
 			return null;
 		}
 
+		// 此处会尝试类加载注解！！！
 		try {
 			Class<A> annotationType = (Class<A>) ClassUtils.forName(typeName, classLoader);
 			return new MergedAnnotationReadingVisitor<>(classLoader, source, annotationType, consumer);

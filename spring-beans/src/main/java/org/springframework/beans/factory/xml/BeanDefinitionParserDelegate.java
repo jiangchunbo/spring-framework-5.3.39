@@ -512,8 +512,10 @@ public class BeanDefinitionParserDelegate {
 		}
 
 		try {
+			// 创建一个空壳 BeanDefinition
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
+			// 处理属性，并填充 bd
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 

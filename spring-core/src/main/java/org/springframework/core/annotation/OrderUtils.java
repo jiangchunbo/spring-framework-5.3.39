@@ -106,13 +106,21 @@ public abstract class OrderUtils {
 	 */
 	@Nullable
 	static Integer getOrderFromAnnotations(AnnotatedElement element, MergedAnnotations annotations) {
+		// 如果是方法级别的注解，就直接读取
 		if (!(element instanceof Class)) {
 			return findOrder(annotations);
 		}
+
+		// 这里隐含了 element instanceof Class
+		// 所以，其实是 orderCache.get(clazz)
+
+		// 类级别的注解会缓存
 		Object cached = orderCache.get(element);
 		if (cached != null) {
 			return (cached instanceof Integer ? (Integer) cached : null);
 		}
+
+		// 构建缓存
 		Integer result = findOrder(annotations);
 		orderCache.put(element, result != null ? result : NOT_ANNOTATED);
 		return result;
@@ -120,10 +128,13 @@ public abstract class OrderUtils {
 
 	@Nullable
 	private static Integer findOrder(MergedAnnotations annotations) {
+		// 读取 @Order value 属性
 		MergedAnnotation<Order> orderAnnotation = annotations.get(Order.class);
 		if (orderAnnotation.isPresent()) {
 			return orderAnnotation.getInt(MergedAnnotation.VALUE);
 		}
+
+		// 读取 @javax.annotation.Priority value 属性
 		MergedAnnotation<?> priorityAnnotation = annotations.get(JAVAX_PRIORITY_ANNOTATION);
 		if (priorityAnnotation.isPresent()) {
 			return priorityAnnotation.getInt(MergedAnnotation.VALUE);

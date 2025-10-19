@@ -335,7 +335,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		do {
 			StartupStep processConfig = this.applicationStartup.start("spring.context.config-classes.parse");
 
-			// 入参 candidates 的作用就是一个收集器
+			// parser 一边解析一边收集信息
 			parser.parse(candidates);
 			parser.validate();
 

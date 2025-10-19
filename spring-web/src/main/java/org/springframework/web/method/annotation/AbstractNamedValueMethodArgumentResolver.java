@@ -131,10 +131,10 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 		}
 
 		if (binderFactory != null) {
-			// 拿到一个所谓的 WebDataBinder
+			// 使用 factory 创建 Binder 实例，所以每个请求 Binder 是不共享的
 			WebDataBinder binder = binderFactory.createBinder(webRequest, null, namedValueInfo.name);
 			try {
-				// 转换
+				// 尽可能地转换去兼容类型
 				arg = binder.convertIfNecessary(arg, parameter.getParameterType(), parameter);
 			} catch (ConversionNotSupportedException ex) {
 				throw new MethodArgumentConversionNotSupportedException(arg, ex.getRequiredType(),

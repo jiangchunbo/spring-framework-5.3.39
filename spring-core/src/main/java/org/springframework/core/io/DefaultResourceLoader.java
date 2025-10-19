@@ -48,6 +48,8 @@ import org.springframework.util.StringUtils;
  */
 public class DefaultResourceLoader implements ResourceLoader {
 
+	// 这个类直接被 Context 继承
+
 	@Nullable
 	private ClassLoader classLoader;
 
@@ -154,14 +156,19 @@ public class DefaultResourceLoader implements ResourceLoader {
 			}
 		}
 
-		// 没有前缀的寻址，具体看实现类是哪种，例如 ServletContextResourceLoader
+		// 1. 前缀是 "/"，根据具体实现类而定
 		if (location.startsWith("/")) {
 			return getResourceByPath(location);
 		}
-		// 如果字符串以 classpath: 开头，则从类路径找
+
+		// 下面都是有前缀的
+
+		// 2. 如果字符串以 classpath: 开头，这个是 spring 约定的，从类路径找
 		else if (location.startsWith(CLASSPATH_URL_PREFIX)) {
 			return new ClassPathResource(location.substring(CLASSPATH_URL_PREFIX.length()), getClassLoader());
 		}
+
+		// 3. 其他情况走 URL
 		else {
 			try {
 				// Try to parse the location as a URL...

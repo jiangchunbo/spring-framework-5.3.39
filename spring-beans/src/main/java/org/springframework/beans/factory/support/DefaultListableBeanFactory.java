@@ -967,7 +967,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// Trigger initialization of all non-lazy singleton beans...
 		for (String beanName : beanNames) {
+			// 获取顶级 bd
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
+
+			// 非抽象，非懒加载的单例 bean
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
 				if (isFactoryBean(beanName)) {
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
@@ -1024,6 +1027,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		Assert.hasText(beanName, "Bean name must not be empty");
 		Assert.notNull(beanDefinition, "BeanDefinition must not be null");
 
+		// 验证
+		// ps: 似乎所有的 bean definition 都实现了 AbstractBeanDefinition ?
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
 				((AbstractBeanDefinition) beanDefinition).validate();
@@ -1033,24 +1038,37 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 
+		// 检查是否存在相同 beanName 的定义
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
 		if (existingDefinition != null) {
+			// 这个分支其实就一件事 —— 覆盖 bean definition
+
+			// 如果不允许 bean definition 覆盖，则抛出异常
 			if (!isAllowBeanDefinitionOverriding()) {
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
-			} else if (existingDefinition.getRole() < beanDefinition.getRole()) {
+			}
+
+			// 只是 log bean definition 角色会被覆盖
+			else if (existingDefinition.getRole() < beanDefinition.getRole()) {
 				// e.g. was ROLE_APPLICATION, now overriding with ROLE_SUPPORT or ROLE_INFRASTRUCTURE
 				if (logger.isInfoEnabled()) {
 					logger.info("Overriding user-defined bean definition for bean '" + beanName +
 							"' with a framework-generated bean definition: replacing [" +
 							existingDefinition + "] with [" + beanDefinition + "]");
 				}
-			} else if (!beanDefinition.equals(existingDefinition)) {
+			}
+
+			// 只是 log bean definition 会被覆盖
+			else if (!beanDefinition.equals(existingDefinition)) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Overriding bean definition for bean '" + beanName +
 							"' with a different definition: replacing [" + existingDefinition +
 							"] with [" + beanDefinition + "]");
 				}
-			} else {
+			}
+
+			// 只是 log bean definition 重复注册，而且是相等的 (equivalent)
+			else {
 				if (logger.isTraceEnabled()) {
 					logger.trace("Overriding bean definition for bean '" + beanName +
 							"' with an equivalent definition: replacing [" + existingDefinition +
@@ -1058,7 +1076,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			this.beanDefinitionMap.put(beanName, beanDefinition);
-		} else {
+		}
+
+		// 这个分支其实就修改两个结构：beanDefinitionMap 和 beanDefinitionNames
+		else {
+			// 检查是否 bean 的创建已经开始
+			// 如果已经开始需要加锁，并构造一个新的集合
+
 			if (hasBeanCreationStarted()) {
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {
@@ -2237,11 +2261,17 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			try {
 				RootBeanDefinition beanDefinition = (RootBeanDefinition) getMergedBeanDefinition(beanName);
+
+				// 构造长度固定式 2 的 List<Object> 最终就是 Object[]
 				List<Object> sources = new ArrayList<>(2);
+
+				// 如果 factory method 存在，就添加到 sources (不过没什么用吧，method 没有实现 Ordered)
 				Method factoryMethod = beanDefinition.getResolvedFactoryMethod();
 				if (factoryMethod != null) {
 					sources.add(factoryMethod);
 				}
+
+				// 如果 target type 存在，就添加到 sources
 				Class<?> targetType = beanDefinition.getTargetType();
 				if (targetType != null && targetType != obj.getClass()) {
 					sources.add(targetType);

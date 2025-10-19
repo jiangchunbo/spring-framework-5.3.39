@@ -43,23 +43,27 @@ import org.springframework.util.ObjectUtils;
  *
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 07.04.2003
  * @see Ordered
  * @see PriorityOrdered
  * @see org.springframework.core.annotation.AnnotationAwareOrderComparator
  * @see java.util.List#sort(java.util.Comparator)
  * @see java.util.Arrays#sort(Object[], java.util.Comparator)
+ * @since 07.04.2003
  */
 public class OrderComparator implements Comparator<Object> {
 
+	// implements Comparator<Object> 我们可以知道，比较的是两个任意对象
+
 	/**
 	 * Shared default instance of {@code OrderComparator}.
+	 * <p>
+	 * 这个实例的用处，大概就是留给外部去获取并调用 withSourceProvider
 	 */
 	public static final OrderComparator INSTANCE = new OrderComparator();
 
-
 	/**
 	 * Build an adapted order comparator with the given source provider.
+	 *
 	 * @param sourceProvider the order source provider to use
 	 * @return the adapted comparator
 	 * @since 4.1
@@ -70,18 +74,19 @@ public class OrderComparator implements Comparator<Object> {
 
 	@Override
 	public int compare(@Nullable Object o1, @Nullable Object o2) {
+		// 比较任何两个对象，并且使用一个 null OrderSourceProvider
 		return doCompare(o1, o2, null);
 	}
 
 	private int doCompare(@Nullable Object o1, @Nullable Object o2, @Nullable OrderSourceProvider sourceProvider) {
-		// 先判断优先级不一样的情况
-		// PriorityOrdered 一定高于 Ordered
+
 		boolean p1 = (o1 instanceof PriorityOrdered);
 		boolean p2 = (o2 instanceof PriorityOrdered);
+
+		// 先判断优先级不一样的情况 (这种在比较时，优先判断不对等的情况很常见，将双方逐渐拉齐)
 		if (p1 && !p2) {
 			return -1;
-		}
-		else if (p2 && !p1) {
+		} else if (p2 && !p1) {
 			return 1;
 		}
 
@@ -95,16 +100,22 @@ public class OrderComparator implements Comparator<Object> {
 	 * Determine the order value for the given object.
 	 * <p>The default implementation checks against the given {@link OrderSourceProvider}
 	 * using {@link #findOrder} and falls back to a regular {@link #getOrder(Object)} call.
+	 *
 	 * @param obj the object to check
 	 * @return the order value, or {@code Ordered.LOWEST_PRECEDENCE} as fallback
 	 */
 	private int getOrder(@Nullable Object obj, @Nullable OrderSourceProvider sourceProvider) {
 		Integer order = null;
 
-		// sourceProvider 这个暂时还不清楚
+		// OrderSourceProvider 这个对象的用途就是传入 obj 返回一个全新的对象
+		// 使用这个全新的对象寻找 order
 		if (obj != null && sourceProvider != null) {
 			Object orderSource = sourceProvider.getOrderSource(obj);
+
+			// 如果全新的对象是 null，那么下面依然使用 obj 寻找 order
 			if (orderSource != null) {
+
+				// 如果全新的对象是 array，那么按顺序尝试这些对象能否获取 order
 				if (orderSource.getClass().isArray()) {
 					for (Object source : ObjectUtils.toObjectArray(orderSource)) {
 						order = findOrder(source);
@@ -112,8 +123,7 @@ public class OrderComparator implements Comparator<Object> {
 							break;
 						}
 					}
-				}
-				else {
+				} else {
 					order = findOrder(orderSource);
 				}
 			}
@@ -127,6 +137,7 @@ public class OrderComparator implements Comparator<Object> {
 	 * Determine the order value for the given object.
 	 * <p>The default implementation checks against the {@link Ordered} interface
 	 * through delegating to {@link #findOrder}. Can be overridden in subclasses.
+	 *
 	 * @param obj the object to check
 	 * @return the order value, or {@code Ordered.LOWEST_PRECEDENCE} as fallback
 	 */
@@ -144,6 +155,9 @@ public class OrderComparator implements Comparator<Object> {
 	 * Find an order value indicated by the given object.
 	 * <p>The default implementation checks against the {@link Ordered} interface.
 	 * Can be overridden in subclasses.
+	 * <p>
+	 * 通过给定对象，找到一个 order 值
+	 *
 	 * @param obj the object to check
 	 * @return the order value, or {@code null} if none found
 	 */
@@ -159,6 +173,7 @@ public class OrderComparator implements Comparator<Object> {
 	 * 'priority' characteristic, in addition to their 'order' semantics.
 	 * A priority indicates that it may be used for selecting one object over
 	 * another, in addition to serving for ordering purposes in a list/array.
+	 *
 	 * @param obj the object to check
 	 * @return the priority value, or {@code null} if none
 	 * @since 4.1
@@ -168,11 +183,11 @@ public class OrderComparator implements Comparator<Object> {
 		return null;
 	}
 
-
 	/**
 	 * Sort the given List with a default OrderComparator.
 	 * <p>Optimized to skip sorting for lists with size 0 or 1,
 	 * in order to avoid unnecessary array extraction.
+	 *
 	 * @param list the List to sort
 	 * @see java.util.List#sort(java.util.Comparator)
 	 */
@@ -186,6 +201,7 @@ public class OrderComparator implements Comparator<Object> {
 	 * Sort the given array with a default OrderComparator.
 	 * <p>Optimized to skip sorting for lists with size 0 or 1,
 	 * in order to avoid unnecessary array extraction.
+	 *
 	 * @param array the array to sort
 	 * @see java.util.Arrays#sort(Object[], java.util.Comparator)
 	 */
@@ -200,21 +216,21 @@ public class OrderComparator implements Comparator<Object> {
 	 * if necessary. Simply skips sorting when given any other value.
 	 * <p>Optimized to skip sorting for lists with size 0 or 1,
 	 * in order to avoid unnecessary array extraction.
+	 *
 	 * @param value the array or List to sort
 	 * @see java.util.Arrays#sort(Object[], java.util.Comparator)
 	 */
 	public static void sortIfNecessary(Object value) {
 		if (value instanceof Object[]) {
 			sort((Object[]) value);
-		}
-		else if (value instanceof List) {
+		} else if (value instanceof List) {
 			sort((List<?>) value);
 		}
 	}
 
-
 	/**
 	 * Strategy interface to provide an order source for a given object.
+	 *
 	 * @since 4.1
 	 */
 	@FunctionalInterface
@@ -226,11 +242,13 @@ public class OrderComparator implements Comparator<Object> {
 		 * <p>Can also be an array of order source objects.
 		 * <p>If the returned object does not indicate any order, the comparator
 		 * will fall back to checking the original object.
+		 *
 		 * @param obj the object to find an order source for
 		 * @return the order source for that object, or {@code null} if none found
 		 */
 		@Nullable
 		Object getOrderSource(Object obj);
+
 	}
 
 }

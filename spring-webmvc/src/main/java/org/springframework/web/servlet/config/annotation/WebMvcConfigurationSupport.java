@@ -703,6 +703,8 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 		RequestMappingHandlerAdapter adapter = createRequestMappingHandlerAdapter();
 		adapter.setContentNegotiationManager(contentNegotiationManager);
 		adapter.setMessageConverters(getMessageConverters());
+
+		// 设置 ConfigurableWebBindingInitializer，这个组件能够在创建 WebDataBinder 时自动注册一些能力
 		adapter.setWebBindingInitializer(getConfigurableWebBindingInitializer(conversionService, validator));
 		adapter.setCustomArgumentResolvers(getArgumentResolvers());
 		adapter.setCustomReturnValueHandlers(getReturnValueHandlers());
@@ -760,12 +762,20 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 			FormattingConversionService mvcConversionService, Validator mvcValidator) {
 
 		ConfigurableWebBindingInitializer initializer = new ConfigurableWebBindingInitializer();
+
+		// 1. 设置 ConversionService 转换服务
 		initializer.setConversionService(mvcConversionService);
+		// 2. 设置 Validator
 		initializer.setValidator(mvcValidator);
+		// 3. 设置 MessageCodesResolver
 		MessageCodesResolver messageCodesResolver = getMessageCodesResolver();
 		if (messageCodesResolver != null) {
 			initializer.setMessageCodesResolver(messageCodesResolver);
 		}
+
+		// 并没有设置 setPropertyEditorRegistrar
+		// 然而， ConfigurableWebBindingInitializer 将会处理每次请求的 DataBinder 创建，因此默认它是不会使用 PropertyEditor 这么古老的方式的
+
 		return initializer;
 	}
 

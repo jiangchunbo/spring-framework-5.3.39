@@ -46,10 +46,8 @@ import org.springframework.util.Assert;
  * defined in later classes will override those defined in earlier classes. This can
  * be leveraged to deliberately override certain bean definitions via an extra
  * {@code @Configuration} class.
- *
+ * <p>
  * 如果存在多个 @Configuration 配置类，后面加载的类将会覆盖前面加载的类
- *
- *
  *
  * <p>See {@link Configuration @Configuration}'s javadoc for usage examples.
  *
@@ -68,12 +66,13 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 
 	private final ClassPathBeanDefinitionScanner scanner;
 
-
 	/**
 	 * Create a new AnnotationConfigApplicationContext that needs to be populated
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
+		// 基于注解的开发，需要创建两大帮手 AnnotatedBeanDefinitionReader 和 ClassPathBeanDefinitionScanner
+
 		StartupStep createAnnotatedBeanDefReader = getApplicationStartup().start("spring.context.annotated-bean-reader.create");
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		createAnnotatedBeanDefReader.end();
@@ -94,6 +93,8 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	/**
 	 * Create a new AnnotationConfigApplicationContext, deriving bean definitions
 	 * from the given component classes and automatically refreshing the context.
+	 * <p>
+	 * 如果传入了 Class 类，会自动执行 refresh
 	 *
 	 * @param componentClasses one or more component classes &mdash; for example,
 	 *                         {@link Configuration @Configuration} classes
@@ -116,7 +117,6 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		scan(basePackages);
 		refresh();
 	}
-
 
 	/**
 	 * Propagate the given custom {@code Environment} to the underlying
@@ -159,7 +159,6 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		this.scanner.setScopeMetadataResolver(scopeMetadataResolver);
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation of AnnotationConfigRegistry
 	//---------------------------------------------------------------------
@@ -176,10 +175,15 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 */
 	@Override
 	public void register(Class<?>... componentClasses) {
+		// 你不能给一个空数组
 		Assert.notEmpty(componentClasses, "At least one component class must be specified");
+
 		StartupStep registerComponentClass = getApplicationStartup().start("spring.context.component-classes.register")
 				.tag("classes", () -> Arrays.toString(componentClasses));
+
+		// 读取并注册
 		this.reader.register(componentClasses);
+
 		registerComponentClass.end();
 	}
 
@@ -200,7 +204,6 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		this.scanner.scan(basePackages);
 		scanPackages.end();
 	}
-
 
 	//---------------------------------------------------------------------
 	// Adapt superclass registerBean calls to AnnotatedBeanDefinitionReader

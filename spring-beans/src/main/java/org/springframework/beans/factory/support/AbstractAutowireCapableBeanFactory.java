@@ -632,11 +632,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// exposedObject 用于存储初始化之后的对象，可能是一个新对象(AOP)
 		Object exposedObject = bean;
 		try {
-			// 属性填充
-			populateBean(beanName, mbd, instanceWrapper);
-
-			// 初始化
-			exposedObject = initializeBean(beanName, exposedObject, mbd);
+			populateBean(beanName, mbd, instanceWrapper); // 属性填充
+			exposedObject = initializeBean(beanName, exposedObject, mbd); // 初始化
 		} catch (Throwable ex) {
 			if (ex instanceof BeanCreationException && beanName.equals(((BeanCreationException) ex).getBeanName())) {
 				throw (BeanCreationException) ex;
@@ -1818,6 +1815,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 2. 初始化前
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
+			// 其中会调用基于注解的 init 方法
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 
@@ -1873,6 +1871,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			throws Throwable {
 
 		boolean isInitializingBean = (bean instanceof InitializingBean);
+
+		// 一般来说实现了 InitializingBean 在这里就要调用 afterPropertiesSet 方法
+		// 特别是的时，如果 afterPropertiesSet 添加了 @PostConstruct 注解等，就不会
 		if (isInitializingBean && (mbd == null || !mbd.hasAnyExternallyManagedInitMethod("afterPropertiesSet"))) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Invoking afterPropertiesSet() on bean with name '" + beanName + "'");

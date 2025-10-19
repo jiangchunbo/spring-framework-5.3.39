@@ -47,10 +47,10 @@ import java.lang.annotation.Target;
  * or {@link java.util.Locale}, allowing to register context-specific editors.
  *
  * @author Juergen Hoeller
- * @since 2.5
  * @see ControllerAdvice
  * @see org.springframework.web.bind.WebDataBinder
  * @see org.springframework.web.context.request.WebRequest
+ * @since 2.5
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -60,11 +60,19 @@ public @interface InitBinder {
 	/**
 	 * The names of command/form attributes and/or request parameters
 	 * that this init-binder method is supposed to apply to.
+	 * <p>
+	 * init-binder 方法所要应用到的“命令/表单属性”和/或“请求参数”的名称。
+	 *
 	 * <p>Default is to apply to all command/form attributes and all request parameters
 	 * processed by the annotated handler class. Specifying model attribute names or
 	 * request parameter names here restricts the init-binder method to those specific
 	 * attributes/parameters, with different init-binder methods typically applying to
 	 * different groups of attributes or parameters.
+	 * <p>
+	 * 默认情况下，该方法会应用于其所在控制器（Handler Class）处理的所有命令/表单属性及全部请求参数。
+	 * 若在此处指定了具体的模型属性名（model attribute names）或请求参数名，
+	 * 则该 init-binder 方法的生效范围就会被限制在这些特定的属性/参数上。
+	 * 利用这一特性，我们通常可以定义多个不同的 init-binder 方法，让它们分别应用于不同的属性或参数组。
 	 */
 	String[] value() default {};
 

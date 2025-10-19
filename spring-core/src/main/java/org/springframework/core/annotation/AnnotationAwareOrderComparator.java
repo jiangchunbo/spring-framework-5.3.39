@@ -73,8 +73,13 @@ public class AnnotationAwareOrderComparator extends OrderComparator {
 
 	@Nullable
 	private Integer findOrderFromAnnotation(Object obj) {
+		// obj instanceof AnnotatedElement 注意这个判断，obj 在这里可能是 Method 或者 Class 这些反射对象
 		AnnotatedElement element = (obj instanceof AnnotatedElement ? (AnnotatedElement) obj : obj.getClass());
+
+		// 通过反射读取注解
 		MergedAnnotations annotations = MergedAnnotations.from(element, SearchStrategy.TYPE_HIERARCHY);
+
+		// 通过被注解的元素，以及注解信息，得到 order (其中，类级别的注解会被缓存)
 		Integer order = OrderUtils.getOrderFromAnnotations(element, annotations);
 		if (order == null && obj instanceof DecoratingProxy) {
 			return findOrderFromAnnotation(((DecoratingProxy) obj).getDecoratedClass());

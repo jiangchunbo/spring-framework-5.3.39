@@ -77,6 +77,7 @@ public interface AnnotationMetadata extends ClassMetadata, AnnotatedTypeMetadata
 	 * @return {@code true} if a matching annotation is present
 	 */
 	default boolean hasAnnotation(String annotationName) {
+		// 获取注解，并判断是否直接存在
 		return getAnnotations().isDirectlyPresent(annotationName);
 	}
 

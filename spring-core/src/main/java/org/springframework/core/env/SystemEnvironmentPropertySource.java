@@ -105,6 +105,8 @@ public class SystemEnvironmentPropertySource extends MapPropertySource {
 	@Override
 	@Nullable
 	public Object getProperty(String name) {
+
+		// 解析真正的名字
 		String actualName = resolvePropertyName(name);
 		if (logger.isDebugEnabled() && !name.equals(actualName)) {
 			logger.debug("PropertySource '" + getName() + "' does not contain property '" + name +
@@ -120,10 +122,14 @@ public class SystemEnvironmentPropertySource extends MapPropertySource {
 	 */
 	protected final String resolvePropertyName(String name) {
 		Assert.notNull(name, "Property name must not be null");
+
+		// 大小写敏感地检测
 		String resolvedName = checkPropertyName(name);
 		if (resolvedName != null) {
 			return resolvedName;
 		}
+
+		// 大小写不敏感地检测
 		String uppercasedName = name.toUpperCase();
 		if (!name.equals(uppercasedName)) {
 			resolvedName = checkPropertyName(uppercasedName);
@@ -137,24 +143,33 @@ public class SystemEnvironmentPropertySource extends MapPropertySource {
 	@Nullable
 	private String checkPropertyName(String name) {
 		// Check name as-is
+		// 如果名字非常标准，那么就直接存在
 		if (containsKey(name)) {
 			return name;
 		}
+
 		// Check name with just dots replaced
+		// 将 . 转换为 _  例如 foo.bar 转化为 foo_bar
 		String noDotName = name.replace('.', '_');
+		// 比较两个字符串是否相等，这个很细节，避免进一步检测
 		if (!name.equals(noDotName) && containsKey(noDotName)) {
 			return noDotName;
 		}
+
 		// Check name with just hyphens replaced
+		// 将 - 替换为 _  例如 foo-bar 转化为 foo_bar
 		String noHyphenName = name.replace('-', '_');
 		if (!name.equals(noHyphenName) && containsKey(noHyphenName)) {
 			return noHyphenName;
 		}
+
 		// Check name with dots and hyphens replaced
+		// 将 foo_bar-bar 转化为 foo_bar_bar
 		String noDotNoHyphenName = noDotName.replace('-', '_');
 		if (!noDotName.equals(noDotNoHyphenName) && containsKey(noDotNoHyphenName)) {
 			return noDotNoHyphenName;
 		}
+
 		// Give up
 		return null;
 	}

@@ -55,7 +55,7 @@ import org.springframework.core.io.ResourceLoader;
  * also contain placeholders &mdash; for example {@code "/beans-*.xml"}. JAR files
  * or different directories in the class path can contain multiple files of the
  * same name.
- *
+ * <p>
  * 本接口还未类路径中的所有匹配资源定义了 classpath*: 资源前缀。资源位置中也可能包含占位符 —— 例如 /beans-*.xml
  *
  * @author Juergen Hoeller

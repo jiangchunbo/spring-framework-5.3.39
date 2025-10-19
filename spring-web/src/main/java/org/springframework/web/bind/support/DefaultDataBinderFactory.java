@@ -24,6 +24,8 @@ import org.springframework.web.context.request.NativeWebRequest;
  * Create a {@link WebRequestDataBinder} instance and initialize it with a
  * {@link WebBindingInitializer}.
  *
+ * 这个类就是为 Web 场景而生的，默认创建 WebRequestDataBinder 这种类型的 DataBinder
+ *
  * @author Rossen Stoyanchev
  * @since 3.1
  */
@@ -53,7 +55,10 @@ public class DefaultDataBinderFactory implements WebDataBinderFactory {
 	public final WebDataBinder createBinder(
 			NativeWebRequest webRequest, @Nullable Object target, String objectName) throws Exception {
 
+		// 使用这个 factory 创建 Binder 实例
 		WebDataBinder dataBinder = createBinderInstance(target, objectName, webRequest);
+
+		// 初始化
 		if (this.initializer != null) {
 			this.initializer.initBinder(dataBinder, webRequest);
 		}

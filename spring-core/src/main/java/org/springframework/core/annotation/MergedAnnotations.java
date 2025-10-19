@@ -297,7 +297,6 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 */
 	Stream<MergedAnnotation<Annotation>> stream();
 
-
 	/**
 	 * Create a new {@link MergedAnnotations} instance containing all
 	 * annotations and meta-annotations from the specified element.
@@ -318,6 +317,8 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * Create a new {@link MergedAnnotations} instance containing all
 	 * annotations and meta-annotations from the specified element and,
 	 * depending on the {@link SearchStrategy}, related inherited elements.
+	 * <p>
+	 * 基于 Java 反射体系的 AnnotatedElement 得到合并之后的注解
 	 *
 	 * @param element        the source element
 	 * @param searchStrategy the search strategy to use
@@ -453,7 +454,6 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	static MergedAnnotations of(Collection<MergedAnnotation<?>> annotations) {
 		return MergedAnnotationsCollection.of(annotations);
 	}
-
 
 	/**
 	 * Search strategies supported by

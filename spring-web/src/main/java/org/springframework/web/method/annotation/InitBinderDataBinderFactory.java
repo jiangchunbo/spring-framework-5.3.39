@@ -64,8 +64,12 @@ public class InitBinderDataBinderFactory extends DefaultDataBinderFactory {
 	@Override
 	public void initBinder(WebDataBinder dataBinder, NativeWebRequest request) throws Exception {
 		for (InvocableHandlerMethod binderMethod : this.binderMethods) {
+
+			// 判断 binder 方法是否应该被使用
 			if (isBinderMethodApplicable(binderMethod, dataBinder)) {
 				Object returnValue = binderMethod.invokeForRequest(request, null, dataBinder);
+
+				// @InitBinder 方法必须返回一个 void
 				if (returnValue != null) {
 					throw new IllegalStateException(
 							"@InitBinder methods must not return a value (should be void): " + binderMethod);
