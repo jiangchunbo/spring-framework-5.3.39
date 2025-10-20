@@ -39,7 +39,10 @@ public abstract class AbstractRequestAttributesScope implements Scope {
 
 	@Override
 	public Object get(String name, ObjectFactory<?> objectFactory) {
+		// 获取一个属性对象
 		RequestAttributes attributes = RequestContextHolder.currentRequestAttributes();
+
+		// 尝试根据 scope 获取属性 (可能从 Request 获取属性，可能从 Session 获取属性)
 		Object scopedObject = attributes.getAttribute(name, getScope());
 		if (scopedObject == null) {
 			scopedObject = objectFactory.getObject();

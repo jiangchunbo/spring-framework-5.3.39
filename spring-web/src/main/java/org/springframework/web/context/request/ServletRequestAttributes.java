@@ -144,6 +144,8 @@ public class ServletRequestAttributes extends AbstractRequestAttributes {
 
 	@Override
 	public Object getAttribute(String name, int scope) {
+
+		// 如果从 Request 中获取属性
 		if (scope == SCOPE_REQUEST) {
 			// 如果要从 Request 范围内获取属性
 			if (!isRequestActive()) {
@@ -152,8 +154,9 @@ public class ServletRequestAttributes extends AbstractRequestAttributes {
 			}
 			return this.request.getAttribute(name);
 		}
+
+		// 否则，从 Session 获取属性
 		else {
-			// 否则就是从 Session 获取属性
 			HttpSession session = getSession(false);
 			if (session != null) {
 				try {
