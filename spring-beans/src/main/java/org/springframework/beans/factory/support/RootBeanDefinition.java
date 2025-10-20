@@ -408,14 +408,19 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	 */
 	@Override
 	public ResolvableType getResolvableType() {
+		// 如果解析完了，就返回
 		ResolvableType targetType = this.targetType;
 		if (targetType != null) {
 			return targetType;
 		}
+
+		// Bean 的类型依赖于 factory method 返回类型
 		ResolvableType returnType = this.factoryMethodReturnType;
 		if (returnType != null) {
 			return returnType;
 		}
+
+		// 内省 factory method
 		Method factoryMethod = this.factoryMethodToIntrospect;
 		if (factoryMethod != null) {
 			return ResolvableType.forMethodReturnType(factoryMethod);

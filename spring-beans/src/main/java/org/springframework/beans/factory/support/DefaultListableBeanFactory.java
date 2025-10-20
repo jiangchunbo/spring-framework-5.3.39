@@ -951,12 +951,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return (this.configurationFrozen || super.isBeanEligibleForMetadataCaching(beanName));
 	}
 
+	/**
+	 * 实例化(非懒加载)单例 bean
+	 */
 	@Override
 	public void preInstantiateSingletons() throws BeansException {
-		// @@@@@@@@@@@@@@@@@@@@@@
-		// 在所有非懒加载的单例 bean 创建之后，这个方法会被调用
-
-
 		if (logger.isTraceEnabled()) {
 			logger.trace("Pre-instantiating singletons in " + this);
 		}
@@ -972,10 +971,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 			// 非抽象，非懒加载的单例 bean
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
+
+				// 判断是否是 FactoryBean
 				if (isFactoryBean(beanName)) {
+
+					// 故意加上 & 前缀，先赶紧创建 FactoryBean 对象，但是到底要不要调用 FactoryBean.getObject 得看它聪不聪明
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;
+
+						// 下面这几行看起来很长，其实写得有点逻辑乱
 						boolean isEagerInit;
 						if (System.getSecurityManager() != null && factory instanceof SmartFactoryBean) {
 							isEagerInit = AccessController.doPrivileged(
@@ -985,6 +990,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							isEagerInit = (factory instanceof SmartFactoryBean &&
 									((SmartFactoryBean<?>) factory).isEagerInit());
 						}
+
+						// 一般情况下，preInstantiateSingletons 不会调用 FactoryBean.getObject 方法，除非 isEagerInit
 						if (isEagerInit) {
 							getBean(beanName);
 						}

@@ -96,10 +96,13 @@ public final class CandidateComponentsIndexLoader {
 		}
 
 		try {
+			// 获取 META-INF/spring.components 文件资源，而且是全部类路径的
 			Enumeration<URL> urls = classLoader.getResources(COMPONENTS_RESOURCE_LOCATION);
 			if (!urls.hasMoreElements()) {
 				return null;
 			}
+
+			// 解析每个类路径的 spring.components 文件，并转换为 Properties 存储到 List 中
 			List<Properties> result = new ArrayList<>();
 			while (urls.hasMoreElements()) {
 				URL url = urls.nextElement();
@@ -109,6 +112,8 @@ public final class CandidateComponentsIndexLoader {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Loaded " + result.size() + " index(es)");
 			}
+
+			// 凡是只要发现了一个 spring.components 文件，就会构造一个对象 (这一点很重要，这样就没有机会使用类路径扫描)
 			int totalCount = result.stream().mapToInt(Properties::size).sum();
 			return (totalCount > 0 ? new CandidateComponentsIndex(result) : null);
 		}
