@@ -666,10 +666,17 @@ public class MethodParameter {
 	 * Return the annotations associated with the specific method/constructor parameter.
 	 */
 	public Annotation[] getParameterAnnotations() {
+		// 缓存不存在就解析一次
 		Annotation[] paramAnns = this.parameterAnnotations;
 		if (paramAnns == null) {
+			// 反射获取注解
 			Annotation[][] annotationArray = this.executable.getParameterAnnotations();
+			// 获取参数的 index
 			int index = this.parameterIndex;
+
+			// 下面这个是处理 JDK < 9 的一个 bug
+			// getParameterCount() 返回值把编译器自动加入的 enclosing 类实例算进去了
+			// getParameterAnnotations() 返回值没有算进去，所以少一个
 			if (this.executable instanceof Constructor &&
 					ClassUtils.isInnerClass(this.executable.getDeclaringClass()) &&
 					annotationArray.length == this.executable.getParameterCount() - 1) {
@@ -677,6 +684,8 @@ public class MethodParameter {
 				// for inner classes, so access it with the actual parameter index lowered by 1
 				index = this.parameterIndex - 1;
 			}
+
+			// 简单返回这个参数的注解数组 Annotation[]
 			paramAnns = (index >= 0 && index < annotationArray.length ?
 					adaptAnnotationArray(annotationArray[index]) : EMPTY_ANNOTATION_ARRAY);
 			this.parameterAnnotations = paramAnns;
@@ -703,8 +712,12 @@ public class MethodParameter {
 	@SuppressWarnings("unchecked")
 	@Nullable
 	public <A extends Annotation> A getParameterAnnotation(Class<A> annotationType) {
+		// 简单直白地获取这个参数的注解
 		Annotation[] anns = getParameterAnnotations();
+
+		// 如果注解刚好是
 		for (Annotation ann : anns) {
+			// 注解判断是否是指定类型，这是方法之一，也可以用 ann.annotationType() == type
 			if (annotationType.isInstance(ann)) {
 				return (A) ann;
 			}
