@@ -25,6 +25,10 @@ import org.springframework.lang.Nullable;
  * A constructor resolver attempts to locate a constructor and returns a ConstructorExecutor
  * that can be used to invoke that constructor. The ConstructorExecutor will be cached but
  * if it 'goes stale' the resolvers will be called again.
+ * <p>
+ * 构造函数解析器用于定位构造函数，并返回一个可用于调用该构造函数的 ConstructorExecutor。
+ * <p>
+ * ConstructorExecutor 会被缓存起来，但如果它“过期失效”了，解析器会被再次调用。
  *
  * @author Andy Clement
  * @since 3.0
@@ -36,8 +40,9 @@ public interface ConstructorResolver {
 	 * Within the supplied context determine a suitable constructor on the supplied type
 	 * that can handle the specified arguments. Return a ConstructorExecutor that can be
 	 * used to invoke that constructor (or {@code null} if no constructor could be found).
-	 * @param context the current evaluation context
-	 * @param typeName the type upon which to look for the constructor
+	 *
+	 * @param context       the current evaluation context
+	 * @param typeName      the type upon which to look for the constructor
 	 * @param argumentTypes the arguments that the constructor must be able to handle
 	 * @return a ConstructorExecutor that can invoke the constructor, or null if non found
 	 */

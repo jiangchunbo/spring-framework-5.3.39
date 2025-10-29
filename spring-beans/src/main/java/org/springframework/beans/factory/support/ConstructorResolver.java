@@ -69,7 +69,11 @@ import org.springframework.util.StringUtils;
 /**
  * Delegate for resolving constructors and factory methods.
  *
+ * <p>用于解析构造函数和工厂方法的委托。
+ *
  * <p>Performs constructor resolution through argument matching.
+ *
+ * <p> 通过参数匹配执行构造函数解析
  *
  * @author Juergen Hoeller
  * @author Rob Harrop
@@ -388,22 +392,31 @@ class ConstructorResolver {
 		// 这个方法最终会调用 @Bean 方法
 
 		BeanWrapperImpl bw = new BeanWrapperImpl();
+
+		// initBeanWrapper 是一个 protected 方法，但是可以包内调用
 		this.beanFactory.initBeanWrapper(bw);
 
 		Object factoryBean;
 		Class<?> factoryClass;
 		boolean isStatic;
 
+		// 根据是否有 factoryBeanName 分别讨论
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
+			// 可能是 XML 里面 <bean> 配置错误
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
 			}
+			// 创建 factory bean 对象
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
+
+			// 已经创建过了
 			if (mbd.isSingleton() && this.beanFactory.containsSingleton(beanName)) {
 				throw new ImplicitlyAppearedSingletonException();
 			}
+
+			// beanName 依赖 factoryBeanName
 			this.beanFactory.registerDependentBean(factoryBeanName, beanName);
 			factoryClass = factoryBean.getClass();
 			isStatic = false;
