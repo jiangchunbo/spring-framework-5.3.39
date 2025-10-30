@@ -1646,16 +1646,20 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 				this, requiredType, true, descriptor.isEager());
 
-		// 创建一个 Map，存放找到的 candidate
-		// 名字叫 result，一般就是用作返回值
+		// result 其实就是最后要返回的，收集结果用的
 		Map<String, Object> result = CollectionUtils.newLinkedHashMap(candidateNames.length);
 
 		// resolvableDependencies: 通过类型直接找到对应的 bean
 		// 1. 查找 resolvableDependencies 是否有匹配的
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
+			// 获取 resolvableDependencies 里面的类型，一般就是一些非常基础的接口
 			Class<?> autowiringType = classObjectEntry.getKey();
+
+			// 如果这个非常基础的接口兼容 requiredType -> 运气很好，进一步处理
 			if (autowiringType.isAssignableFrom(requiredType)) {
 				Object autowiringValue = classObjectEntry.getValue();
+
+				// 进一步解析，一般只有 ObjectFactory 才会进一步处理
 				autowiringValue = AutowireUtils.resolveAutowiringValue(autowiringValue, requiredType);
 				if (requiredType.isInstance(autowiringValue)) {
 					result.put(ObjectUtils.identityToString(autowiringValue), autowiringValue);

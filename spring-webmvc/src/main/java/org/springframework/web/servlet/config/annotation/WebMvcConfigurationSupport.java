@@ -299,6 +299,8 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	/**
 	 * Return a {@link RequestMappingHandlerMapping} ordered at 0 for mapping
 	 * requests to annotated controllers.
+	 *
+	 * @param conversionService 对于 SpringBoot 来说，类型是 WebConversionService
 	 */
 	@Bean
 	@SuppressWarnings("deprecation")

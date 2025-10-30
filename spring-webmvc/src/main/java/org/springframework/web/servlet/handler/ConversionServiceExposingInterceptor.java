@@ -39,6 +39,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
  */
 public class ConversionServiceExposingInterceptor implements HandlerInterceptor {
 
+	// 能够将转换服务暴露到 request 的属性中
+
 	private final ConversionService conversionService;
 
 

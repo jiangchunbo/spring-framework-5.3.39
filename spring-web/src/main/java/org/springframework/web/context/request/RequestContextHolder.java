@@ -44,6 +44,8 @@ import org.springframework.util.ClassUtils;
  */
 public abstract class RequestContextHolder  {
 
+	// 这个类就是 Spring 能够通过自动注入 HttpServletRequest 的方式，动态获取请求对象
+
 	private static final boolean jsfPresent =
 			ClassUtils.isPresent("javax.faces.context.FacesContext", RequestContextHolder.class.getClassLoader());
 

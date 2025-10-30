@@ -93,7 +93,10 @@ public class RequestContextFilter extends OncePerRequestFilter {
 			HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
+		// 创建一个 ServletRequestAttributes 封装 request 和 response
 		ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
+
+		// 向 ThreadLocal 填充属性
 		initContextHolders(request, attributes);
 
 		try {
@@ -109,7 +112,11 @@ public class RequestContextFilter extends OncePerRequestFilter {
 	}
 
 	private void initContextHolders(HttpServletRequest request, ServletRequestAttributes requestAttributes) {
+
+		// 填充 Locale
 		LocaleContextHolder.setLocale(request.getLocale(), this.threadContextInheritable);
+
+		// 填充 ServletRequestAttributes
 		RequestContextHolder.setRequestAttributes(requestAttributes, this.threadContextInheritable);
 		if (logger.isTraceEnabled()) {
 			logger.trace("Bound request context to thread: " + request);
