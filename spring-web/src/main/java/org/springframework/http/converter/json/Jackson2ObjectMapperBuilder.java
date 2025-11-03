@@ -104,6 +104,9 @@ public class Jackson2ObjectMapperBuilder {
 
 	private final Map<Class<?>, Class<?>> mixIns = new LinkedHashMap<>();
 
+	/**
+	 * 我们可以
+	 */
 	private final Map<Class<?>, JsonSerializer<?>> serializers = new LinkedHashMap<>();
 
 	private final Map<Class<?>, JsonDeserializer<?>> deserializers = new LinkedHashMap<>();

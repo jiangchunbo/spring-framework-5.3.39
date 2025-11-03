@@ -44,14 +44,18 @@ public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {
 
 	private final WebMvcConfigurerComposite configurers = new WebMvcConfigurerComposite();
 
-
+	/**
+	 * 通过 {@link Autowired} 捕获容器中所有的 {@link WebMvcConfigurer}
+	 * <p>
+	 * 这意味着，只要你定义了 {@link WebMvcConfigurer} 就会被发现，
+	 * 有时候可能我们只是实现了 {@link WebMvcConfigurer} 其中一部分接口而已。
+	 */
 	@Autowired(required = false)
 	public void setConfigurers(List<WebMvcConfigurer> configurers) {
 		if (!CollectionUtils.isEmpty(configurers)) {
 			this.configurers.addWebMvcConfigurers(configurers);
 		}
 	}
-
 
 	@Override
 	protected void configurePathMatch(PathMatchConfigurer configurer) {
@@ -115,6 +119,7 @@ public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {
 
 	@Override
 	protected void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+		// 我们自己，以及 spring 可能有很多 configurer，使用他们配置转换器
 		this.configurers.configureMessageConverters(converters);
 	}
 

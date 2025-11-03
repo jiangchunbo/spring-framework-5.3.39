@@ -1558,6 +1558,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			TypeConverter converter = (typeConverter != null ? typeConverter : getTypeConverter());
 			Object result = converter.convertIfNecessary(matchingBeans.values(), type);
+
+			// 如果你的依赖类型是 List，Spring 会帮助你排序
 			if (result instanceof List) {
 				if (((List<?>) result).size() > 1) {
 					Comparator<Object> comparator = adaptDependencyComparator(matchingBeans);

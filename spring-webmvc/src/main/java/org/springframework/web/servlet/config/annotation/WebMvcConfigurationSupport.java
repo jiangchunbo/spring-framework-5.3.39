@@ -609,7 +609,7 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	 * Return a handler mapping ordered at Integer.MAX_VALUE-1 with mapped
 	 * resource handlers. To configure resource handling, override
 	 * {@link #addResourceHandlers}.
-	 *
+	 * <p>
 	 * 这是 Spring 向容器中注册的一个 Bean，用于映射 request -> resource
 	 */
 	@Bean
@@ -695,6 +695,15 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	 * <li>{@link #addReturnValueHandlers} for adding custom return value handlers.
 	 * <li>{@link #configureMessageConverters} for adding custom message converters.
 	 * </ul>
+	 * <p>
+	 * 返回一个 {@link RequestMappingHandlerAdapter}，用于通过注解的控制器方法处理请求。
+	 * <p>
+	 * 如果需要更细粒度的定制，可以考虑重写以下方法：
+	 * <ul>
+	 * <li>{@link #addArgumentResolvers} for adding custom argument resolvers.
+	 * <li>{@link #addReturnValueHandlers} for adding custom return value handlers.
+	 * <li>{@link #configureMessageConverters} for adding custom message converters.
+	 * </ul>
 	 */
 	@Bean
 	public RequestMappingHandlerAdapter requestMappingHandlerAdapter(
@@ -704,6 +713,8 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 
 		RequestMappingHandlerAdapter adapter = createRequestMappingHandlerAdapter();
 		adapter.setContentNegotiationManager(contentNegotiationManager);
+
+		// 获取消息转换器，该方法实现支持添加自己的消息转换器
 		adapter.setMessageConverters(getMessageConverters());
 
 		// 设置 ConfigurableWebBindingInitializer，这个组件能够在创建 WebDataBinder 时自动注册一些能力
@@ -909,12 +920,26 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	 * Also see {@link #addDefaultHttpMessageConverters} for adding default message converters.
 	 */
 	protected final List<HttpMessageConverter<?>> getMessageConverters() {
+		// 有好几个个地方会调用这个方法：
+		// 1. spring boot 注册 HttpMessageConverters
+		// 2. spring mvc RequestMappingHandlerAdapter 适配器需要
+
 		if (this.messageConverters == null) {
 			this.messageConverters = new ArrayList<>();
+
+			// 下面其实就是两步：
+			// (1) 自己配置，或者用默认的
+			// (2) 添加扩展的
+
+			// 使用所有的 WebMvcConfigurer 配置 messageConverters，其实就是添加自己的消息转换器
 			configureMessageConverters(this.messageConverters);
+
+			// 如果一阵配置之后，还是空的，就用默认的
 			if (this.messageConverters.isEmpty()) {
 				addDefaultHttpMessageConverters(this.messageConverters);
 			}
+
+			// 扩展
 			extendMessageConverters(this.messageConverters);
 		}
 		return this.messageConverters;
@@ -951,6 +976,8 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	 * @param messageConverters the list to add the default message converters to
 	 */
 	protected final void addDefaultHttpMessageConverters(List<HttpMessageConverter<?>> messageConverters) {
+		// 添加默认的 HttpMessageConverter
+
 		messageConverters.add(new ByteArrayHttpMessageConverter());
 		messageConverters.add(new StringHttpMessageConverter());
 		messageConverters.add(new ResourceHttpMessageConverter());
@@ -984,6 +1011,9 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 		if (kotlinSerializationJsonPresent) {
 			messageConverters.add(new KotlinSerializationJsonHttpMessageConverter());
 		}
+
+		// 创建一个默认的 ObjectMapper，交给 MappingJackson2HttpMessageConverter 使用
+		// 所以，我们没有办法定制化 controller 处理的 MappingJackson2HttpMessageConverter
 		if (jackson2Present) {
 			Jackson2ObjectMapperBuilder builder = Jackson2ObjectMapperBuilder.json();
 			if (this.applicationContext != null) {

@@ -48,6 +48,10 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  */
 public interface WebMvcConfigurer {
 
+	// 对于 Spring 框架来说，没有实现任何扩展，因为都内置好了
+	// 等待用户实现这个接口扩展
+	// 而且，WebMvcConfigurerAdapter 已经废弃，因为接口支持 default 方法
+
 	/**
 	 * Help with configuring {@link HandlerMapping} path matching options such as
 	 * whether to use parsed {@code PathPatterns} or String pattern matching
