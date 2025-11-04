@@ -37,6 +37,9 @@ import org.springframework.util.ClassUtils;
 /**
  * {@link MergedAnnotation} that adapts attributes from a root annotation by
  * applying the mapping and mirroring rules of an {@link AnnotationTypeMapping}.
+ * <p>
+ * {@link MergedAnnotation} 的实现类，通过 {@link AnnotationTypeMapping} 的映射和镜像规则，
+ * 从跟注解中适配属性值。
  *
  * <p>Root attribute values are extracted from a source object using a supplied
  * {@code BiFunction}. This allows various different annotation models to be
@@ -60,16 +63,17 @@ import org.springframework.util.ClassUtils;
  * <tr><td>Other types</td><td>An exact match or the appropriate primitive wrapper</td></tr>
  * </table>
  *
+ * @param <A> the annotation type
  * @author Phillip Webb
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 5.2
- * @param <A> the annotation type
  * @see TypeMappedAnnotations
+ * @since 5.2
  */
 final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnnotation<A> {
 
 	private static final Map<Class<?>, Object> EMPTY_ARRAYS;
+
 	static {
 		Map<Class<?>, Object> emptyArrays = new HashMap<>();
 		emptyArrays.put(boolean.class, new boolean[0]);
@@ -83,7 +87,6 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 		emptyArrays.put(String.class, new String[0]);
 		EMPTY_ARRAYS = Collections.unmodifiableMap(emptyArrays);
 	}
-
 
 	private final AnnotationTypeMapping mapping;
 
@@ -109,17 +112,16 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 
 	private final int[] resolvedMirrors;
 
-
 	private TypeMappedAnnotation(AnnotationTypeMapping mapping, @Nullable ClassLoader classLoader,
-			@Nullable Object source, @Nullable Object rootAttributes, ValueExtractor valueExtractor,
-			int aggregateIndex) {
+								 @Nullable Object source, @Nullable Object rootAttributes, ValueExtractor valueExtractor,
+								 int aggregateIndex) {
 
 		this(mapping, classLoader, source, rootAttributes, valueExtractor, aggregateIndex, null);
 	}
 
 	private TypeMappedAnnotation(AnnotationTypeMapping mapping, @Nullable ClassLoader classLoader,
-			@Nullable Object source, @Nullable Object rootAttributes, ValueExtractor valueExtractor,
-			int aggregateIndex, @Nullable int[] resolvedRootMirrors) {
+								 @Nullable Object source, @Nullable Object rootAttributes, ValueExtractor valueExtractor,
+								 int aggregateIndex, @Nullable int[] resolvedRootMirrors) {
 
 		this.mapping = mapping;
 		this.classLoader = classLoader;
@@ -136,9 +138,9 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 	}
 
 	private TypeMappedAnnotation(AnnotationTypeMapping mapping, @Nullable ClassLoader classLoader,
-			@Nullable Object source, @Nullable Object rootAnnotation, ValueExtractor valueExtractor,
-			int aggregateIndex, boolean useMergedValues, @Nullable Predicate<String> attributeFilter,
-			int[] resolvedRootMirrors, int[] resolvedMirrors) {
+								 @Nullable Object source, @Nullable Object rootAnnotation, ValueExtractor valueExtractor,
+								 int aggregateIndex, boolean useMergedValues, @Nullable Predicate<String> attributeFilter,
+								 int[] resolvedRootMirrors, int[] resolvedMirrors) {
 
 		this.classLoader = classLoader;
 		this.source = source;
@@ -151,7 +153,6 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 		this.resolvedRootMirrors = resolvedRootMirrors;
 		this.resolvedMirrors = resolvedMirrors;
 	}
-
 
 	@Override
 	@SuppressWarnings("unchecked")
@@ -262,6 +263,7 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 
 	@Override
 	public MergedAnnotation<A> withNonMergedAttributes() {
+		// 注意有个参数是写死的 useMergedValues = false
 		return new TypeMappedAnnotation<>(this.mapping, this.classLoader, this.source, this.rootAttributes,
 				this.valueExtractor, this.aggregateIndex, false, this.attributeFilter,
 				this.resolvedRootMirrors, this.resolvedMirrors);
@@ -274,13 +276,20 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 
 	@Override
 	public <T extends Map<String, Object>> T asMap(Function<MergedAnnotation<?>, T> factory, Adapt... adaptations) {
+		// factory apply 一下就变成 Map 了
 		T map = factory.apply(this);
+
 		Assert.state(map != null, "Factory used to create MergedAnnotation Map must not return null");
+
+		// 获取注解属性方法，遍历
 		AttributeMethods attributes = this.mapping.getAttributes();
 		for (int i = 0; i < attributes.size(); i++) {
 			Method attribute = attributes.get(i);
+			// 获取属性值
 			Object value = (isFiltered(attribute.getName()) ? null :
 					getValue(i, getTypeForMapOptions(attribute, adaptations)));
+			// ps: getTypeForMapOptions(attribute, adaptations) 要不就返回 String.class 系列，要不就是 Object.class
+
 			if (value != null) {
 				map.put(attribute.getName(),
 						adaptValueForMapOptions(attribute, value, map.getClass(), factory, adaptations));
@@ -290,16 +299,23 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 	}
 
 	private Class<?> getTypeForMapOptions(Method attribute, Adapt[] adaptations) {
+		// 注解属性方法返回值类型
 		Class<?> attributeType = attribute.getReturnType();
+		// 如果是数组，则获取 component type
 		Class<?> componentType = (attributeType.isArray() ? attributeType.getComponentType() : attributeType);
+
+		// 需要 CLASS 准换 STRING
 		if (Adapt.CLASS_TO_STRING.isIn(adaptations) && componentType == Class.class) {
+			// 直接返回 String 相关
 			return (attributeType.isArray() ? String[].class : String.class);
 		}
+
+		// 否则就是 Object
 		return Object.class;
 	}
 
 	private <T extends Map<String, Object>> Object adaptValueForMapOptions(Method attribute, Object value,
-			Class<?> mapType, Function<MergedAnnotation<?>, T> factory, Adapt[] adaptations) {
+																		   Class<?> mapType, Function<MergedAnnotation<?>, T> factory, Adapt[] adaptations) {
 
 		if (value instanceof MergedAnnotation) {
 			MergedAnnotation<?> annotation = (MergedAnnotation<?>) value;
@@ -342,6 +358,7 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 	/**
 	 * Determine if the supplied object is an annotation of the required
 	 * {@linkplain #getType() type}.
+	 *
 	 * @param obj the object to check
 	 * @since 5.3.22
 	 */
@@ -354,6 +371,7 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 	 * <strong>and</strong> whether the mapped annotation is a composed annotation
 	 * that needs to have its attributes merged or the mapped annotation is
 	 * {@linkplain AnnotationTypeMapping#isSynthesizable() synthesizable} in general.
+	 *
 	 * @param annotation the annotation to check
 	 * @since 5.3.22
 	 */
@@ -389,7 +407,9 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 
 	@Nullable
 	private <T> T getValue(int attributeIndex, Class<T> type) {
+		// 先拿到 Method 能够调用获取属性
 		Method attribute = this.mapping.getAttributes().get(attributeIndex);
+
 		Object value = getValue(attributeIndex, true, false);
 		if (value == null) {
 			value = attribute.getDefaultValue();
@@ -401,7 +421,10 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 	private Object getValue(int attributeIndex, boolean useConventionMapping, boolean forMirrorResolution) {
 		AnnotationTypeMapping mapping = this.mapping;
 		if (this.useMergedValues) {
+			// 别名
 			int mappedIndex = this.mapping.getAliasMapping(attributeIndex);
+
+			// 没有找到明确的 aliasMapping，那么试试 convention 约定
 			if (mappedIndex == -1 && useConventionMapping) {
 				mappedIndex = this.mapping.getConventionMapping(attributeIndex);
 			}
@@ -455,31 +478,26 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 		type = getAdaptType(attribute, type);
 		if (value instanceof Class && type == String.class) {
 			value = ((Class<?>) value).getName();
-		}
-		else if (value instanceof String && type == Class.class) {
+		} else if (value instanceof String && type == Class.class) {
 			value = ClassUtils.resolveClassName((String) value, getClassLoader());
-		}
-		else if (value instanceof Class[] && type == String[].class) {
+		} else if (value instanceof Class[] && type == String[].class) {
 			Class<?>[] classes = (Class<?>[]) value;
 			String[] names = new String[classes.length];
 			for (int i = 0; i < classes.length; i++) {
 				names[i] = classes[i].getName();
 			}
 			value = names;
-		}
-		else if (value instanceof String[] && type == Class[].class) {
+		} else if (value instanceof String[] && type == Class[].class) {
 			String[] names = (String[]) value;
 			Class<?>[] classes = new Class<?>[names.length];
 			for (int i = 0; i < names.length; i++) {
 				classes[i] = ClassUtils.resolveClassName(names[i], getClassLoader());
 			}
 			value = classes;
-		}
-		else if (value instanceof MergedAnnotation && type.isAnnotation()) {
+		} else if (value instanceof MergedAnnotation && type.isAnnotation()) {
 			MergedAnnotation<?> annotation = (MergedAnnotation<?>) value;
 			value = annotation.synthesize();
-		}
-		else if (value instanceof MergedAnnotation[] && type.isArray() && type.getComponentType().isAnnotation()) {
+		} else if (value instanceof MergedAnnotation[] && type.isArray() && type.getComponentType().isAnnotation()) {
 			MergedAnnotation<?>[] annotations = (MergedAnnotation<?>[]) value;
 			Object array = Array.newInstance(type.getComponentType(), annotations.length);
 			for (int i = 0; i < annotations.length; i++) {
@@ -610,10 +628,13 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 		return null;
 	}
 
-
 	static <A extends Annotation> MergedAnnotation<A> from(@Nullable Object source, A annotation) {
 		Assert.notNull(annotation, "Annotation must not be null");
+
+		// 传入注解对象的 Class 解析出一个 mapping
 		AnnotationTypeMappings mappings = AnnotationTypeMappings.forAnnotationType(annotation.annotationType());
+
+		// mappings.get(0) 获取第一个？也就是注解他自己
 		return new TypeMappedAnnotation<>(
 				mappings.get(0), null, source, annotation, AnnotationUtils::invokeAnnotationMethod, 0);
 	}
@@ -660,8 +681,7 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 		try {
 			return new TypeMappedAnnotation<>(mapping, null, source, rootAttribute,
 					valueExtractor, aggregateIndex);
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			AnnotationUtils.rethrowAnnotationConfigurationException(ex);
 			if (logger.isEnabled()) {
 				String type = mapping.getAnnotationType().getName();

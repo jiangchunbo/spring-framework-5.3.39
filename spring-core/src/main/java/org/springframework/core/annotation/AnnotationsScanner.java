@@ -48,17 +48,14 @@ abstract class AnnotationsScanner {
 
 	private static final Method[] NO_METHODS = {};
 
-
 	private static final Map<AnnotatedElement, Annotation[]> declaredAnnotationCache =
 			new ConcurrentReferenceHashMap<>(256);
 
 	private static final Map<Class<?>, Method[]> baseTypeMethodsCache =
 			new ConcurrentReferenceHashMap<>(256);
 
-
 	private AnnotationsScanner() {
 	}
-
 
 	/**
 	 * Scan the hierarchy of the specified element for relevant annotations and
@@ -441,9 +438,10 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
-
 	/**
 	 * 获取声明的注解
+	 *
+	 * @param defensive 防御性的，意思就是是否 clone 一份返回，防止数据被破坏
 	 */
 	static Annotation[] getDeclaredAnnotations(AnnotatedElement source, boolean defensive) {
 		boolean cached = false;

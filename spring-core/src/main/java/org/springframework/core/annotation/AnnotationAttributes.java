@@ -349,6 +349,8 @@ public class AnnotationAttributes extends LinkedHashMap<String, Object> {
 	@SuppressWarnings("unchecked")
 	private <T> T getRequiredAttribute(String attributeName, Class<T> expectedType) {
 		Assert.hasText(attributeName, "'attributeName' must not be null or empty");
+
+		// 本类直接继承了 LinkedHashMap，所以直接调用其 get(attributeName)
 		Object value = get(attributeName);
 		assertAttributePresence(attributeName, value);
 		assertNotException(attributeName, value);

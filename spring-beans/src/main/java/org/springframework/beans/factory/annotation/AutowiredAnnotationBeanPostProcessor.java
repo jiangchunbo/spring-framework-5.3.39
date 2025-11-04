@@ -164,7 +164,6 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	 */
 	private final Map<String, InjectionMetadata> injectionMetadataCache = new ConcurrentHashMap<>(256);
 
-
 	/**
 	 * Create a new {@code AutowiredAnnotationBeanPostProcessor} for Spring's
 	 * standard {@link Autowired @Autowired} and {@link Value @Value} annotations.
@@ -188,7 +187,6 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			// JSR-330 API not available - simply skip.
 		}
 	}
-
 
 	/**
 	 * Set the 'autowired' annotation type, to be used on constructors, fields,
@@ -260,7 +258,6 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 		this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
 		this.metadataReaderFactory = new SimpleMetadataReaderFactory(this.beanFactory.getBeanClassLoader());
 	}
-
 
 	/**
 	 * Bean Definition 已经合并完毕，所以具备了顶级 BeanDefinition，这时候这个处理器就想在 Bean Definition 设置一些属性
@@ -734,6 +731,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	 */
 	@Nullable
 	private Object resolveCachedArgument(@Nullable String beanName, @Nullable Object cachedArgument) {
+		// cachedArgument 如果存在，类型一定是 ShortcutDependencyDescriptor
 		if (cachedArgument instanceof DependencyDescriptor) {
 			DependencyDescriptor descriptor = (DependencyDescriptor) cachedArgument;
 			Assert.state(this.beanFactory != null, "No BeanFactory available");
@@ -742,7 +740,6 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			return cachedArgument;
 		}
 	}
-
 
 	/**
 	 * Class representing injection information about an annotated field.
@@ -767,7 +764,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			Field field = (Field) this.member;
 			Object value;
 
-			// 什么所谓的缓存
+			// 尝试从缓存获取，使用 ShortcutDependencyDescriptor 快速解析
 			if (this.cached) {
 				try {
 					value = resolveCachedArgument(beanName, this.cachedFieldValue);
@@ -777,7 +774,9 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 					logger.debug("Failed to resolve cached argument", ex);
 					value = resolveFieldValue(field, bean, beanName);
 				}
-			} else {
+			}
+			// 解析字段
+			else {
 				value = resolveFieldValue(field, bean, beanName);
 			}
 			if (value != null) {
@@ -788,11 +787,10 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 
 		@Nullable
 		private Object resolveFieldValue(Field field, Object bean, @Nullable String beanName) {
-			// 构造了一个依赖描述器
+			// 构造了一个依赖描述器 (传入 Field 我只能说似乎是按照类型寻找)
 			DependencyDescriptor desc = new DependencyDescriptor(field, this.required);
 			// 设置包含这个依赖项的 bean.getClass()
 			desc.setContainingClass(bean.getClass());
-
 
 			// 这个容器是干嘛的呢，就是传给下面的依赖解析方法，这个方法会把解析到的依赖放进去，让你知道解析到了多少个
 			Set<String> autowiredBeanNames = new LinkedHashSet<>(2);
@@ -817,7 +815,8 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 						// 注册依赖关系
 						registerDependentBeans(beanName, autowiredBeanNames);
 
-						// 如果 value（也就是解析出来的值）不为空，并且这个依赖只找到 1 个
+						// 如果 value（也就是解析出来的值）不为空，并且只匹配唯一的一个 beanName，
+						// 那么创建了 ShortcutDependencyDescriptor 缓存下来，对于 prototype 可能很有用
 						if (value != null && autowiredBeanNames.size() == 1) {
 							String autowiredBeanName = autowiredBeanNames.iterator().next();
 							if (beanFactory.containsBean(autowiredBeanName) &&
@@ -835,8 +834,8 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			}
 			return value;
 		}
-	}
 
+	}
 
 	/**
 	 * Class representing injection information about an annotated method.
@@ -931,7 +930,6 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 				}
 			}
 
-
 			synchronized (this) {
 				if (!this.cached) {
 					if (arguments != null) {
@@ -959,15 +957,22 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			}
 			return arguments;
 		}
-	}
 
+	}
 
 	/**
 	 * DependencyDescriptor variant with a pre-resolved target bean name.
+	 * <p>
+	 * DependencyDescriptor 变体，其中包含了已经解析好的 target bean name
+	 * <p>
+	 * 为什么要缓存这个？因为按类型解析需要寻找
 	 */
 	@SuppressWarnings("serial")
 	private static class ShortcutDependencyDescriptor extends DependencyDescriptor {
 
+		/**
+		 * beanName
+		 */
 		private final String shortcut;
 
 		public ShortcutDependencyDescriptor(DependencyDescriptor original, String shortcut) {
@@ -979,6 +984,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 		public Object resolveShortcut(BeanFactory beanFactory) {
 			return beanFactory.getBean(this.shortcut, getDependencyType());
 		}
+
 	}
 
 }

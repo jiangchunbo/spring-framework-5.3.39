@@ -1365,6 +1365,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		// 2. 如果依赖项的类型是 ObjectFactory 或 ObjectProvider
+		// 这种类型其实返回的并不是所需要的类型对象
 		else if (ObjectFactory.class == descriptor.getDependencyType() ||
 				ObjectProvider.class == descriptor.getDependencyType()) {
 			return new DependencyObjectProvider(descriptor, requestingBeanName);

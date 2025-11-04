@@ -28,8 +28,8 @@ import java.lang.annotation.Annotation;
  *
  * @author Phillip Webb
  * @author Juergen Hoeller
- * @since 5.2
  * @see MergedAnnotations
+ * @since 5.2
  */
 @FunctionalInterface
 public interface AnnotationFilter {
@@ -57,14 +57,17 @@ public interface AnnotationFilter {
 		public boolean matches(Annotation annotation) {
 			return true;
 		}
+
 		@Override
 		public boolean matches(Class<?> type) {
 			return true;
 		}
+
 		@Override
 		public boolean matches(String typeName) {
 			return true;
 		}
+
 		@Override
 		public String toString() {
 			return "All annotations filtered";
@@ -74,6 +77,7 @@ public interface AnnotationFilter {
 	/**
 	 * {@link AnnotationFilter} that never matches and can be used when no
 	 * filtering is needed (allowing for any annotation types to be present).
+	 *
 	 * @see #PLAIN
 	 * @deprecated as of 5.2.6 since the {@link MergedAnnotations} model
 	 * always ignores lang annotations according to the {@link #PLAIN} filter
@@ -85,23 +89,26 @@ public interface AnnotationFilter {
 		public boolean matches(Annotation annotation) {
 			return false;
 		}
+
 		@Override
 		public boolean matches(Class<?> type) {
 			return false;
 		}
+
 		@Override
 		public boolean matches(String typeName) {
 			return false;
 		}
+
 		@Override
 		public String toString() {
 			return "No annotation filtering";
 		}
 	};
 
-
 	/**
 	 * Test if the given annotation matches the filter.
+	 *
 	 * @param annotation the annotation to test
 	 * @return {@code true} if the annotation matches
 	 */
@@ -111,6 +118,7 @@ public interface AnnotationFilter {
 
 	/**
 	 * Test if the given type matches the filter.
+	 *
 	 * @param type the annotation type to test
 	 * @return {@code true} if the annotation matches
 	 */
@@ -120,15 +128,16 @@ public interface AnnotationFilter {
 
 	/**
 	 * Test if the given type name matches the filter.
+	 *
 	 * @param typeName the fully qualified class name of the annotation type to test
 	 * @return {@code true} if the annotation matches
 	 */
 	boolean matches(String typeName);
 
-
 	/**
 	 * Create a new {@link AnnotationFilter} that matches annotations in the
 	 * specified packages.
+	 *
 	 * @param packages the annotation packages that should match
 	 * @return a new {@link AnnotationFilter} instance
 	 */

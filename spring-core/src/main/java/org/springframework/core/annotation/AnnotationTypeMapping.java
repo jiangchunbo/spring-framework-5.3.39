@@ -68,6 +68,9 @@ final class AnnotationTypeMapping {
 
 	private final int[] aliasMappings;
 
+	/**
+	 * 约定映射。默认所有值都是 -1。
+	 */
 	private final int[] conventionMappings;
 
 	private final int[] annotationValueMappings;
@@ -262,20 +265,37 @@ final class AnnotationTypeMapping {
 		return -1;
 	}
 
+	/**
+	 * 添加约定映射
+	 */
 	private void addConventionMappings() {
 		if (this.distance == 0) {
 			return;
 		}
+
+		// 获取根的属性方法
 		AttributeMethods rootAttributes = this.root.getAttributes();
+
+		// 先放到局部变量
 		int[] mappings = this.conventionMappings;
 		for (int i = 0; i < mappings.length; i++) {
+			// 获取属性名
 			String name = this.attributes.get(i).getName();
+
+			// 1. 当前属性 i 在 root 注解的映射索引 mapped
 			int mapped = rootAttributes.indexOf(name);
+
+			// 2. 接下来要处理当前属性 i 的镜像属性(从 MirrorSet 获取)，如果存在镜像属性，则其关联属性的映射也需要更新到 mapped
+
+			// mapped != -1 表示 root 存在这种映射
+			// 但是，当前属性 i 不能叫 value
 			if (!MergedAnnotation.VALUE.equals(name) && mapped != -1) {
+				// 那么填充这个索引
 				mappings[i] = mapped;
 				MirrorSet mirrors = getMirrorSets().getAssigned(i);
 				if (mirrors != null) {
 					for (int j = 0; j < mirrors.size(); j++) {
+						// mirrors.getAttributeIndex(j) 镜像属性的索引
 						mappings[mirrors.getAttributeIndex(j)] = mapped;
 					}
 				}
@@ -364,6 +384,8 @@ final class AnnotationTypeMapping {
 	 * lookups from child mappings will occur.
 	 */
 	void afterAllMappingsSet() {
+		// 似乎都是一些 validate
+
 		validateAllAliasesClaimed();
 		for (int i = 0; i < this.mirrorSets.size(); i++) {
 			validateMirrorSet(this.mirrorSets.get(i));

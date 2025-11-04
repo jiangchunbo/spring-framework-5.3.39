@@ -30,12 +30,17 @@ import org.springframework.util.ReflectionUtils;
 /**
  * Provides a quick way to access the attribute methods of an {@link Annotation}
  * with consistent ordering as well as a few useful utility methods.
+ * <p>
+ * 其实就是注解里面的属性方法。里面封装了 {@link annotationType} 注解类型，还有它所有的属性方法 {@link attributeMethods}
  *
  * @author Phillip Webb
  * @author Sam Brannen
  * @since 5.2
  */
 final class AttributeMethods {
+
+	// 其实就是注解的属性方法
+	// 里面封装饿了注解类型 annotationType
 
 	static final AttributeMethods NONE = new AttributeMethods(null, new Method[0]);
 
@@ -48,7 +53,6 @@ final class AttributeMethods {
 		return (m1 != null ? -1 : 1);
 	};
 
-
 	@Nullable
 	private final Class<? extends Annotation> annotationType;
 
@@ -59,7 +63,6 @@ final class AttributeMethods {
 	private final boolean hasDefaultValueMethod;
 
 	private final boolean hasNestedAnnotation;
-
 
 	private AttributeMethods(@Nullable Class<? extends Annotation> annotationType, Method[] attributeMethods) {
 		this.annotationType = annotationType;
@@ -88,13 +91,13 @@ final class AttributeMethods {
 		this.hasNestedAnnotation = foundNestedAnnotation;
 	}
 
-
 	/**
 	 * Determine if values from the given annotation can be safely accessed without
 	 * causing any {@link TypeNotPresentException TypeNotPresentExceptions}.
 	 * <p>This method is designed to cover Google App Engine's late arrival of such
 	 * exceptions for {@code Class} values (instead of the more typical early
 	 * {@code Class.getAnnotations() failure} on a regular JVM).
+	 *
 	 * @param annotation the annotation to check
 	 * @return {@code true} if all values are present
 	 * @see #validate(Annotation)
@@ -105,12 +108,10 @@ final class AttributeMethods {
 			if (canThrowTypeNotPresentException(i)) {
 				try {
 					AnnotationUtils.invokeAnnotationMethod(get(i), annotation);
-				}
-				catch (IllegalStateException ex) {
+				} catch (IllegalStateException ex) {
 					// Plain invocation failure to expose -> leave up to attribute retrieval
 					// (if any) where such invocation failure will be logged eventually.
-				}
-				catch (Throwable ex) {
+				} catch (Throwable ex) {
 					// TypeNotPresentException etc. -> annotation type not actually loadable.
 					return false;
 				}
@@ -125,6 +126,7 @@ final class AttributeMethods {
 	 * <p>This method is designed to cover Google App Engine's late arrival of such
 	 * exceptions for {@code Class} values (instead of the more typical early
 	 * {@code Class.getAnnotations() failure} on a regular JVM).
+	 *
 	 * @param annotation the annotation to validate
 	 * @throws IllegalStateException if a declared {@code Class} attribute could not be read
 	 * @see #canLoad(Annotation)
@@ -135,11 +137,9 @@ final class AttributeMethods {
 			if (canThrowTypeNotPresentException(i)) {
 				try {
 					AnnotationUtils.invokeAnnotationMethod(get(i), annotation);
-				}
-				catch (IllegalStateException ex) {
+				} catch (IllegalStateException ex) {
 					throw ex;
-				}
-				catch (Throwable ex) {
+				} catch (Throwable ex) {
 					throw new IllegalStateException("Could not obtain annotation attribute value for " +
 							get(i).getName() + " declared on " + annotation.annotationType(), ex);
 				}
@@ -157,6 +157,7 @@ final class AttributeMethods {
 	/**
 	 * Get the attribute with the specified name or {@code null} if no
 	 * matching attribute exists.
+	 *
 	 * @param name the attribute name to find
 	 * @return the attribute method or {@code null}
 	 */
@@ -168,10 +169,11 @@ final class AttributeMethods {
 
 	/**
 	 * Get the attribute at the specified index.
+	 *
 	 * @param index the index of the attribute to return
 	 * @return the attribute method
 	 * @throws IndexOutOfBoundsException if the index is out of range
-	 * ({@code index < 0 || index >= size()})
+	 *                                   ({@code index < 0 || index >= size()})
 	 */
 	Method get(int index) {
 		return this.attributeMethods[index];
@@ -180,6 +182,7 @@ final class AttributeMethods {
 	/**
 	 * Determine if the attribute at the specified index could throw a
 	 * {@link TypeNotPresentException} when accessed.
+	 *
 	 * @param index the index of the attribute to check
 	 * @return {@code true} if the attribute can throw a
 	 * {@link TypeNotPresentException}
@@ -191,6 +194,7 @@ final class AttributeMethods {
 	/**
 	 * Get the index of the attribute with the specified name, or {@code -1}
 	 * if there is no attribute with the name.
+	 *
 	 * @param name the name to find
 	 * @return the index of the attribute, or {@code -1}
 	 */
@@ -206,6 +210,7 @@ final class AttributeMethods {
 	/**
 	 * Get the index of the specified attribute, or {@code -1} if the
 	 * attribute is not in this collection.
+	 *
 	 * @param attribute the attribute to find
 	 * @return the index of the attribute, or {@code -1}
 	 */
@@ -220,6 +225,7 @@ final class AttributeMethods {
 
 	/**
 	 * Get the number of attributes in this collection.
+	 *
 	 * @return the number of attributes
 	 */
 	int size() {
@@ -228,6 +234,7 @@ final class AttributeMethods {
 
 	/**
 	 * Determine if at least one of the attribute methods has a default value.
+	 *
 	 * @return {@code true} if there is at least one attribute method with a default value
 	 */
 	boolean hasDefaultValueMethod() {
@@ -236,6 +243,7 @@ final class AttributeMethods {
 
 	/**
 	 * Determine if at least one of the attribute methods is a nested annotation.
+	 *
 	 * @return {@code true} if there is at least one attribute method with a nested
 	 * annotation type
 	 */
@@ -243,9 +251,9 @@ final class AttributeMethods {
 		return this.hasNestedAnnotation;
 	}
 
-
 	/**
 	 * Get the attribute methods for the given annotation type.
+	 *
 	 * @param annotationType the annotation type
 	 * @return the attribute methods for the annotation type
 	 */
@@ -257,7 +265,10 @@ final class AttributeMethods {
 	}
 
 	private static AttributeMethods compute(Class<? extends Annotation> annotationType) {
+		// 获取注解的声明的方法
 		Method[] methods = annotationType.getDeclaredMethods();
+
+		// 检查每个 method，判断是否是属性方法 (一般应该都是，可能这里太谨慎了)
 		int size = methods.length;
 		for (int i = 0; i < methods.length; i++) {
 			if (!isAttributeMethod(methods[i])) {
@@ -265,21 +276,31 @@ final class AttributeMethods {
 				size--;
 			}
 		}
+
+		// 如果没有属性方法，就返回 NONE
 		if (size == 0) {
 			return NONE;
 		}
+
+		// 将这些属性方法按照 (名字) 排序
 		Arrays.sort(methods, methodComparator);
+
+		// 重新拷贝为一个新的方法
 		Method[] attributeMethods = Arrays.copyOf(methods, size);
+
+		// 构造 AttributeMethods
 		return new AttributeMethods(annotationType, attributeMethods);
 	}
 
 	private static boolean isAttributeMethod(Method method) {
+		// 判断是否是属性方法，参数是 0，并且返回值不能是 void
 		return (method.getParameterCount() == 0 && method.getReturnType() != void.class);
 	}
 
 	/**
 	 * Create a description for the given attribute method suitable to use in
 	 * exception messages and logs.
+	 *
 	 * @param attribute the attribute to describe
 	 * @return a description of the attribute
 	 */
@@ -293,8 +314,9 @@ final class AttributeMethods {
 	/**
 	 * Create a description for the given attribute method suitable to use in
 	 * exception messages and logs.
+	 *
 	 * @param annotationType the annotation type
-	 * @param attributeName the attribute name
+	 * @param attributeName  the attribute name
 	 * @return a description of the attribute
 	 */
 	static String describe(@Nullable Class<?> annotationType, @Nullable String attributeName) {

@@ -150,8 +150,10 @@ public abstract class RepeatableContainers {
 		@Override
 		@Nullable
 		Annotation[] findRepeatedAnnotations(Annotation annotation) {
+			// 简单理解就是 value() 是否是一个可重复的注解
 			Method method = getRepeatedAnnotationsMethod(annotation.annotationType());
 			if (method != null) {
+				// 调用这个方法，得到更多注解
 				return (Annotation[]) AnnotationUtils.invokeAnnotationMethod(method, annotation);
 			}
 			return super.findRepeatedAnnotations(annotation);
@@ -166,11 +168,18 @@ public abstract class RepeatableContainers {
 
 		private static Object computeRepeatedAnnotationsMethod(Class<? extends Annotation> annotationType) {
 			AttributeMethods methods = AttributeMethods.forAnnotationType(annotationType);
+
+			// 1. 寻找 value 名称的方法
+			// 2. 返回值是 Array
+			// 3. Array 元素是注解
+			// 4. Array 元素注解的上面有 @Repeatable
 			Method method = methods.get(MergedAnnotation.VALUE);
 			if (method != null) {
 				Class<?> returnType = method.getReturnType();
 				if (returnType.isArray()) {
 					Class<?> componentType = returnType.getComponentType();
+
+					// 如果数组的元素是注解，并且这个注解上面还存在 Repeatable，那么
 					if (Annotation.class.isAssignableFrom(componentType) &&
 							componentType.isAnnotationPresent(Repeatable.class)) {
 						return method;
