@@ -383,6 +383,12 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	/**
 	 * Return the target type of this bean definition, if known
 	 * (either specified in advance or resolved on first instantiation).
+	 * <p>
+	 * 获取 bean definition 里面的目标类型 (if known ，意思就是也可能暂时也不知道)
+	 * <p>
+	 * 要不就是提前指定了类型，或者是第一次实例化的时候解析出来
+	 * <p>
+	 * 如果没有提前指定类型，也没有实例化，那么就不知道了，返回 null
 	 *
 	 * @since 3.2.2
 	 */

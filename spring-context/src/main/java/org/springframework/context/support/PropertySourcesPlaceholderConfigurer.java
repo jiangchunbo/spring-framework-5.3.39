@@ -115,6 +115,7 @@ public class PropertySourcesPlaceholderConfigurer extends PlaceholderConfigurerS
 	/**
 	 * Processing occurs by replacing ${...} placeholders in bean definitions by resolving each
 	 * against this configurer's set of {@link PropertySources}, which includes:
+	 *
 	 * <ul>
 	 * <li>all {@linkplain org.springframework.core.env.ConfigurableEnvironment#getPropertySources
 	 * environment property sources}, if an {@code Environment} {@linkplain #setEnvironment is present}
@@ -185,6 +186,7 @@ public class PropertySourcesPlaceholderConfigurer extends PlaceholderConfigurerS
 		propertyResolver.setPlaceholderSuffix(this.placeholderSuffix);
 		propertyResolver.setValueSeparator(this.valueSeparator);
 
+		// 用 lambda 形式创建 StringValueResolver 对象
 		StringValueResolver valueResolver = strVal -> {
 			String resolved = (this.ignoreUnresolvablePlaceholders ?
 					propertyResolver.resolvePlaceholders(strVal) :

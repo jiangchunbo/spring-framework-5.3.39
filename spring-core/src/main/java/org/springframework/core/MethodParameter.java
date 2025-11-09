@@ -758,6 +758,8 @@ public class MethodParameter {
 		if (this.parameterIndex < 0) {
 			return null;
 		}
+
+		// 用于发现参数名
 		ParameterNameDiscoverer discoverer = this.parameterNameDiscoverer;
 		if (discoverer != null) {
 			String[] parameterNames = null;
@@ -769,6 +771,8 @@ public class MethodParameter {
 			if (parameterNames != null) {
 				this.parameterName = parameterNames[this.parameterIndex];
 			}
+
+			// 使用完毕就置为 null，表示不再使用它发现参数名
 			this.parameterNameDiscoverer = null;
 		}
 		return this.parameterName;

@@ -402,16 +402,27 @@ public class ResolvableType implements Serializable {
 	 * @see #isArray()
 	 */
 	public ResolvableType getComponentType() {
+		// 这个方法就是为了获取数组中的 componentType
+
 		if (this == NONE) {
 			return NONE;
 		}
+
+		// 如果构造 ResolvableType 的时候就已经传入了 componentType，直接返回
 		if (this.componentType != null) {
 			return this.componentType;
 		}
+
+		// 否则，需要解析
+
+		// 如果类型是类似于 int[] String[] 之类的，可以直接获取其中的组件类型
+		// List<?>[] 这种也可能
 		if (this.type instanceof Class) {
 			Class<?> componentType = ((Class<?>) this.type).getComponentType();
 			return forType(componentType, this.variableResolver);
 		}
+
+		// 如果是 T[] 泛型数组
 		if (this.type instanceof GenericArrayType) {
 			return forType(((GenericArrayType) this.type).getGenericComponentType(), this.variableResolver);
 		}
@@ -826,6 +837,15 @@ public class ResolvableType implements Serializable {
 	 * <p>If this method returns a non-null {@code Class} and {@link #hasGenerics()}
 	 * returns {@code false}, the given type effectively wraps a plain {@code Class},
 	 * allowing for plain {@code Class} processing if desirable.
+	 * <p>
+	 * 将当前类型解析为 Class，如果该类型无法解析，则返回 null。
+	 * <p>
+	 * ps: 虽然说是解析，但是不是直接返回了一个 resolved 么???!!!
+	 * <p>
+	 * 如果解析失败，此方法将尝试考虑 TypeVariable 和 WildcardType 的边界来进行解析；然而，对于 Object 的边界会被忽略。
+	 * <p>
+	 * 如果此方法返回一个非空的 Class 并且 {@link #hasGenerics()} 返回 {@code false}，
+	 * 则表示给定的类型包装了一个普通 Class
 	 *
 	 * @return the resolved {@link Class}, or {@code null} if not resolvable
 	 * @see #resolve(Class)

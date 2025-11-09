@@ -272,6 +272,9 @@ class StubWebApplicationContext implements WebApplicationContext {
 		return this.beanFactory.getBeanNamesForType(type, includeNonSingletons, allowEagerInit);
 	}
 
+	/**
+	 * 按照类型寻找 beanName，如果 type == null，其实等价于 Object，也就是查找所有的 beanName
+	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type) {
 		return this.beanFactory.getBeanNamesForType(type);

@@ -1710,7 +1710,21 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * It only predicts the bean type correctly for a standard bean.
 	 * To be overridden in subclasses, applying more sophisticated type detection.
 	 * <p>
-	 * 预测 Bean 的类型。
+	 * 预测指定 bean (在完成所有处理之后最终得到的实例) 的最终类型。
+	 * <p>
+	 * 注意：
+	 * <p>
+	 * 1. 这里不需要专门处理 FactoryBean，因为它只关心 “原始 Bean 类型”
+	 * <p>
+	 * 2. 这个默认实现比较简单，无法处理
+	 * <p>
+	 * - 工厂方法 (factory method)
+	 * <p>
+	 * - 以及 InstantiationAwareBeanPostProcessor (因为需要调用方法知道具体类型) 等高级场景
+	 * <p>
+	 * 换言之，它只能对 “标准 Bean” 给出准确预测
+	 * <p>
+	 * 如果需要更智能的类型判断，应在子类中重写此方法
 	 *
 	 * @param beanName     the name of the bean
 	 *                     beanName 这个根本不能作为预测的线索
@@ -1722,18 +1736,25 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	@Nullable
 	protected Class<?> predictBeanType(String beanName, RootBeanDefinition mbd, Class<?>... typesToMatch) {
+		// 获取 targetType，其实就是看看是否提前指定了 targetType，或者因为实例化过了，而知道了类型
 		Class<?> targetType = mbd.getTargetType();
 		if (targetType != null) {
 			return targetType;
 		}
+
+		// 如果是通过 factory method 产生的对象，该方法无法得出类型
 		if (mbd.getFactoryMethodName() != null) {
 			return null;
 		}
+
+		// 解析 beanClass
 		return resolveBeanClass(mbd, beanName, typesToMatch);
 	}
 
 	/**
 	 * Check whether the given bean is defined as a {@link FactoryBean}.
+	 * <p>
+	 * 最底层的方法，给你一个 beanName，判断是否是 FactoryBean
 	 *
 	 * @param beanName the name of the bean
 	 * @param mbd      the corresponding bean definition

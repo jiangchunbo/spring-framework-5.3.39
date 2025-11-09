@@ -45,6 +45,12 @@ import org.springframework.util.ObjectUtils;
  * Descriptor for a specific dependency that is about to be injected.
  * Wraps a constructor parameter, a method parameter or a field,
  * allowing unified access to their metadata.
+ * <p>
+ * DependencyDescriptor 翻译为依赖描述符，差不多这样翻译一下吧
+ * <p>
+ * 这个类用于描述将要被注入的依赖
+ * <p>
+ * 包装一个构造器参数，方法参数，或者字段，允许统一地访问它们的元数据。
  *
  * @author Juergen Hoeller
  * @since 2.5
@@ -79,7 +85,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 	@Nullable
 	private transient volatile TypeDescriptor typeDescriptor;
-
 
 	/**
 	 * Create a new descriptor for a method or constructor parameter.
@@ -160,7 +165,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 		this.eager = original.eager;
 		this.nestingLevel = original.nestingLevel;
 	}
-
 
 	/**
 	 * Return whether this dependency is required.
@@ -283,7 +287,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 		return beanFactory.getBean(beanName);
 	}
-
 
 	/**
 	 * Increase this descriptor's nesting level.
@@ -424,7 +427,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 		}
 	}
 
-
 	@Override
 	public boolean equals(@Nullable Object other) {
 		if (this == other) {
@@ -442,7 +444,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	public int hashCode() {
 		return (31 * super.hashCode() + ObjectUtils.nullSafeHashCode(this.containingClass));
 	}
-
 
 	//---------------------------------------------------------------------
 	// Serialization support
@@ -473,7 +474,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 		}
 	}
 
-
 	/**
 	 * Inner class to avoid a hard dependency on Kotlin at runtime.
 	 */
@@ -486,6 +486,7 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 			KProperty<?> property = ReflectJvmMapping.getKotlinProperty(field);
 			return (property != null && property.getReturnType().isMarkedNullable());
 		}
+
 	}
 
 }

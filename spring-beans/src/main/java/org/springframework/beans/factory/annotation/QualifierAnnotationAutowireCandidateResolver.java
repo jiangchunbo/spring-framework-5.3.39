@@ -350,6 +350,7 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	@Override
 	@Nullable
 	public Object getSuggestedValue(DependencyDescriptor descriptor) {
+		// 通过 DependencyDescriptor 统一地获取 Field/MethodParameter/ConstructorParameter 上面地注解
 		// 寻找是否有 @Value 注解，并获取它的值
 		Object value = findValue(descriptor.getAnnotations());
 
@@ -358,6 +359,7 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 			// 获取方法参数 --> 获取方法注解
 			MethodParameter methodParam = descriptor.getMethodParameter();
 			if (methodParam != null) {
+				// 得到一个 String
 				value = findValue(methodParam.getMethodAnnotations());
 			}
 		}
@@ -368,6 +370,10 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	/**
 	 * Determine a suggested value from any of the given candidate annotations.
+	 * <p>
+	 * 虽然返回值类型是 Object，其实就是 String，只不过 AnnotationAttributes 这个工具得到的 Map 是 {@code Map<String, Object>}，毕竟注解的属性返回值可能是很多类型
+	 *
+	 * @return 其实就是 String
 	 */
 	@Nullable
 	protected Object findValue(Annotation[] annotationsToSearch) {

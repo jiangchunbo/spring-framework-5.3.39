@@ -380,8 +380,12 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 		return StringUtils.toStringArray(matches);
 	}
 
+	/**
+	 * 这个方法是早期的设计，由于后期添加了 ResolvableType，所以调用参数是 ResolvableType 的重载方法
+	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type) {
+		// 将 Class 解析为 ResolvableType
 		return getBeanNamesForType(ResolvableType.forClass(type));
 	}
 

@@ -394,8 +394,17 @@ class ConfigurationClassParser {
 	 * Retrieve the metadata for all <code>@Bean</code> methods.
 	 */
 	private Set<MethodMetadata> retrieveBeanMethodMetadata(SourceClass sourceClass) {
+		// 转换为 AnnotationMetadata，只是为了方便获取当前类里面的 @Bean
 		AnnotationMetadata original = sourceClass.getMetadata();
+
+		// 获得具有 @Bean 注解的 MethodMetadata
 		Set<MethodMetadata> beanMethods = original.getAnnotatedMethods(Bean.class.getName());
+
+		// 正常来说，这里直接
+		// return beanMethods; 就好了
+
+		// 但是，JDK 反射存在确认，返回的 Method 是无序的，所以下面尝试用 ASM 重新排序
+
 		if (beanMethods.size() > 1 && original instanceof StandardAnnotationMetadata) {
 			// Try reading the class file via ASM for deterministic declaration order...
 			// Unfortunately, the JVM's standard reflection returns methods in arbitrary

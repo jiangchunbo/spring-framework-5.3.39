@@ -575,6 +575,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Return whether this bean should be lazily initialized, i.e. not
 	 * eagerly instantiated on startup. Only applicable to a singleton bean.
+	 * <p>
+	 * 这个属性只针对于 singleton 有效。
+	 * <p>
+	 * 返回是否这个 bean 应该惰性地初始化，其实就是说，到底启动地时候会不会快速实例化它。
 	 *
 	 * @return whether to apply lazy-init semantics ({@code false} by default)
 	 */

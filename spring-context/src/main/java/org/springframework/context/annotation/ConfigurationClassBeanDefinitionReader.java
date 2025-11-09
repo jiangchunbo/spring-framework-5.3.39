@@ -70,8 +70,8 @@ import org.springframework.util.StringUtils;
  * @author Phillip Webb
  * @author Sam Brannen
  * @author Sebastien Deleuze
- * @since 3.0
  * @see ConfigurationClassParser
+ * @since 3.0
  */
 class ConfigurationClassBeanDefinitionReader {
 
@@ -100,14 +100,13 @@ class ConfigurationClassBeanDefinitionReader {
 
 	private final ConditionEvaluator conditionEvaluator;
 
-
 	/**
 	 * Create a new {@link ConfigurationClassBeanDefinitionReader} instance
 	 * that will be used to populate the given {@link BeanDefinitionRegistry}.
 	 */
 	ConfigurationClassBeanDefinitionReader(BeanDefinitionRegistry registry, SourceExtractor sourceExtractor,
-			ResourceLoader resourceLoader, Environment environment, BeanNameGenerator importBeanNameGenerator,
-			ImportRegistry importRegistry) {
+										   ResourceLoader resourceLoader, Environment environment, BeanNameGenerator importBeanNameGenerator,
+										   ImportRegistry importRegistry) {
 
 		this.registry = registry;
 		this.sourceExtractor = sourceExtractor;
@@ -117,7 +116,6 @@ class ConfigurationClassBeanDefinitionReader {
 		this.importRegistry = importRegistry;
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, resourceLoader);
 	}
-
 
 	/**
 	 * Read {@code configurationModel}, registering bean definitions
@@ -149,6 +147,8 @@ class ConfigurationClassBeanDefinitionReader {
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+
+		// 处理所有的 @Bean
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
@@ -203,9 +203,13 @@ class ConfigurationClassBeanDefinitionReader {
 
 		// Consider name and any aliases
 		List<String> names = new ArrayList<>(Arrays.asList(bean.getStringArray("name")));
+
+		// 决策出 beanName
+		// 如果 @Bean 方法设置了 name，那么获取第 1 个作为 beanName，否则获取 methodName
 		String beanName = (!names.isEmpty() ? names.remove(0) : methodName);
 
 		// Register aliases even when overridden
+		// 注册别名，不是很重要，别看了
 		for (String alias : names) {
 			this.registry.registerAlias(beanName, alias);
 		}
@@ -223,18 +227,19 @@ class ConfigurationClassBeanDefinitionReader {
 		ConfigurationClassBeanDefinition beanDef = new ConfigurationClassBeanDefinition(configClass, metadata, beanName);
 		beanDef.setSource(this.sourceExtractor.extractSource(metadata, configClass.getResource()));
 
+		// @Bean 方法允许是 static
+
 		if (metadata.isStatic()) {
 			// static @Bean method
 			if (configClass.getMetadata() instanceof StandardAnnotationMetadata) {
 				beanDef.setBeanClass(((StandardAnnotationMetadata) configClass.getMetadata()).getIntrospectedClass());
-			}
-			else {
+			} else {
 				beanDef.setBeanClassName(configClass.getMetadata().getClassName());
 			}
 			beanDef.setUniqueFactoryMethodName(methodName);
-		}
-		else {
+		} else {
 			// instance @Bean method
+			// 如果 method 不是静态的，也就是实例方法，那么这里设置了 FactoryBeanName，意思就是要这个类实例化之后才能调用这个方法
 			beanDef.setFactoryBeanName(configClass.getBeanName());
 			beanDef.setUniqueFactoryMethodName(methodName);
 		}
@@ -313,8 +318,7 @@ class ConfigurationClassBeanDefinitionReader {
 					ccbd.setNonUniqueFactoryMethodName(ccbd.getFactoryMethodMetadata().getMethodName());
 				}
 				return true;
-			}
-			else {
+			} else {
 				return false;
 			}
 		}
@@ -340,7 +344,7 @@ class ConfigurationClassBeanDefinitionReader {
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("Skipping bean definition for %s: a definition for bean '%s' " +
-					"already exists. This top-level bean definition is considered as an override.",
+							"already exists. This top-level bean definition is considered as an override.",
 					beanMethod, beanName));
 		}
 		return true;
@@ -357,11 +361,9 @@ class ConfigurationClassBeanDefinitionReader {
 				if (StringUtils.endsWithIgnoreCase(resource, ".groovy")) {
 					// When clearly asking for Groovy, that's what they'll get...
 					readerClass = GroovyBeanDefinitionReader.class;
-				}
-				else if (shouldIgnoreXml) {
+				} else if (shouldIgnoreXml) {
 					throw new UnsupportedOperationException("XML support disabled");
-				}
-				else {
+				} else {
 					// Primarily ".xml" files but for any other extension as well
 					readerClass = XmlBeanDefinitionReader.class;
 				}
@@ -379,8 +381,7 @@ class ConfigurationClassBeanDefinitionReader {
 						abdr.setEnvironment(this.environment);
 					}
 					readerInstanceCache.put(readerClass, reader);
-				}
-				catch (Throwable ex) {
+				} catch (Throwable ex) {
 					throw new IllegalStateException(
 							"Could not instantiate BeanDefinitionReader class [" + readerClass.getName() + "]");
 				}
@@ -396,12 +397,13 @@ class ConfigurationClassBeanDefinitionReader {
 				registrar.registerBeanDefinitions(metadata, this.registry, this.importBeanNameGenerator));
 	}
 
-
 	/**
 	 * {@link RootBeanDefinition} marker subclass used to signify that a bean definition
 	 * was created from a configuration class as opposed to any other configuration source.
 	 * Used in bean overriding cases where it's necessary to determine whether the bean
 	 * definition was created externally.
+	 * <p>
+	 * 其实这个类就是专门给配置类里面的 @Bean 工厂方法 bean 设计的吧？！
 	 */
 	@SuppressWarnings("serial")
 	private static class ConfigurationClassBeanDefinition extends RootBeanDefinition implements AnnotatedBeanDefinition {
@@ -423,7 +425,7 @@ class ConfigurationClassBeanDefinitionReader {
 		}
 
 		public ConfigurationClassBeanDefinition(RootBeanDefinition original,
-				ConfigurationClass configClass, MethodMetadata beanMethodMetadata, String derivedBeanName) {
+												ConfigurationClass configClass, MethodMetadata beanMethodMetadata, String derivedBeanName) {
 
 			super(original);
 			this.annotationMetadata = configClass.getMetadata();
@@ -459,8 +461,8 @@ class ConfigurationClassBeanDefinitionReader {
 		public ConfigurationClassBeanDefinition cloneBeanDefinition() {
 			return new ConfigurationClassBeanDefinition(this);
 		}
-	}
 
+	}
 
 	/**
 	 * Evaluate {@code @Conditional} annotations, tracking results and taking into
@@ -493,6 +495,7 @@ class ConfigurationClassBeanDefinitionReader {
 			}
 			return skip;
 		}
+
 	}
 
 }
