@@ -62,6 +62,7 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+		// 自己先不能抗拒作为候选人
 		if (!super.isAutowireCandidate(bdHolder, descriptor)) {
 			// If explicitly false, do not proceed with any other checks...
 			return false;
@@ -74,7 +75,10 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	 * candidate bean definition.
 	 */
 	protected boolean checkGenericTypeMatch(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+		// 获取依赖的类型
 		ResolvableType dependencyType = descriptor.getResolvableType();
+
+		// 类型是具体的就可以作为候选人，例如 Handler，而不是 List<Handler>
 		if (dependencyType.getType() instanceof Class) {
 			// No generic type -> we know it's a Class type-match, so no need to check again.
 			return true;
@@ -83,16 +87,22 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 		ResolvableType targetType = null;
 		boolean cacheType = false;
 		RootBeanDefinition rbd = null;
+
+		// 获取 bean definition (可能是一个 scope 代理的 bean definition)
 		if (bdHolder.getBeanDefinition() instanceof RootBeanDefinition) {
 			rbd = (RootBeanDefinition) bdHolder.getBeanDefinition();
 		}
 		if (rbd != null) {
+			// targetType 是一个缓存，首次肯定没有，所以下面 cacheType 标记需要缓存
 			targetType = rbd.targetType;
 			if (targetType == null) {
 				cacheType = true;
 				// First, check factory method return type, if applicable
+
+				// 方法返回类型
 				targetType = getReturnTypeForFactoryMethod(rbd, descriptor);
 				if (targetType == null) {
+					// 又拿到一个 RootBeanDefinition
 					RootBeanDefinition dbd = getResolvedDecoratedDefinition(rbd);
 					if (dbd != null) {
 						targetType = dbd.targetType;
@@ -125,6 +135,8 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 		if (targetType == null) {
 			return true;
 		}
+
+		// 将 targetType 缓存起来
 		if (cacheType) {
 			rbd.targetType = targetType;
 		}
@@ -141,6 +153,7 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 
 	@Nullable
 	protected RootBeanDefinition getResolvedDecoratedDefinition(RootBeanDefinition rbd) {
+		// 有可能需要获取真实的，被装饰起来的目标 bean definition
 		BeanDefinitionHolder decDef = rbd.getDecoratedDefinition();
 		if (decDef != null && this.beanFactory instanceof ConfigurableListableBeanFactory) {
 			ConfigurableListableBeanFactory clbf = (ConfigurableListableBeanFactory) this.beanFactory;

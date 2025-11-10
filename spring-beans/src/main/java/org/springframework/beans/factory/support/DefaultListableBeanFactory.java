@@ -168,6 +168,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Map from dependency type to corresponding autowired value.
+	 * <p>
+	 * 这个属性被放在 DefaultListableBeanFactory 中，使得 DefaultListableBeanFactory 需要再实现一个新的 byType 方法，
+	 * 只是为了从 resolvableDependencies 查找 bean
+	 * <p>
+	 * 要与手工注册的 bean 区别开来，这个里面存放的甚至可能都不算 bean
 	 */
 	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
 
@@ -921,6 +926,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			throws NoSuchBeanDefinitionException {
 
 		String bdName = BeanFactoryUtils.transformedBeanName(beanName);
+
+		// 存在 bean definition
 		if (containsBeanDefinition(bdName)) {
 			return isAutowireCandidate(beanName, getMergedLocalBeanDefinition(bdName), descriptor, resolver);
 		} else if (containsSingleton(beanName)) {
@@ -1451,7 +1458,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// 这种类型其实返回的并不是所需要的类型对象
 		else if (ObjectFactory.class == descriptor.getDependencyType() ||
 				ObjectProvider.class == descriptor.getDependencyType()) {
-			// 返回值其实自己又是一个 ObjectProvider
+			// 返回值其实自己又是一个 ObjectProvider，有点代理对象的感觉，将 DependencyObjectProvider 赋予给用户的所需的对象
 			return new DependencyObjectProvider(descriptor, requestingBeanName);
 		}
 
@@ -1483,7 +1490,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				return shortcut;
 			}
 
-			// 依赖项类型
+			// 获取依赖的类型 [支持泛型嵌套]
 			Class<?> type = descriptor.getDependencyType();
 
 			// 解析 @Value 注解里面的值 [Field/MethodParameter/ConstructorArgument]
@@ -1514,12 +1521,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 
-			// 2. 解析类型是 Array Collection Map -> 里面会快速判断依赖的类型
+			// 2. 解析类型是 Stream/Array/Collection/Map -> 里面会快速判断依赖的类型
 			Object multipleBeans = resolveMultipleBeans(descriptor, beanName, autowiredBeanNames, typeConverter);
 			if (multipleBeans != null) {
 				return multipleBeans;
 			}
-
 
 			// 3. 解析单个 bean
 			// 寻找类型匹配的 bean。其实这个方法上面 resolveMultipleBeans 里面也会调用 findAutowireCandidates
@@ -1589,7 +1595,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	private Object resolveMultipleBeans(DependencyDescriptor descriptor, @Nullable String beanName,
 										@Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) {
 
-		// 获得类型
+		// 获得依赖的类型 [支持泛型]  (其实外面已经获取过一次，这里再次获取/解析)
 		Class<?> type = descriptor.getDependencyType();
 
 		// 1. 流？
@@ -1738,10 +1744,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * 这个方法非常重要，提供了一种按照类型查找 bean 实例的方式。
 	 * <p>
 	 * 因为按照类型查找，很可能有多个 bean，毕竟只有 beanName 是唯一的，所以该方法返回的是一个 Map
+	 * <p>
+	 * 而且，传入的参数 requiredType 已经是解析完泛型的最底层(深)的类型
 	 *
 	 * @param beanName     the name of the bean that is about to be wired
 	 * @param requiredType the actual type of bean to look for
 	 *                     (may be an array component type or collection element type)
+	 *                     <p>最底层类型
 	 * @param descriptor   the descriptor of the dependency to resolve
 	 * @return a Map of candidate names and candidate instances that match
 	 * the required type (never {@code null})
@@ -1751,20 +1760,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 */
 	protected Map<String, Object> findAutowireCandidates(
 			@Nullable String beanName, Class<?> requiredType, DependencyDescriptor descriptor) {
-		// 一共也就 5 个地方调用了该方法
-		// 分为两类:
-		// (1) multiple bean 调用 包括 Stream Array Collection Map
-		// (2) 普通查找
+		// 5 个地方调用了该方法: 需要调用者解析到最底层的类型，再调用这个方法 [Stream/Array/Collection/Map/普通bean]
 
-		// 按照类型查找，可能核心的是 beanNamesForTypeIncludingAncestors 这个方法
-		// tips: 如果依赖注入的是 Array Collection Map，此处 requiredType 是其元素类型
+		// 查找 bean definition 以及手工注册 bean，且包括祖先 bean factory
 		String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 				this, requiredType, true, descriptor.isEager());
 
-		// result 其实就是最后要返回的，收集结果用的
+		// 收集结果
 		Map<String, Object> result = CollectionUtils.newLinkedHashMap(candidateNames.length);
 
-		// resolvableDependencies: 通过类型直接找到对应的 bean
+		// resolvableDependencies: 通过类型直接找到对应的 bean，应该不算 bean，是一种依赖的补充
 		// 1. 查找 resolvableDependencies 是否有匹配的
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
 			// 获取 resolvableDependencies 里面的类型，一般就是一些非常基础的接口
@@ -1785,9 +1790,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 
+		// candidateNames 这个应该算 bean
 		// 2. 检查每一个按类型查找到的 bean，将这些 bean 找到并放到 result 里面
 		for (String candidate : candidateNames) {
-			// 如果不是自我引用，什么意思，比如我自己就是个 RouteDefinitionLocator 接口，然后我想注入 List<RouteDefinitionLocator> 那么 List 中不会包含我
+			// 确保自己不会找到自己
+			// 检查是否有资格成为候选人 (比如 scope 原始 bean 是不能作为候选人的，只有它的代理对象可以)
 			if (!isSelfReference(beanName, candidate) && isAutowireCandidate(candidate, descriptor)) {
 				addCandidateEntry(result, candidate, descriptor, requiredType);
 			}

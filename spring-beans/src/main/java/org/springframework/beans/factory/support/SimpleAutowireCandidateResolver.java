@@ -36,7 +36,9 @@ public class SimpleAutowireCandidateResolver implements AutowireCandidateResolve
 	 */
 	public static final SimpleAutowireCandidateResolver INSTANCE = new SimpleAutowireCandidateResolver();
 
-
+	/**
+	 * 要想成为候选人，自己先不能抗拒作为候选人，也就是 autowireCandidate == true
+	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		return bdHolder.getBeanDefinition().isAutowireCandidate();

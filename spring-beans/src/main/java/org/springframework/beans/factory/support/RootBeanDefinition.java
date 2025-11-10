@@ -56,6 +56,9 @@ import org.springframework.util.Assert;
 @SuppressWarnings("serial")
 public class RootBeanDefinition extends AbstractBeanDefinition {
 
+	/**
+	 * 被装饰起来的 bean definition
+	 */
 	@Nullable
 	private BeanDefinitionHolder decoratedDefinition;
 

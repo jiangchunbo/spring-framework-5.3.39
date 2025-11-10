@@ -272,12 +272,19 @@ public abstract class BeanFactoryUtils {
 	public static String[] beanNamesForTypeIncludingAncestors(
 			ListableBeanFactory lbf, Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 
+		// 根据类型查找 beanName，并且支持 [bean factory] 向上递归
+
 		Assert.notNull(lbf, "ListableBeanFactory must not be null");
 
 		// 根据类型获取 beanName
+		// 本身也是个 BeanFactoryUtils, 还是要调用 bean factory 方法
 		String[] result = lbf.getBeanNamesForType(type, includeNonSingletons, allowEagerInit);
+
+		// 检查是否支持层次
 		if (lbf instanceof HierarchicalBeanFactory) {
 			HierarchicalBeanFactory hbf = (HierarchicalBeanFactory) lbf;
+
+			// 向上递归
 			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {
 				String[] parentResult = beanNamesForTypeIncludingAncestors(
 						(ListableBeanFactory) hbf.getParentBeanFactory(), type, includeNonSingletons, allowEagerInit);

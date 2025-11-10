@@ -75,6 +75,9 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 	private final boolean eager;
 
+	/**
+	 * 嵌套层数，默认是 1，也可以推测是从 1 开始
+	 */
 	private int nestingLevel = 1;
 
 	@Nullable
@@ -397,29 +400,47 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 	/**
 	 * Determine the declared (non-generic) type of the wrapped parameter/field.
+	 * <p>
+	 * 确定依赖的类型
 	 *
 	 * @return the declared type (never {@code null})
 	 */
 	public Class<?> getDependencyType() {
+		// 主要分为 Field 和 MethodParameter
+
 		if (this.field != null) {
+			// 如果 level > 1，说明类型没有那么简单
 			if (this.nestingLevel > 1) {
+				// JDK API 获取能够反应泛型的类型
 				Type type = this.field.getGenericType();
+
 				for (int i = 2; i <= this.nestingLevel; i++) {
+					// 参数化的类型，获取 [最后一个] 参数类型
+					// 即: Optional<String> 就是 String; Map<String, Handler> 就是 Handler
 					if (type instanceof ParameterizedType) {
 						Type[] args = ((ParameterizedType) type).getActualTypeArguments();
 						type = args[args.length - 1];
 					}
 				}
+
+				// 比如 Optional<Handler> 内嵌的类型就是 Handler，Handler 也是一个 Class
 				if (type instanceof Class) {
 					return (Class<?>) type;
-				} else if (type instanceof ParameterizedType) {
+				}
+				// 比如 Optional<Iterator<Handler>> 内嵌的类型又是一个 ParameterizedType
+				else if (type instanceof ParameterizedType) {
 					Type arg = ((ParameterizedType) type).getRawType();
+
+					// 如果是 JDK 反射，总是返回 Class
+					// 自己看 sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
 					if (arg instanceof Class) {
 						return (Class<?>) arg;
 					}
 				}
 				return Object.class;
-			} else {
+			}
+			// level == 1，直接获取字段类型就是依赖类型
+			else {
 				return this.field.getType();
 			}
 		} else {
