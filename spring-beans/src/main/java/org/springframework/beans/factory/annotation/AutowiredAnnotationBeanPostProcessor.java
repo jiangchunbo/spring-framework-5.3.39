@@ -453,8 +453,9 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
 		// 找到注解元数据，其实已经找到了，这里只是走缓存
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);
+
 		try {
-			// 注入
+			// 执行注入
 			metadata.inject(bean, beanName, pvs);
 		} catch (BeanCreationException ex) {
 			throw ex;
@@ -507,14 +508,17 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 		// 通过 cacheKey 快速找到 metadata
 		InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
 
-		// 是否需要刷新？不知道是什么
+		// metadata == null || metadata.targetClass 变了
 		if (InjectionMetadata.needsRefresh(metadata, clazz)) {
 
 			// 给整个 injectionMetadataCache 都加锁
 			// 这是什么意思，要进行写入的时候，就整个加锁？
 			synchronized (this.injectionMetadataCache) {
+				// DCL 写法罢了
 				metadata = this.injectionMetadataCache.get(cacheKey);
 				if (InjectionMetadata.needsRefresh(metadata, clazz)) {
+
+					// 如果之前是存在 metadata，那么清空
 					if (metadata != null) {
 						metadata.clear(pvs);
 					}
@@ -601,6 +605,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 		}
 		while (targetClass != null && targetClass != Object.class);
 
+		// 找到了一些需要注入的元素，传入给 InjectionMetadata 构造一个对象
 		return InjectionMetadata.forElements(elements, clazz);
 	}
 

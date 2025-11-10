@@ -149,7 +149,7 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	volatile Boolean beforeInstantiationResolved;
 
 	/**
-	 * 外部管理的成员
+	 * 比如那些 @Autowired 注解
 	 */
 	@Nullable
 	private Set<Member> externallyManagedConfigMembers;

@@ -69,7 +69,6 @@ public class InjectionMetadata {
 		}
 	};
 
-
 	private final Class<?> targetClass;
 
 	/**
@@ -84,7 +83,6 @@ public class InjectionMetadata {
 	@Nullable
 	private volatile Set<InjectedElement> checkedElements;
 
-
 	/**
 	 * Create a new {@code InjectionMetadata instance}.
 	 * <p>Preferably use {@link #forElements} for reusing the {@link #EMPTY}
@@ -98,7 +96,6 @@ public class InjectionMetadata {
 		this.targetClass = targetClass;
 		this.injectedElements = elements;
 	}
-
 
 	/**
 	 * Determine whether this metadata instance needs to be refreshed.
@@ -115,15 +112,18 @@ public class InjectionMetadata {
 	 * 进行什么检查。其实就是向 Bean Definition 填充属性
 	 */
 	public void checkConfigMembers(RootBeanDefinition beanDefinition) {
-		// 以 injectedElements 的长度构造一个新的集合。injectedElements 是刚才通过类层次的扫描，得到的方法、字段的注入点
+		// 为什么用 injectedElements 长度作为 Set 初始大小，因为最多也就这么多元素
+		// InjectionMetadata.injectedElements 是一个初始传入的不变量
+
+		// checkedElements 是一层过滤，也意味着是 ExternallyManagedConfigMember
 		Set<InjectedElement> checkedElements = new LinkedHashSet<>(this.injectedElements.size());
 
-		// 遍历每个注入点
+		// 遍历每个 element
 		for (InjectedElement element : this.injectedElements) {
-			// 获得字段或者注解
+			// 获得 Field 或者 Method
 			Member member = element.getMember();
 
-			// 是否注册了，若没有注册，就注册进去；同时也加入到 checkedElements 中
+			// 注册 ExternallyManagedConfigMember 并添加到 checkedElements
 			if (!beanDefinition.isExternallyManagedConfigMember(member)) {
 				beanDefinition.registerExternallyManagedConfigMember(member);
 				checkedElements.add(element);
@@ -135,7 +135,7 @@ public class InjectionMetadata {
 	public void inject(Object target, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 		Collection<InjectedElement> checkedElements = this.checkedElements;
 
-		// 这里是一个决策，到底用 checked 还是 injected，反正优先用 checked
+		// 这里是一个决策，到底用 checked 还是 injected，反正优先用 checked (因为 checked 是 injected 的过滤)
 		Collection<InjectedElement> elementsToIterate =
 				(checkedElements != null ? checkedElements : this.injectedElements);
 
@@ -153,6 +153,9 @@ public class InjectionMetadata {
 	 * @since 3.2.13
 	 */
 	public void clear(@Nullable PropertyValues pvs) {
+		// injectedElements 是初始的时候传入的，不变量
+		// checkedElements 是经过检查过滤出来的
+
 		Collection<InjectedElement> checkedElements = this.checkedElements;
 		Collection<InjectedElement> elementsToIterate =
 				(checkedElements != null ? checkedElements : this.injectedElements);
@@ -162,7 +165,6 @@ public class InjectionMetadata {
 			}
 		}
 	}
-
 
 	/**
 	 * Return an {@code InjectionMetadata} instance, possibly for empty elements.
@@ -176,12 +178,15 @@ public class InjectionMetadata {
 		// 这个方法的意图在于，Spring 并不想将一个长度是 0 的 Collection 存储进去，转而使用常量 emptyList
 		// 这样估计可以减少一些内存消耗吧
 		// 或者可以强制让这个集合无法进行 add 或者 get 等
-		return (elements.isEmpty() ? new InjectionMetadata(clazz, Collections.emptyList()) :
+		return (elements.isEmpty() ?
+				new InjectionMetadata(clazz, Collections.emptyList()) :
 				new InjectionMetadata(clazz, elements));
 	}
 
 	/**
 	 * Check whether the given injection metadata needs to be refreshed.
+	 * <p>
+	 * 给定 InjectionMetadata 以及 Class 检查是否需要刷新
 	 *
 	 * @param metadata the existing metadata instance
 	 * @param clazz    the current target class
@@ -189,9 +194,10 @@ public class InjectionMetadata {
 	 * @see #needsRefresh(Class)
 	 */
 	public static boolean needsRefresh(@Nullable InjectionMetadata metadata, Class<?> clazz) {
+		// 条件1: metadata 如果根本不存在，那肯定是要刷新，或者叫初始化
+		// 条件2: 如果 targetClass 已经变了，也需要刷新 (还没想通)
 		return (metadata == null || metadata.needsRefresh(clazz));
 	}
-
 
 	/**
 	 * A single injected element.
@@ -347,6 +353,7 @@ public class InjectionMetadata {
 		public String toString() {
 			return getClass().getSimpleName() + " for " + this.member;
 		}
+
 	}
 
 }
