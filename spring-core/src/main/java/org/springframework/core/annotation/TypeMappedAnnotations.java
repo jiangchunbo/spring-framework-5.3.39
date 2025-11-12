@@ -212,8 +212,12 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return StreamSupport.stream(spliterator(annotationType), false);
 	}
 
+	/**
+	 * 转换成 Java Stream 对象
+	 */
 	@Override
 	public <A extends Annotation> Stream<MergedAnnotation<A>> stream(String annotationType) {
+		// 如果过滤所有的，那么返回一个空流
 		if (this.annotationFilter == AnnotationFilter.ALL) {
 			return Stream.empty();
 		}
@@ -246,7 +250,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 
 	/**
-	 * 并行迭代器
+	 * 创建一个迭代器
+	 *
+	 * @param annotationType 之所以类型是 Object，是因为可能传入一个注解 Class，也可能是注解字符串
 	 */
 	private <A extends Annotation> Spliterator<MergedAnnotation<A>> spliterator(@Nullable Object annotationType) {
 		// 底层会使用 AggregatesCollector 这个处理器
@@ -508,12 +514,18 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		}
 
 		private Aggregate createAggregate(int aggregateIndex, @Nullable Object source, Annotation[] annotations) {
+			// 收集所有注解 (含可重复注解)
 			List<Annotation> aggregateAnnotations = getAggregateAnnotations(annotations);
 			return new Aggregate(aggregateIndex, source, aggregateAnnotations);
 		}
 
+		/**
+		 * 传入 Annotation[] 返回 {@code List<Annotation>}
+		 */
 		private List<Annotation> getAggregateAnnotations(Annotation[] annotations) {
 			List<Annotation> result = new ArrayList<>(annotations.length);
+
+			// 该方法会收集所有注解 [对于 value() 可重复注解，会调用 value() 递归解析]
 			addAggregateAnnotations(result, annotations);
 			return result;
 		}
@@ -521,10 +533,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private void addAggregateAnnotations(List<Annotation> aggregateAnnotations, Annotation[] annotations) {
 			for (Annotation annotation : annotations) {
 				if (annotation != null && !annotationFilter.matches(annotation)) {
+					// 寻找那些可以重复的注解，递归解析
 					Annotation[] repeatedAnnotations = repeatableContainers.findRepeatedAnnotations(annotation);
 					if (repeatedAnnotations != null) {
 						addAggregateAnnotations(aggregateAnnotations, repeatedAnnotations);
-					} else {
+					}
+					// 如果不是可以重复的注解，就直接添加到
+					else {
 						aggregateAnnotations.add(annotation);
 					}
 				}
@@ -626,9 +641,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		}
 
 		private boolean tryAdvance(Aggregate aggregate, Consumer<? super MergedAnnotation<A>> action) {
+			// 初始化指针数组
 			if (this.mappingCursors == null) {
 				this.mappingCursors = new int[aggregate.size()];
 			}
+
 			int lowestDistance = Integer.MAX_VALUE;
 			int annotationResult = -1;
 			for (int annotationIndex = 0; annotationIndex < aggregate.size(); annotationIndex++) {
@@ -658,6 +675,8 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Nullable
 		private AnnotationTypeMapping getNextSuitableMapping(Aggregate aggregate, int annotationIndex) {
 			int[] cursors = this.mappingCursors;
+
+			// 其实不可能是 null，早已初始化了
 			if (cursors != null) {
 				AnnotationTypeMapping mapping;
 				do {

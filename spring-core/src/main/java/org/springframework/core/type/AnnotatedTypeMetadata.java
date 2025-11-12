@@ -95,8 +95,6 @@ public interface AnnotatedTypeMetadata {
 	 * defined on the underlying element, as direct annotation or meta-annotation),
 	 * also taking attribute overrides on composed annotations into account.
 	 *
-	 *
-	 *
 	 * @param annotationName      the fully qualified class name of the annotation
 	 *                            type to look for
 	 * @param classValuesAsString whether to convert class references to String
@@ -141,6 +139,8 @@ public interface AnnotatedTypeMetadata {
 	 * Retrieve all attributes of all annotations of the given type, if any (i.e. if
 	 * defined on the underlying element, as direct annotation or meta-annotation).
 	 * Note that this variant does <i>not</i> take attribute overrides into account.
+	 * <p>
+	 * 记住，本类(本实例)代表的是一个可以被注解元素，因此调用该方法实际上是获取该注解元素上所有注解的属性
 	 *
 	 * @param annotationName      the fully qualified class name of the annotation
 	 *                            type to look for
@@ -154,9 +154,13 @@ public interface AnnotatedTypeMetadata {
 	default MultiValueMap<String, Object> getAllAnnotationAttributes(
 			String annotationName, boolean classValuesAsString) {
 
+		// 适配策略 [第二个参数是 true，表示注解总是转换为 Map，否则，一般可能是注解对象 Proxy]
 		Adapt[] adaptations = Adapt.values(classValuesAsString, true);
+
 		return getAnnotations().stream(annotationName)
+				// MergedAnnotation::getMetaTypes 等价于 (MergedAnnotation a) -> a.getMetaTypes
 				.filter(MergedAnnotationPredicates.unique(MergedAnnotation::getMetaTypes))
+				// 类型转换
 				.map(MergedAnnotation::withNonMergedAttributes)
 				.collect(MergedAnnotationCollectors.toMultiValueMap(map ->
 						map.isEmpty() ? null : map, adaptations));

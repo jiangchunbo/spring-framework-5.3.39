@@ -110,6 +110,7 @@ public abstract class MergedAnnotationPredicates {
 	 */
 	public static <A extends Annotation, K> Predicate<MergedAnnotation<A>> unique(
 			Function<? super MergedAnnotation<A>, K> keyExtractor) {
+		// K List<Class<? extends Annotation>>
 
 		return new UniquePredicate<>(keyExtractor);
 	}

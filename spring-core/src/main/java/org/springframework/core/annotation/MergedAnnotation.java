@@ -671,17 +671,27 @@ public interface MergedAnnotation<A extends Annotation> {
 	 * Adaptations that can be applied to attribute values when creating
 	 * {@linkplain MergedAnnotation#asMap(Adapt...) Maps} or
 	 * {@link MergedAnnotation#asAnnotationAttributes(Adapt...) AnnotationAttributes}.
+	 * <p>
+	 * 其实就是把注解属性解析成 Map 或者 MergedAnnotation 时的适配策略。
+	 * <p>
+	 * 比如把 Class 转换为 String [避免类加载]
+	 * <p>
+	 * 比如把嵌套 Annotation 转换为 Map
 	 */
 	enum Adapt {
 
 		/**
 		 * Adapt class or class array attributes to strings.
+		 * <p>
+		 * 将 class 或者 class[] 属性适配为字符串
 		 */
 		CLASS_TO_STRING,
 
 		/**
 		 * Adapt nested annotation or annotation arrays to maps rather
 		 * than synthesizing the values.
+		 * <p>
+		 * 将嵌套注解或注解数组转换成 Map 时，不对它们进行简化合成的处理
 		 */
 		ANNOTATION_TO_MAP;
 
@@ -702,7 +712,10 @@ public interface MergedAnnotation<A extends Annotation> {
 		 * @return a new {@link Adapt} array
 		 */
 		public static Adapt[] values(boolean classToString, boolean annotationsToMap) {
+			// 创建一个空的集合
 			EnumSet<Adapt> result = EnumSet.noneOf(Adapt.class);
+
+			// 添加适配
 			addIfTrue(result, Adapt.CLASS_TO_STRING, classToString);
 			addIfTrue(result, Adapt.ANNOTATION_TO_MAP, annotationsToMap);
 			return result.toArray(new Adapt[0]);
