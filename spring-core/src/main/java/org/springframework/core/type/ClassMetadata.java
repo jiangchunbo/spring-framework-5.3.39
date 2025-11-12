@@ -23,37 +23,48 @@ import org.springframework.lang.Nullable;
  * in a form that does not require that class to be loaded yet.
  *
  * @author Juergen Hoeller
- * @since 2.5
  * @see StandardClassMetadata
  * @see org.springframework.core.type.classreading.MetadataReader#getClassMetadata()
  * @see AnnotationMetadata
+ * @since 2.5
  */
 public interface ClassMetadata {
 
 	/**
 	 * Return the name of the underlying class.
+	 * <p>
+	 * 返回底层类的名称。其实就是类的名称。
 	 */
 	String getClassName();
 
 	/**
 	 * Return whether the underlying class represents an interface.
+	 * <p>
+	 * 返回底层类是否表示一个接口。
 	 */
 	boolean isInterface();
 
 	/**
 	 * Return whether the underlying class represents an annotation.
+	 * <p>
+	 * 返回是否底层类表示一个注解。
+	 *
 	 * @since 4.1
 	 */
 	boolean isAnnotation();
 
 	/**
 	 * Return whether the underlying class is marked as abstract.
+	 * <p>
+	 * 返回是否底层类被标识为抽象类。
 	 */
 	boolean isAbstract();
 
 	/**
 	 * Return whether the underlying class represents a concrete class,
 	 * i.e. neither an interface nor an abstract class.
+	 * <p>
+	 * 返回底层类是否是一个具体的类。
 	 */
 	default boolean isConcrete() {
 		return !(isInterface() || isAbstract());
@@ -61,6 +72,8 @@ public interface ClassMetadata {
 
 	/**
 	 * Return whether the underlying class is marked as 'final'.
+	 * <p>
+	 * 返回底层类是否标识为 final
 	 */
 	boolean isFinal();
 
@@ -68,6 +81,8 @@ public interface ClassMetadata {
 	 * Determine whether the underlying class is independent, i.e. whether
 	 * it is a top-level class or a nested class (static inner class) that
 	 * can be constructed independently of an enclosing class.
+	 * <p>
+	 * 确定是否底层类是独立的，例如是否是一个 top-level 类，或者一个 static inner class [可以独立于封闭类构造出来]
 	 */
 	boolean isIndependent();
 
@@ -99,6 +114,8 @@ public interface ClassMetadata {
 	/**
 	 * Return the name of the superclass of the underlying class,
 	 * or {@code null} if there is no superclass defined.
+	 * <p>
+	 * 返回底层类的超类名称，如果没有超类返回 null。
 	 */
 	@Nullable
 	String getSuperClassName();
@@ -106,6 +123,8 @@ public interface ClassMetadata {
 	/**
 	 * Return the names of all interfaces that the underlying class
 	 * implements, or an empty array if there are none.
+	 * <p>
+	 * 返回底层类实现的所有接口的名字，如果没有，就返回一个空数组。
 	 */
 	String[] getInterfaceNames();
 
@@ -115,6 +134,7 @@ public interface ClassMetadata {
 	 * access, and private classes and interfaces declared by the class, but excludes
 	 * inherited classes and interfaces. An empty array is returned if no member classes
 	 * or interfaces exist.
+	 *
 	 * @since 3.1
 	 */
 	String[] getMemberClassNames();

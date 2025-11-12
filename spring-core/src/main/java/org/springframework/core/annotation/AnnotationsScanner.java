@@ -76,15 +76,18 @@ abstract class AnnotationsScanner {
 		return processor.finish(result);
 	}
 
+	/**
+	 * 处理被注解的元素
+	 */
 	@Nullable
 	private static <C, R> R process(C context, AnnotatedElement source,
 									SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
-		// 扫描，如果是个类
+		// 扫描，如果是个 Class
 		if (source instanceof Class) {
 			return processClass(context, (Class<?>) source, searchStrategy, processor);
 		}
 
-		// 扫描，如果是个方法
+		// 扫描，如果是个 Method
 		if (source instanceof Method) {
 			return processMethod(context, (Method) source, searchStrategy, processor);
 		}
@@ -93,6 +96,9 @@ abstract class AnnotationsScanner {
 		return processElement(context, source, processor);
 	}
 
+	/**
+	 * 处理被注解的类
+	 */
 	@Nullable
 	private static <C, R> R processClass(C context, Class<?> source,
 										 SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
@@ -417,7 +423,10 @@ abstract class AnnotationsScanner {
 										   AnnotationsProcessor<C, R> processor) {
 
 		try {
+			// processor.result 是一个结果缓存，如果处理完毕，就直接获取结果
 			R result = processor.doWithAggregate(context, 0);
+
+			// 如果第一次执行，就需要处理注解，不过先获取第一层注解，从第一层注解开始处理
 			return (result != null ? result
 					: processor.doWithAnnotations(context, 0, source, getDeclaredAnnotations(source, false)));
 		} catch (Throwable ex) {
@@ -452,6 +461,7 @@ abstract class AnnotationsScanner {
 			// 反射直接获取注解
 			annotations = source.getDeclaredAnnotations();
 			if (annotations.length != 0) {
+				// allIgnored == true 表示没有感兴趣的注解
 				boolean allIgnored = true;
 				for (int i = 0; i < annotations.length; i++) {
 					Annotation annotation = annotations[i];
@@ -487,36 +497,44 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
-	 * 是否已知是空的
+	 * 这是一个快捷方法，快速判断给定元素是否没有需要收集的注解[直接忽略了 Java 原生注解]
 	 */
 	static boolean isKnownEmpty(AnnotatedElement source, SearchStrategy searchStrategy) {
-		// 如果被注解的元素，是 JDK 自带的那些类，那么一定不可能有自定义注解
+		// 快速判断该元素是否只有简单 Java 注解
 		if (hasPlainJavaAnnotationsOnly(source)) {
 			return true;
 		}
 
-		// 如果是 Direct 搜索策略，那么我们稍后只要调用 Java 反射自带的方法判断注解就行了
-		// 如果没有层次结构，也是这么处理，不需要向上搜索了
+		// 为什么要做下面这个判断，因为 Java 反射 API 提供了获取[直接注解]的 API，所以利用这个方法，快速判断是否有感兴趣的注解
+		// 1. 只搜索第一层
+		// 2. 元素只有一层
 		if (searchStrategy == SearchStrategy.DIRECT || isWithoutHierarchy(source, searchStrategy)) {
-			// 算是一个快速判断吧？桥接方法一定没有注解
+			// 快速判断，桥接方法一定没有注解
 			if (source instanceof Method && ((Method) source).isBridge()) {
 				return false;
 			}
 
-			// Java 反射获取声明的注解，如果是空的，说明确实没有注解
+			// Java 反射 -> 获取声明的注解(实现比较复杂，有一定过滤)，如果是空的，说明确实没有感兴趣的注解
 			return getDeclaredAnnotations(source, false).length == 0;
 		}
 		return false;
 	}
 
+	/**
+	 * 快速判断一下给定元素是不是只有简单 Java 注解
+	 */
 	static boolean hasPlainJavaAnnotationsOnly(@Nullable Object annotatedElement) {
+		// 情况 1: 类。如果 java. 开头，或者 Ordered，那么不用再考察了，只存在 Java 注解
 		if (annotatedElement instanceof Class) {
-			// 判断这个类是不是仅仅只有简单 Java 注解
 			return hasPlainJavaAnnotationsOnly((Class<?>) annotatedElement);
-		} else if (annotatedElement instanceof Member) {
+		}
+		// 情况 2：成员(普通方法/构造方法)。声明类是  java. 开头，或者 Ordered，那么不用再考察了，只存在 Java 注解
+		else if (annotatedElement instanceof Member) {
 			// 判断这个方法/构造器的声明类是不是只有简单 Java 注解
 			return hasPlainJavaAnnotationsOnly(((Member) annotatedElement).getDeclaringClass());
-		} else {
+		}
+		// 其他不考虑
+		else {
 			return false;
 		}
 	}
@@ -532,24 +550,36 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
-	 * 是否没有层次结构
+	 * 判断给定的元素有没有层级结构
+	 * <p>
+	 * 为什么有这么复杂的设计？全都是因为 Java 的继承！！！
+	 * <p>
+	 * 正常来说元素可能有 Field，Method，Class，但是 Filed 直接排除，因为 Field 重复声明属于[隐藏]。
 	 */
 	private static boolean isWithoutHierarchy(AnnotatedElement source, SearchStrategy searchStrategy) {
-		// 已经是顶级类了
+		// 如果是一个 Class，而且是 Object，一定没有层次结构
 		if (source == Object.class) {
 			return true;
 		}
 
-		// 如果是类
+		// 讨论 Class 情形，类注解可能需要聚合来自 (abstract) class、interface
 		if (source instanceof Class) {
 			Class<?> sourceClass = (Class<?>) source;
+			// 如果没有父类，而且也没有接口，这样的类一般认为没有层次结构
 			boolean noSuperTypes = (sourceClass.getSuperclass() == Object.class &&
 					sourceClass.getInterfaces().length == 0);
-			return (searchStrategy == SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES ? noSuperTypes &&
-					sourceClass.getEnclosingClass() == null : noSuperTypes);
+
+			// SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES 比较少见的搜索策略，连封闭类的注解都抓取过来
+			return (searchStrategy == SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES ?
+					noSuperTypes && sourceClass.getEnclosingClass() == null :
+					noSuperTypes);
 		}
+
+		// 讨论 Method 情形
 		if (source instanceof Method) {
 			Method sourceMethod = (Method) source;
+			// 1. 私有方法，不会继承父类的信息
+			// 2. 方法的声明类没有层次结构，那么也不可能去实现/重写任何方法
 			return (Modifier.isPrivate(sourceMethod.getModifiers()) ||
 					isWithoutHierarchy(sourceMethod.getDeclaringClass(), searchStrategy));
 		}

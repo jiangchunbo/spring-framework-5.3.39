@@ -1116,13 +1116,17 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 
 				// Actually invoke the handler.
+				// 调用 handler，获取返回值，处理返回值，得到一个 ModelAndView
+				// [此时还没有渲染视图，只是获得了一个视图模型]
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				if (asyncManager.isConcurrentHandlingStarted()) {
 					return;
 				}
 
+				// 如果没有 view，那么用默认的 view [比较少见吧，用户返回一个视图，但是又没有设置 view ???]
 				applyDefaultViewName(processedRequest, mv);
+
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			} catch (Exception ex) {
 				dispatchException = ex;
@@ -1131,6 +1135,9 @@ public class DispatcherServlet extends FrameworkServlet {
 				// making them available for @ExceptionHandler methods and other scenarios.
 				dispatchException = new NestedServletException("Handler dispatch failed", err);
 			}
+
+			// 处理 dispatch 的结果
+			// [包括视图的渲染]
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		} catch (Exception ex) {
 			triggerAfterCompletion(processedRequest, response, mappedHandler, ex);
@@ -1421,6 +1428,8 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		View view;
 		String viewName = mv.getViewName();
+
+		// 解析视图的名字
 		if (viewName != null) {
 			// We need to resolve the view name.
 			view = resolveViewName(viewName, mv.getModelInternal(), locale, request);
@@ -1488,6 +1497,8 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		if (this.viewResolvers != null) {
 			for (ViewResolver viewResolver : this.viewResolvers) {
+				// 比如 ThymeleafViewResolver
+				// 但是基本都是调用的 AbstractCachingViewResolver 模板方法
 				View view = viewResolver.resolveViewName(viewName, locale);
 				if (view != null) {
 					return view;

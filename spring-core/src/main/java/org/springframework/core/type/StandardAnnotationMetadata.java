@@ -53,9 +53,9 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	@Nullable
 	private Set<String> annotationTypes;
 
-
 	/**
 	 * Create a new {@code StandardAnnotationMetadata} wrapper for the given Class.
+	 *
 	 * @param introspectedClass the Class to introspect
 	 * @see #StandardAnnotationMetadata(Class, boolean)
 	 * @deprecated since 5.2 in favor of the factory method {@link AnnotationMetadata#introspect(Class)}
@@ -70,10 +70,11 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 * providing the option to return any nested annotations or annotation arrays in the
 	 * form of {@link org.springframework.core.annotation.AnnotationAttributes} instead
 	 * of actual {@link Annotation} instances.
-	 * @param introspectedClass the Class to introspect
+	 *
+	 * @param introspectedClass      the Class to introspect
 	 * @param nestedAnnotationsAsMap return nested annotations and annotation arrays as
-	 * {@link org.springframework.core.annotation.AnnotationAttributes} for compatibility
-	 * with ASM-based {@link AnnotationMetadata} implementations
+	 *                               {@link org.springframework.core.annotation.AnnotationAttributes} for compatibility
+	 *                               with ASM-based {@link AnnotationMetadata} implementations
 	 * @since 3.1.1
 	 * @deprecated since 5.2 in favor of the factory method {@link AnnotationMetadata#introspect(Class)}.
 	 * Use {@link MergedAnnotation#asMap(org.springframework.core.annotation.MergedAnnotation.Adapt...) MergedAnnotation.asMap}
@@ -82,12 +83,17 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 */
 	@Deprecated
 	public StandardAnnotationMetadata(Class<?> introspectedClass, boolean nestedAnnotationsAsMap) {
+		// 这个构造函数似乎过时了，希望开发者直接用静态方法 AnnotationMetadata.introspect 内省类
+
+		// 反正目前来看，内省类其实调用的也是这个构造函数
+
 		super(introspectedClass);
+
+		// 内省指定的类，按照注解继承机制
 		this.mergedAnnotations = MergedAnnotations.from(introspectedClass,
 				SearchStrategy.INHERITED_ANNOTATIONS, RepeatableContainers.none());
 		this.nestedAnnotationsAsMap = nestedAnnotationsAsMap;
 	}
-
 
 	@Override
 	public MergedAnnotations getAnnotations() {
@@ -134,8 +140,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 						return true;
 					}
 				}
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Failed to introspect annotated methods on " + getIntrospectedClass(), ex);
 			}
 		}
@@ -157,14 +162,12 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 						annotatedMethods.add(new StandardMethodMetadata(method, this.nestedAnnotationsAsMap));
 					}
 				}
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Failed to introspect annotated methods on " + getIntrospectedClass(), ex);
 			}
 		}
 		return (annotatedMethods != null ? annotatedMethods : Collections.emptySet());
 	}
-
 
 	private static boolean isAnnotatedMethod(Method method, String annotationName) {
 		return !method.isBridge() && method.getAnnotations().length > 0 &&

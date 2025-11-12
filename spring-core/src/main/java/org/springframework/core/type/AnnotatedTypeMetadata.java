@@ -39,15 +39,18 @@ import org.springframework.util.MultiValueMap;
  * @author Chris Beams
  * @author Phillip Webb
  * @author Sam Brannen
- * @since 4.0
  * @see AnnotationMetadata
  * @see MethodMetadata
+ * @since 4.0
  */
 public interface AnnotatedTypeMetadata {
 
 	/**
 	 * Return annotation details based on the direct annotations of the
 	 * underlying element.
+	 * <p>
+	 * 返回底层元素的直接注解合并后的注解
+	 *
 	 * @return merged annotations based on the direct annotations
 	 * @since 5.2
 	 */
@@ -58,8 +61,9 @@ public interface AnnotatedTypeMetadata {
 	 * of the given type defined.
 	 * <p>If this method returns {@code true}, then
 	 * {@link #getAnnotationAttributes} will return a non-null Map.
+	 *
 	 * @param annotationName the fully qualified class name of the annotation
-	 * type to look for
+	 *                       type to look for
 	 * @return whether a matching annotation is defined
 	 */
 	default boolean isAnnotated(String annotationName) {
@@ -70,14 +74,19 @@ public interface AnnotatedTypeMetadata {
 	 * Retrieve the attributes of the annotation of the given type, if any (i.e. if
 	 * defined on the underlying element, as direct annotation or meta-annotation),
 	 * also taking attribute overrides on composed annotations into account.
+	 * <p>
+	 * 检索给定类型的注解的属性（如存在），也就是说，如果在底层元素上定义为直接注解或元注解时，
+	 * 也会考虑组合注解中的属性覆盖。
+	 *
 	 * @param annotationName the fully qualified class name of the annotation
-	 * type to look for
+	 *                       type to look for
 	 * @return a Map of attributes, with the attribute name as key (e.g. "value")
 	 * and the defined attribute value as Map value. This return value will be
 	 * {@code null} if no matching annotation is defined.
 	 */
 	@Nullable
 	default Map<String, Object> getAnnotationAttributes(String annotationName) {
+		// 返回注解属性时，如果
 		return getAnnotationAttributes(annotationName, false);
 	}
 
@@ -85,18 +94,23 @@ public interface AnnotatedTypeMetadata {
 	 * Retrieve the attributes of the annotation of the given type, if any (i.e. if
 	 * defined on the underlying element, as direct annotation or meta-annotation),
 	 * also taking attribute overrides on composed annotations into account.
-	 * @param annotationName the fully qualified class name of the annotation
-	 * type to look for
+	 *
+	 *
+	 *
+	 * @param annotationName      the fully qualified class name of the annotation
+	 *                            type to look for
 	 * @param classValuesAsString whether to convert class references to String
-	 * class names for exposure as values in the returned Map, instead of Class
-	 * references which might potentially have to be loaded first
+	 *                            class names for exposure as values in the returned Map, instead of Class
+	 *                            references which might potentially have to be loaded first
+	 *                            <p>是否要将类引用转换为字符串形式的类名，以在返回的 Map 中作为值暴露，
+	 *                            而不是可能需要加载的 Class 引用
 	 * @return a Map of attributes, with the attribute name as key (e.g. "value")
 	 * and the defined attribute value as Map value. This return value will be
 	 * {@code null} if no matching annotation is defined.
 	 */
 	@Nullable
 	default Map<String, Object> getAnnotationAttributes(String annotationName,
-			boolean classValuesAsString) {
+														boolean classValuesAsString) {
 
 		MergedAnnotation<Annotation> annotation = getAnnotations().get(annotationName,
 				null, MergedAnnotationSelectors.firstDirectlyDeclared());
@@ -110,8 +124,9 @@ public interface AnnotatedTypeMetadata {
 	 * Retrieve all attributes of all annotations of the given type, if any (i.e. if
 	 * defined on the underlying element, as direct annotation or meta-annotation).
 	 * Note that this variant does <i>not</i> take attribute overrides into account.
+	 *
 	 * @param annotationName the fully qualified class name of the annotation
-	 * type to look for
+	 *                       type to look for
 	 * @return a MultiMap of attributes, with the attribute name as key (e.g. "value")
 	 * and a list of the defined attribute values as Map value. This return value will
 	 * be {@code null} if no matching annotation is defined.
@@ -126,9 +141,10 @@ public interface AnnotatedTypeMetadata {
 	 * Retrieve all attributes of all annotations of the given type, if any (i.e. if
 	 * defined on the underlying element, as direct annotation or meta-annotation).
 	 * Note that this variant does <i>not</i> take attribute overrides into account.
-	 * @param annotationName the fully qualified class name of the annotation
-	 * type to look for
-	 * @param classValuesAsString  whether to convert class references to String
+	 *
+	 * @param annotationName      the fully qualified class name of the annotation
+	 *                            type to look for
+	 * @param classValuesAsString whether to convert class references to String
 	 * @return a MultiMap of attributes, with the attribute name as key (e.g. "value")
 	 * and a list of the defined attribute values as Map value. This return value will
 	 * be {@code null} if no matching annotation is defined.

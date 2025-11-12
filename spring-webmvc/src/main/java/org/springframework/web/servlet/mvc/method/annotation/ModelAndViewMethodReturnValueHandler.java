@@ -78,12 +78,15 @@ public class ModelAndViewMethodReturnValueHandler implements HandlerMethodReturn
 	public void handleReturnValue(@Nullable Object returnValue, MethodParameter returnType,
 			ModelAndViewContainer mavContainer, NativeWebRequest webRequest) throws Exception {
 
+		// 返回值是 null，不正常
 		if (returnValue == null) {
 			mavContainer.setRequestHandled(true);
 			return;
 		}
 
 		ModelAndView mav = (ModelAndView) returnValue;
+
+		// ModelAndView 里面的 view 是 Object 多态的，
 		if (mav.isReference()) {
 			String viewName = mav.getViewName();
 			mavContainer.setViewName(viewName);

@@ -241,11 +241,17 @@ public class HandlerMethod {
 	}
 
 	private void evaluateResponseStatus() {
+		// 1. 先找方法的 ResponseStatus
 		ResponseStatus annotation = getMethodAnnotation(ResponseStatus.class);
+
+		// 2. 找不到就找 Class 上面的注解
 		if (annotation == null) {
 			annotation = AnnotatedElementUtils.findMergedAnnotation(getBeanType(), ResponseStatus.class);
 		}
+
+		// 如果找到注解
 		if (annotation != null) {
+			// 可能存在一些 reason 需要进行 message 国际化解析
 			String reason = annotation.reason();
 			String resolvedReason = (StringUtils.hasText(reason) && this.messageSource != null ?
 					this.messageSource.getMessage(reason, null, reason, LocaleContextHolder.getLocale()) :

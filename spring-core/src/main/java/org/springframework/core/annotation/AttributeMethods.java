@@ -81,10 +81,7 @@ final class AttributeMethods {
 			}
 			ReflectionUtils.makeAccessible(method);
 
-			// 到底怎么做才可以抛出类型不存在的异常
-			// 1. Class
-			// 2. Class[]
-			// 3. Enum
+			// 这个数组存储了当前索引 [是否允许抛出类型不存在] 的异常
 			this.canThrowTypeNotPresentException[i] = (type == Class.class || type == Class[].class || type.isEnum());
 		}
 		this.hasDefaultValueMethod = foundDefaultValueMethod;

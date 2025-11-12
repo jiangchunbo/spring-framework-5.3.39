@@ -869,6 +869,8 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	/**
 	 * Invoke the {@link RequestMapping} handler method preparing a {@link ModelAndView}
 	 * if view resolution is required.
+	 * <p>
+	 * 这个方法被 3 个地方调用，但是不要太害怕，这 3 个地方都在一起
 	 *
 	 * @see #createInvocableHandlerMethod(HandlerMethod)
 	 * @since 4.2
@@ -939,7 +941,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 				invocableMethod = invocableMethod.wrapConcurrentResult(result);
 			}
 
-			// invoke 这里调用方法的重点
+			// 里面会调用 handler 方法获取返回值并进行处理 [里面可能对 ModelAndViewContainer 进行了一些处理]
 			invocableMethod.invokeAndHandle(webRequest, mavContainer);
 			if (asyncManager.isConcurrentHandlingStarted()) {
 				return null;
@@ -1022,7 +1024,6 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			this.initBinderCache.put(handlerType, methods);
 		}
 
-
 		// initBinderMethods > 其实就是 result
 		List<InvocableHandlerMethod> initBinderMethods = new ArrayList<>();
 		// Global methods first
@@ -1077,7 +1078,11 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			return null;
 		}
 		ModelMap model = mavContainer.getModel();
+
+		// 创建了一个全新的 ModelAndView
 		ModelAndView mav = new ModelAndView(mavContainer.getViewName(), model, mavContainer.getStatus());
+
+		// view 属性不是 String，那么一定是 View 类型
 		if (!mavContainer.isViewReference()) {
 			mav.setView((View) mavContainer.getView());
 		}

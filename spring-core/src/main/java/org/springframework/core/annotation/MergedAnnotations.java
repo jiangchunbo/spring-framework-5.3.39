@@ -335,7 +335,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * depending on the {@link SearchStrategy}, related inherited elements.
 	 *
 	 * @param element              the source element
+	 *                             <p>被注解的元素
 	 * @param searchStrategy       the search strategy to use
+	 *                             <p>搜索策略
 	 * @param repeatableContainers the repeatable containers that may be used by
 	 *                             the element annotations or the meta-annotations
 	 * @return a {@code MergedAnnotations} instance containing the merged
@@ -366,6 +368,7 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 
 		Assert.notNull(repeatableContainers, "RepeatableContainers must not be null");
 		Assert.notNull(annotationFilter, "AnnotationFilter must not be null");
+
 		return TypeMappedAnnotations.from(element, searchStrategy, repeatableContainers, annotationFilter);
 	}
 

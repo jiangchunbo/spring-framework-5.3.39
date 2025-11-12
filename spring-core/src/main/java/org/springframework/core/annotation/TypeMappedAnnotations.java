@@ -70,18 +70,20 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 
 	/**
-	 * 模式1: 基于 AnnotatedElement 的动态扫描
+	 * 模式1: 基于被注解的元素构造注解属性，具备调用 Java 反射的能力
 	 */
 	private TypeMappedAnnotations(AnnotatedElement element, SearchStrategy searchStrategy,
 								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
-
+		// 来源
 		this.source = element;
+		// 被注解的元素，可能是 Method Class
 		this.element = element;
+		// 搜索策略
 		this.searchStrategy = searchStrategy;
 		this.annotations = null;
+		// 容器
 		this.repeatableContainers = repeatableContainers;
-
-		// 正常来说可能都是过滤 java lang 以及 spring lang  ---> AnnotationFilter
+		// 注解过滤器 org.springframework.core.annotation.AnnotationFilter.PLAIN
 		this.annotationFilter = annotationFilter;
 	}
 
@@ -90,12 +92,17 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	 */
 	private TypeMappedAnnotations(@Nullable Object source, Annotation[] annotations,
 								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
-
+		// 来源
 		this.source = source;
+		// 不知道被逐节的元素
 		this.element = null;
+		// 搜索策略
 		this.searchStrategy = null;
+		// 注解数组
 		this.annotations = annotations;
+		// 容器
 		this.repeatableContainers = repeatableContainers;
+		// 注解过滤器
 		this.annotationFilter = annotationFilter;
 	}
 
@@ -186,10 +193,12 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	public <A extends Annotation> MergedAnnotation<A> get(String annotationType,
 														  @Nullable Predicate<? super MergedAnnotation<A>> predicate,
 														  @Nullable MergedAnnotationSelector<A> selector) {
-
+		// 注解过滤器快速排除
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
 		}
+
+
 		MergedAnnotation<A> result = scan(annotationType,
 				new MergedAnnotationFinder<>(annotationType, predicate, selector));
 		return (result != null ? result : MergedAnnotation.missing());
@@ -275,12 +284,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
 								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
-		// 快速判断，是否 element 在当前搜索策略 searchStrategy 下一定是空注解(没有注解)
+		// 快速判断，结合搜索策略，判断是否没有感兴趣的注解
+		// [实现很复杂] 需要考虑 Class Method 以及它们的层次结构，是否可能携带感兴趣的注解
 		if (AnnotationsScanner.isKnownEmpty(element, searchStrategy)) {
 			return NONE;
 		}
 
-		// 否则，这里可能是构造注解
+		// 构造 MergedAnnotations -> 该对象的构造是很轻量的，只有调用它的方法可能执行一些扫描
 		return new TypeMappedAnnotations(element, searchStrategy, repeatableContainers, annotationFilter);
 	}
 
@@ -424,9 +434,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Nullable
 		public MergedAnnotation<A> doWithAnnotations(Object type, int aggregateIndex,
 													 @Nullable Object source, Annotation[] annotations) {
-
+			// 遍历第一层注解
 			for (Annotation annotation : annotations) {
+				// annotationFilter.matches 就会被丢弃，这里逻辑有些反常，所以逻辑取反
 				if (annotation != null && !annotationFilter.matches(annotation)) {
+
 					MergedAnnotation<A> result = process(type, aggregateIndex, source, annotation);
 					if (result != null) {
 						return result;

@@ -114,8 +114,10 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 	public void invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer,
 			Object... providedArgs) throws Exception {
 
-		// 调用拿到返回值。这里面很重要，包含了怎么找到参数
+		// 返回值就是 handler 我们自己写的方法的返回值
 		Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+
+		// 写入响应码
 		setResponseStatus(webRequest);
 
 		if (returnValue == null) {
@@ -148,6 +150,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 	 * Set the response status according to the {@link ResponseStatus} annotation.
 	 */
 	private void setResponseStatus(ServletWebRequest webRequest) throws IOException {
+		// 注解上解析出来的 @ResponseStatus
 		HttpStatus status = getResponseStatus();
 		if (status == null) {
 			return;
