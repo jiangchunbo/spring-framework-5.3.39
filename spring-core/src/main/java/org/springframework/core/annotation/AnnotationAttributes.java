@@ -350,10 +350,14 @@ public class AnnotationAttributes extends LinkedHashMap<String, Object> {
 	private <T> T getRequiredAttribute(String attributeName, Class<T> expectedType) {
 		Assert.hasText(attributeName, "'attributeName' must not be null or empty");
 
-		// 本类直接继承了 LinkedHashMap，所以直接调用其 get(attributeName)
+		// 其实就是 LinkedHashMap.get
 		Object value = get(attributeName);
+
+		// 确保属性值不是 null，也不是 Throwable
 		assertAttributePresence(attributeName, value);
 		assertNotException(attributeName, value);
+
+
 		if (!expectedType.isInstance(value) && expectedType.isArray() &&
 				expectedType.getComponentType().isInstance(value)) {
 			Object array = Array.newInstance(expectedType.getComponentType(), 1);

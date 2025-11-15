@@ -533,9 +533,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private void addAggregateAnnotations(List<Annotation> aggregateAnnotations, Annotation[] annotations) {
 			for (Annotation annotation : annotations) {
 				if (annotation != null && !annotationFilter.matches(annotation)) {
-					// 寻找那些可以重复的注解，递归解析
+					// 寻找那些可以重复的注解，展开
+					// 例如，传入 @RabbitListeners 注解对象，得到若干个 @RabbitListener 对象
 					Annotation[] repeatedAnnotations = repeatableContainers.findRepeatedAnnotations(annotation);
 					if (repeatedAnnotations != null) {
+						// 递归调用
 						addAggregateAnnotations(aggregateAnnotations, repeatedAnnotations);
 					}
 					// 如果不是可以重复的注解，就直接添加到

@@ -347,14 +347,21 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
+				// 获取当前 bean 的依赖，必须要提前创建他们
+				// 这种属于隐式依赖，因为他不直接依赖，或者将其作为属性注入，而是隐式依赖其他 bean 产生的副作用
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
+						// 相互依赖则报错
 						if (isDependent(beanName, dep)) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+
+						// 注册依赖关系，确保销毁时按序销毁
 						registerDependentBean(dep, beanName);
+
+						// getBean 创建
 						try {
 							getBean(dep);
 						} catch (NoSuchBeanDefinitionException ex) {

@@ -110,7 +110,7 @@ public abstract class MergedAnnotationPredicates {
 	 */
 	public static <A extends Annotation, K> Predicate<MergedAnnotation<A>> unique(
 			Function<? super MergedAnnotation<A>, K> keyExtractor) {
-		// K List<Class<? extends Annotation>>
+		// keyExtractor 通过这个函数，传入合并的注解信息，可以得到一个 K 对象
 
 		return new UniquePredicate<>(keyExtractor);
 	}
@@ -153,6 +153,9 @@ public abstract class MergedAnnotationPredicates {
 	 */
 	private static class UniquePredicate<A extends Annotation, K> implements Predicate<MergedAnnotation<A>> {
 
+		/**
+		 * 这个 Predicate 对象之中包含了一个 Function，用于将断言时的对象传递，获取一个 K
+		 */
 		private final Function<? super MergedAnnotation<A>, K> keyExtractor;
 
 		private final Set<K> seen = new HashSet<>();

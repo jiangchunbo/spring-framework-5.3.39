@@ -43,6 +43,9 @@ import org.springframework.util.ObjectUtils;
  */
 public abstract class RepeatableContainers {
 
+	/**
+	 * 通过这个 cache 可以找到注解中是否存在可重复的注解。例如 @RabbitListeners -> value()
+	 */
 	static final Map<Class<? extends Annotation>, Object> cache = new ConcurrentReferenceHashMap<>();
 
 	@Nullable
@@ -140,6 +143,9 @@ public abstract class RepeatableContainers {
 
 		private static final Object NONE = new Object();
 
+		/**
+		 * 这个类被设计为一个单例
+		 */
 		private static StandardRepeatableContainers INSTANCE = new StandardRepeatableContainers();
 
 		StandardRepeatableContainers() {
@@ -152,7 +158,7 @@ public abstract class RepeatableContainers {
 			// 简单理解就是 value() 是否是一个可重复的注解
 			Method method = getRepeatedAnnotationsMethod(annotation.annotationType());
 			if (method != null) {
-				// 调用这个方法，得到更多注解
+				// 调用 value() 方法，得到更多注解对象
 				return (Annotation[]) AnnotationUtils.invokeAnnotationMethod(method, annotation);
 			}
 			return super.findRepeatedAnnotations(annotation);

@@ -143,6 +143,7 @@ class ScriptBeanDefinitionParser extends AbstractBeanDefinitionParser {
 		bd.setAutowireMode(autowireMode);
 
 		// Parse depends-on list of bean names.
+		// 解析 depends-on 属性
 		String dependsOn = element.getAttribute(DEPENDS_ON_ATTRIBUTE);
 		if (StringUtils.hasLength(dependsOn)) {
 			bd.setDependsOn(StringUtils.tokenizeToStringArray(

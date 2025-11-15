@@ -158,9 +158,14 @@ public interface AnnotatedTypeMetadata {
 		Adapt[] adaptations = Adapt.values(classValuesAsString, true);
 
 		return getAnnotations().stream(annotationName)
-				// MergedAnnotation::getMetaTypes 等价于 (MergedAnnotation a) -> a.getMetaTypes
+				// 下面这句话挺难理解
+				// 首先去看 MergedAnnotationPredicates.unique 该静态方法返回一个 Predicate 对象
+				// 即，每次迭代都会将 MergedAnnotation 对象传递给这个 Predicate 进行判断
+				// 接着，断言的时候又将 MergedAnnotation 对象传递给 MergedAnnotation::getMetaTypes 得到一个 List<Class<? extends Annotation>>
+				// 并尝试将 List<Class<? extends Annotation>> 添加到一个 Set 中，若添加成功(首次)，则继续处理，
+				// --> 否则可能处理过了，跳过，这样估计可以确保去重
 				.filter(MergedAnnotationPredicates.unique(MergedAnnotation::getMetaTypes))
-				// 类型转换
+				// 将 MergedAnnotation 转换为另一个 MergedAnnotation
 				.map(MergedAnnotation::withNonMergedAttributes)
 				.collect(MergedAnnotationCollectors.toMultiValueMap(map ->
 						map.isEmpty() ? null : map, adaptations));

@@ -234,10 +234,18 @@ public abstract class AnnotationConfigUtils {
 		}
 	}
 
+	/**
+	 * public 处理一些通用的注解
+	 */
 	public static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd) {
 		processCommonDefinitionAnnotations(abd, abd.getMetadata());
 	}
 
+	/**
+	 * 没有访问修饰符，所以只是为了方便使用可能
+	 *
+	 * @param metadata 便捷访问 AnnotatedTypeMetadata
+	 */
 	static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd, AnnotatedTypeMetadata metadata) {
 		AnnotationAttributes lazy = attributesFor(metadata, Lazy.class);
 		if (lazy != null) {
@@ -252,6 +260,8 @@ public abstract class AnnotationConfigUtils {
 		if (metadata.isAnnotated(Primary.class.getName())) {
 			abd.setPrimary(true);
 		}
+
+		// 获取注解属性 @DependsOn
 		AnnotationAttributes dependsOn = attributesFor(metadata, DependsOn.class);
 		if (dependsOn != null) {
 			abd.setDependsOn(dependsOn.getStringArray("value"));

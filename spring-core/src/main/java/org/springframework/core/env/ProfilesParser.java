@@ -41,11 +41,14 @@ final class ProfilesParser {
 	private ProfilesParser() {
 	}
 
-
+	/**
+	 * @param expressions 可变表达式，甚至 dev 就是一个表达式
+	 */
 	static Profiles parse(String... expressions) {
 		Assert.notEmpty(expressions, "Must specify at least one profile expression");
 		Profiles[] parsed = new Profiles[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
+			// 解析表达式，就是看表达式是否存在 ()&|!
 			parsed[i] = parseExpression(expressions[i]);
 		}
 		return new ParsedProfiles(expressions, parsed);
@@ -71,6 +74,7 @@ final class ProfilesParser {
 			}
 			switch (token) {
 				case "(":
+					// 如果发现 ( ，那么标记进入 PARENTHESIS 括号上下文中
 					Profiles contents = parseTokens(expression, tokens, Context.PARENTHESIS);
 					if (context == Context.NEGATE) {
 						return contents;
@@ -141,10 +145,13 @@ final class ProfilesParser {
 		return profiles -> profiles.matches(activeProfiles);
 	}
 
+	private enum Operator {AND, OR}
 
-	private enum Operator { AND, OR }
-
-	private enum Context { NONE, NEGATE, PARENTHESIS }
+	/**
+	 * NEGATE 		否定
+	 * PARENTHESIS  括号
+	 */
+	private enum Context {NONE, NEGATE, PARENTHESIS}
 
 	/**
 	 * Profiles 的组合体
@@ -164,14 +171,13 @@ final class ProfilesParser {
 		}
 
 		/**
-		 * 检查是否匹配
+		 * 匹配是否有任何一个命中
 		 */
 		@Override
 		public boolean matches(Predicate<String> activeProfiles) {
 
-			// 其实就是检查是否匹配 any
-
 			for (Profiles candidate : this.parsed) {
+				// 如果匹配，则返回 true
 				if (candidate.matches(activeProfiles)) {
 					return true;
 				}
@@ -200,6 +206,7 @@ final class ProfilesParser {
 		public String toString() {
 			return StringUtils.collectionToDelimitedString(this.expressions, " or ");
 		}
+
 	}
 
 }
