@@ -874,16 +874,13 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		// 从字符串格式解析成 HttpMethod 枚举
+		// 为了兼容 PATCH 请求
 		HttpMethod httpMethod = HttpMethod.resolve(request.getMethod());
-
-		// 总之就是要走 processRequest 逻辑
-		// tomcat 还不支持 patch，所以直接走 processRequest 逻辑
 		if (httpMethod == HttpMethod.PATCH || httpMethod == null) {
 			processRequest(request, response);
 		}
+		// 其他请求方法依然走执行的逻辑
 		else {
-			// 底层会 doGet doHead doPost doPut doDelete doOptions doTrace，这些方法都被 FrameworkServlet 重写了，都会走到 processRequest
 			super.service(request, response);
 		}
 	}
@@ -995,16 +992,21 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 		Throwable failureCause = null;
 
+		// <<<<<<<<<<<<< Locale <<<<<<<<<
 		// 获得之前的 locale
 		LocaleContext previousLocaleContext = LocaleContextHolder.getLocaleContext();
-		// 解析请求的 locale
+		// request.getLocale() 包装成 LocaleContext
 		LocaleContext localeContext = buildLocaleContext(request);
+		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-		// 获得之前的 request attributes
+		// <<<<<<<<<<<< Request Attribute <<<<<<<
+		// 获得 previous request attributes
 		RequestAttributes previousAttributes = RequestContextHolder.getRequestAttributes();
-		// 构件 ServletRequestAttributes
+		// 将 request(为了拿属性) response(可能只是为了暴露出去吧) 包装为 ServletRequestAttributes
 		ServletRequestAttributes requestAttributes = buildRequestAttributes(request, response, previousAttributes);
+		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+		// 异步管理器
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
 		asyncManager.registerCallableInterceptor(FrameworkServlet.class.getName(), new RequestBindingInterceptor());
 
@@ -1071,9 +1073,12 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	private void initContextHolders(HttpServletRequest request,
 			@Nullable LocaleContext localeContext, @Nullable RequestAttributes requestAttributes) {
 
+		// 设置本地化 Locale 到线程上下文
 		if (localeContext != null) {
 			LocaleContextHolder.setLocaleContext(localeContext, this.threadContextInheritable);
 		}
+
+		// 设置 Request Attribute 到线程上下文
 		if (requestAttributes != null) {
 			RequestContextHolder.setRequestAttributes(requestAttributes, this.threadContextInheritable);
 		}

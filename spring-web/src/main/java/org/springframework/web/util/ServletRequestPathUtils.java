@@ -245,16 +245,21 @@ public abstract class ServletRequestPathUtils {
 
 
 		public static RequestPath parse(HttpServletRequest request) {
+			// 1. include uri
+			// 2. request uri (不能先获取这个，因为这个总是存在)
 			String requestUri = (String) request.getAttribute(WebUtils.INCLUDE_REQUEST_URI_ATTRIBUTE);
 			if (requestUri == null) {
 				requestUri = request.getRequestURI();
 			}
+
+			// 检查能够通过 Servlet 4.0 的支持获得 Servlet 级别的前缀
 			if (UrlPathHelper.servlet4Present) {
 				String servletPathPrefix = Servlet4Delegate.getServletPathPrefix(request);
 				if (StringUtils.hasText(servletPathPrefix)) {
 					return new ServletRequestPath(requestUri, request.getContextPath(), servletPathPrefix);
 				}
 			}
+
 			return RequestPath.parse(requestUri, request.getContextPath());
 		}
 	}
@@ -268,14 +273,20 @@ public abstract class ServletRequestPathUtils {
 
 		@Nullable
 		public static String getServletPathPrefix(HttpServletRequest request) {
+			// 1. include mapping
+			// 2. servlet mapping
 			HttpServletMapping mapping = (HttpServletMapping) request.getAttribute(RequestDispatcher.INCLUDE_MAPPING);
 			if (mapping == null) {
 				mapping = request.getHttpServletMapping();
 			}
+
+			// 检查是否能够通过 Servlet 规范支持，获取请求匹配前缀
 			MappingMatch match = mapping.getMappingMatch();
 			if (!ObjectUtils.nullSafeEquals(match, MappingMatch.PATH)) {
 				return null;
 			}
+
+			// 获取前缀
 			String servletPath = (String) request.getAttribute(WebUtils.INCLUDE_SERVLET_PATH_ATTRIBUTE);
 			servletPath = (servletPath != null ? servletPath : request.getServletPath());
 			return UriUtils.encodePath(servletPath, StandardCharsets.UTF_8);

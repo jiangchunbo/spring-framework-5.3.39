@@ -298,7 +298,6 @@ public class DispatcherServlet extends FrameworkServlet {
 	 */
 	private static final String DEFAULT_STRATEGIES_PREFIX = "org.springframework.web.servlet";
 
-
 	/**
 	 * Additional logger to use when no mapped handler is found for a request.
 	 */
@@ -394,8 +393,10 @@ public class DispatcherServlet extends FrameworkServlet {
 	@Nullable
 	private List<ViewResolver> viewResolvers;
 
+	/**
+	 * 是否解析请求路径 (高版本我估计是默认 true 吧)
+	 */
 	private boolean parseRequestPath;
-
 
 	/**
 	 * Create a new {@code DispatcherServlet} that will create its own internal web
@@ -464,7 +465,6 @@ public class DispatcherServlet extends FrameworkServlet {
 		super(webApplicationContext);
 		setDispatchOptionsRequest(true);
 	}
-
 
 	/**
 	 * Set whether to detect all HandlerMapping beans in this servlet's context. Otherwise,
@@ -537,7 +537,6 @@ public class DispatcherServlet extends FrameworkServlet {
 	public void setCleanupAfterInclude(boolean cleanupAfterInclude) {
 		this.cleanupAfterInclude = cleanupAfterInclude;
 	}
-
 
 	/**
 	 * This implementation calls {@link #initStrategies}.
@@ -669,6 +668,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 
+		// 侦测是否存在某个 HandlerMapping 需要解析 request path
 		for (HandlerMapping mapping : this.handlerMappings) {
 			if (mapping.usesPathPatterns()) {
 				this.parseRequestPath = true;
@@ -959,7 +959,6 @@ public class DispatcherServlet extends FrameworkServlet {
 		return context.getAutowireCapableBeanFactory().createBean(clazz);
 	}
 
-
 	/**
 	 * Exposes the DispatcherServlet-specific request attributes and delegates to {@link #doDispatch}
 	 * for the actual dispatching.
@@ -999,10 +998,12 @@ public class DispatcherServlet extends FrameworkServlet {
 			request.setAttribute(FLASH_MAP_MANAGER_ATTRIBUTE, this.flashMapManager);
 		}
 
-		// 这里不一定会解析，除非 HandlerMapping 使用 pattern 模式
+		// 使用 pattern 模式解析
 		RequestPath previousRequestPath = null;
 		if (this.parseRequestPath) {
+			// 记录 previous request path
 			previousRequestPath = (RequestPath) request.getAttribute(ServletRequestPathUtils.PATH_ATTRIBUTE);
+			// 解析并缓存
 			ServletRequestPathUtils.parseAndCache(request);
 		}
 

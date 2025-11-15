@@ -29,15 +29,31 @@ import org.springframework.util.StringUtils;
  */
 class DefaultRequestPath implements RequestPath {
 
+	/**
+	 * 请求的全路径，包括 Context Path
+	 *
+	 * 完全路径，包括 Servlet 前缀 (contextPath) 以及 pathWithinApplication
+	 */
 	private final PathContainer fullPath;
 
+	/**
+	 * Servlet 上下文路径，不是应用上下文，可能是 Servlet 的固定前缀
+	 * <p>
+	 * 例如，Servlet 使用 /api 作为匹配 path，这里就是 path
+	 */
 	private final PathContainer contextPath;
 
+	/**
+	 * 在应用中的路径，不包含 Servlet 的前缀
+	 * <p>
+	 * 例如，全路径是 /api/users，Servlet 的前缀是 /api，这里就是 /users
+	 */
 	private final PathContainer pathWithinApplication;
 
-
 	DefaultRequestPath(String rawPath, @Nullable String contextPath) {
+		// rawPath 就是 request.getRequestUri() -> 解析得到 fullPath
 		this.fullPath = PathContainer.parsePath(rawPath);
+		//
 		this.contextPath = initContextPath(this.fullPath, contextPath);
 		this.pathWithinApplication = extractPathWithinApplication(this.fullPath, this.contextPath);
 	}
@@ -49,6 +65,7 @@ class DefaultRequestPath implements RequestPath {
 	}
 
 	private static PathContainer initContextPath(PathContainer path, @Nullable String contextPath) {
+		// 应用上下文路径是 / 根路径，那么
 		if (!StringUtils.hasText(contextPath) || StringUtils.matchesCharacter(contextPath, '/')) {
 			return PathContainer.parsePath("");
 		}
@@ -91,7 +108,6 @@ class DefaultRequestPath implements RequestPath {
 		return fullPath.subPath(contextPath.elements().size());
 	}
 
-
 	// PathContainer methods..
 
 	@Override
@@ -103,7 +119,6 @@ class DefaultRequestPath implements RequestPath {
 	public List<Element> elements() {
 		return this.fullPath.elements();
 	}
-
 
 	// RequestPath methods..
 
@@ -122,7 +137,6 @@ class DefaultRequestPath implements RequestPath {
 		return new DefaultRequestPath(this, contextPath);
 	}
 
-
 	@Override
 	public boolean equals(@Nullable Object other) {
 		if (this == other) {
@@ -131,7 +145,7 @@ class DefaultRequestPath implements RequestPath {
 		if (other == null || getClass() != other.getClass()) {
 			return false;
 		}
-		DefaultRequestPath otherPath= (DefaultRequestPath) other;
+		DefaultRequestPath otherPath = (DefaultRequestPath) other;
 		return (this.fullPath.equals(otherPath.fullPath) &&
 				this.contextPath.equals(otherPath.contextPath) &&
 				this.pathWithinApplication.equals(otherPath.pathWithinApplication));
