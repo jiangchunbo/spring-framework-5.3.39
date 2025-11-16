@@ -159,12 +159,12 @@ public abstract class AopProxyUtils {
 			}
 		}
 
-		// 帮你添加 SpringProxy
+		// [总是]帮你添加 SpringProxy，可以识别这个对象是否是 Spring 代理
 		if (!advised.isInterfaceProxied(SpringProxy.class)) {
 			proxiedInterfaces.add(SpringProxy.class);
 		}
 
-		// 如果想暴露 Advised（透明），那么就加上 Advised
+		// 如果不想做[透明人]，并且 advised 还没有添加 Advised 接口，那么加进去
 		if (!advised.isOpaque() && !advised.isInterfaceProxied(Advised.class)) {
 			proxiedInterfaces.add(Advised.class);
 		}

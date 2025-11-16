@@ -35,7 +35,6 @@ public class ProxyConfig implements Serializable {
 	 */
 	private static final long serialVersionUID = -8409359707199703185L;
 
-
 	private boolean proxyTargetClass = false;
 
 	private boolean optimize = false;
@@ -48,7 +47,6 @@ public class ProxyConfig implements Serializable {
 	boolean exposeProxy = false;
 
 	private boolean frozen = false;
-
 
 	/**
 	 * Set whether to proxy the target class directly, instead of just proxying
@@ -107,6 +105,10 @@ public class ProxyConfig implements Serializable {
 	/**
 	 * Return whether proxies created by this configuration should be
 	 * prevented from being cast to {@link Advised}.
+	 * <p>
+	 * 返回由此配置创建的代理是否应该被[阻止]强转为 Advised
+	 * <p>
+	 * 引申为[透明的]，表示隐藏自己真实身份
 	 */
 	public boolean isOpaque() {
 		return this.opaque;
@@ -153,7 +155,6 @@ public class ProxyConfig implements Serializable {
 	public boolean isFrozen() {
 		return this.frozen;
 	}
-
 
 	/**
 	 * Copy configuration from the other config object.

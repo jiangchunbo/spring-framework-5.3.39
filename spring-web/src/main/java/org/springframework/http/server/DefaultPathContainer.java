@@ -99,31 +99,46 @@ final class DefaultPathContainer implements PathContainer {
 		if (path.isEmpty()) {
 			return EMPTY_PATH;
 		}
+
+		// 获取分隔符
 		char separator = options.separator();
 		DefaultSeparator separatorElement = SEPARATORS.get(separator);
 		if (separatorElement == null) {
 			throw new IllegalArgumentException("Unexpected separator: '" + separator + "'");
 		}
+
 		List<Element> elements = new ArrayList<>();
 		int begin;
 		if (path.charAt(0) == separator) {
 			begin = 1;
+			// 分隔符作为一个单独的元素添加到 elements
 			elements.add(separatorElement);
 		}
 		else {
 			begin = 0;
 		}
+
+
 		while (begin < path.length()) {
+			// 寻找下一个分隔符
 			int end = path.indexOf(separator, begin);
+
+			// 找不到下一个分隔符就直接 substring 到末尾；否则，就截取一个片段(不包括分隔符)
 			String segment = (end != -1 ? path.substring(begin, end) : path.substring(begin));
+
+			// 如果是 // 连续两个分隔符可能导致 substring 是空字符串，这种没有意义排除
 			if (!segment.isEmpty()) {
 				elements.add(options.shouldDecodeAndParseSegments() ?
 						decodeAndParsePathSegment(segment) :
 						DefaultPathSegment.from(segment, separatorElement));
 			}
+
+			// 没有分隔符了，退出
 			if (end == -1) {
 				break;
 			}
+
+			// 添加分隔符
 			elements.add(separatorElement);
 			begin = end + 1;
 		}

@@ -1003,7 +1003,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		if (this.parseRequestPath) {
 			// 记录 previous request path
 			previousRequestPath = (RequestPath) request.getAttribute(ServletRequestPathUtils.PATH_ATTRIBUTE);
-			// 解析并缓存
+			// 解析得到 RequestPath 对象并缓存
 			ServletRequestPathUtils.parseAndCache(request);
 		}
 
@@ -1130,14 +1130,16 @@ public class DispatcherServlet extends FrameworkServlet {
 
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			} catch (Exception ex) {
+				// 处理过程中发生 Exception
 				dispatchException = ex;
 			} catch (Throwable err) {
 				// As of 4.3, we're processing Errors thrown from handler methods as well,
 				// making them available for @ExceptionHandler methods and other scenarios.
+				// 处理过程中发生 Throwable
 				dispatchException = new NestedServletException("Handler dispatch failed", err);
 			}
 
-			// 处理 dispatch 的结果
+			// 处理 mv 或者处理 dispatchException
 			// [包括视图的渲染]
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		} catch (Exception ex) {
@@ -1183,6 +1185,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		boolean errorView = false;
 
+		// 处理异常
 		if (exception != null) {
 			if (exception instanceof ModelAndViewDefiningException) {
 				logger.debug("ModelAndViewDefiningException encountered", exception);
@@ -1195,6 +1198,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		// Did the handler return a view to render?
+		// 处理视图渲染 (有可能是异常处理产生的视图)
 		if (mv != null && !mv.wasCleared()) {
 			render(mv, request, response);
 			if (errorView) {
@@ -1378,8 +1382,13 @@ public class DispatcherServlet extends FrameworkServlet {
 		request.removeAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
 
 		// Check registered HandlerExceptionResolvers...
+		// 有可能在处理异常的过程中，我们得到一个 ModelAndView 对象
 		ModelAndView exMv = null;
 		if (this.handlerExceptionResolvers != null) {
+			// 对于 Spring Boot 来说，第一个属性叫 DefaultErrorAttributes
+			// 通常，第二个是 HandlerExceptionResolverComposite
+
+			// 一般我们可能觉得这里是所有的 HandlerExceptionResolver，实际上不是，里面
 			for (HandlerExceptionResolver resolver : this.handlerExceptionResolvers) {
 				exMv = resolver.resolveException(request, response, handler, ex);
 				if (exMv != null) {
@@ -1387,11 +1396,14 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 			}
 		}
+
+
 		if (exMv != null) {
 			if (exMv.isEmpty()) {
 				request.setAttribute(EXCEPTION_ATTRIBUTE, ex);
 				return null;
 			}
+
 			// We might still need view name translation for a plain error model...
 			if (!exMv.hasView()) {
 				String defaultViewName = getDefaultViewName(request);

@@ -63,7 +63,10 @@ public abstract class ServletRequestPathUtils {
 	 * through {@link #getParsedRequestPath(ServletRequest)}.
 	 */
 	public static RequestPath parseAndCache(HttpServletRequest request) {
+		// 解析出 RequestPath (可能用 Servlet 4.0 支持或者 Default)
 		RequestPath requestPath = ServletRequestPath.parse(request);
+
+		// 设置新的属性
 		request.setAttribute(PATH_ATTRIBUTE, requestPath);
 		return requestPath;
 	}
@@ -186,13 +189,20 @@ public abstract class ServletRequestPathUtils {
 	 */
 	private static final class ServletRequestPath implements RequestPath {
 
+		/**
+		 * 其实类型就是 DefaultRequestPath
+		 */
 		private final RequestPath requestPath;
 
 		private final PathContainer contextPath;
 
 		private ServletRequestPath(String rawPath, @Nullable String contextPath, String servletPathPrefix) {
 			Assert.notNull(servletPathPrefix, "`servletPathPrefix` is required");
+
+			// 请求路径是 应用上下文 + Servlet 前缀
 			this.requestPath = RequestPath.parse(rawPath, contextPath + servletPathPrefix);
+
+			// 应用上下文
 			this.contextPath = PathContainer.parsePath(StringUtils.hasText(contextPath) ? contextPath : "");
 		}
 
@@ -280,13 +290,13 @@ public abstract class ServletRequestPathUtils {
 				mapping = request.getHttpServletMapping();
 			}
 
-			// 检查是否能够通过 Servlet 规范支持，获取请求匹配前缀
+			// 如果不是 PATH 匹配类型，就拿不到 prefix，那么返回 null
 			MappingMatch match = mapping.getMappingMatch();
 			if (!ObjectUtils.nullSafeEquals(match, MappingMatch.PATH)) {
 				return null;
 			}
 
-			// 获取前缀
+			// 如果是 PATH 匹配，类型，获取 servlet path
 			String servletPath = (String) request.getAttribute(WebUtils.INCLUDE_SERVLET_PATH_ATTRIBUTE);
 			servletPath = (servletPath != null ? servletPath : request.getServletPath());
 			return UriUtils.encodePath(servletPath, StandardCharsets.UTF_8);

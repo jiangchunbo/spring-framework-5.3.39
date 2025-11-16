@@ -48,14 +48,18 @@ public class InvocableHandlerMethod extends HandlerMethod {
 
 	private static final Object[] EMPTY_ARGS = new Object[0];
 
-
+	/**
+	 * 方法参数解析器
+	 */
 	private HandlerMethodArgumentResolverComposite resolvers = new HandlerMethodArgumentResolverComposite();
 
+	/**
+	 * 参数名发现器 (反射 or 本地变量表)
+	 */
 	private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
 	@Nullable
 	private WebDataBinderFactory dataBinderFactory;
-
 
 	/**
 	 * Create an instance from a {@code HandlerMethod}.
@@ -74,6 +78,7 @@ public class InvocableHandlerMethod extends HandlerMethod {
 	/**
 	 * Variant of {@link #InvocableHandlerMethod(Object, Method)} that
 	 * also accepts a {@link MessageSource}, for use in subclasses.
+	 *
 	 * @since 5.3.10
 	 */
 	protected InvocableHandlerMethod(Object bean, Method method, @Nullable MessageSource messageSource) {
@@ -82,8 +87,9 @@ public class InvocableHandlerMethod extends HandlerMethod {
 
 	/**
 	 * Construct a new handler method with the given bean instance, method name and parameters.
-	 * @param bean the object bean
-	 * @param methodName the method name
+	 *
+	 * @param bean           the object bean
+	 * @param methodName     the method name
 	 * @param parameterTypes the method parameter types
 	 * @throws NoSuchMethodException when the method cannot be found
 	 */
@@ -92,7 +98,6 @@ public class InvocableHandlerMethod extends HandlerMethod {
 
 		super(bean, methodName, parameterTypes);
 	}
-
 
 	/**
 	 * Set {@link HandlerMethodArgumentResolver HandlerMethodArgumentResolvers}
@@ -119,7 +124,6 @@ public class InvocableHandlerMethod extends HandlerMethod {
 		this.dataBinderFactory = dataBinderFactory;
 	}
 
-
 	/**
 	 * Invoke the method after resolving its argument values in the context of the given request.
 	 * <p>Argument values are commonly resolved through
@@ -130,23 +134,27 @@ public class InvocableHandlerMethod extends HandlerMethod {
 	 * Provided argument values are checked before argument resolvers.
 	 * <p>Delegates to {@link #getMethodArgumentValues} and calls {@link #doInvoke} with the
 	 * resolved arguments.
-	 * @param request the current request
+	 *
+	 * @param request      the current request
 	 * @param mavContainer the ModelAndViewContainer for this request
 	 * @param providedArgs "given" arguments matched by type, not resolved
 	 * @return the raw value returned by the invoked method
 	 * @throws Exception raised if no suitable argument resolver can be found,
-	 * or if the method raised an exception
+	 *                   or if the method raised an exception
 	 * @see #getMethodArgumentValues
 	 * @see #doInvoke
 	 */
 	@Nullable
 	public Object invokeForRequest(NativeWebRequest request, @Nullable ModelAndViewContainer mavContainer,
-			Object... providedArgs) throws Exception {
+								   Object... providedArgs) throws Exception {
 
+		// 1. 找到调用方法的参数
 		Object[] args = getMethodArgumentValues(request, mavContainer, providedArgs);
 		if (logger.isTraceEnabled()) {
 			logger.trace("Arguments: " + Arrays.toString(args));
 		}
+
+		// 2. (反射)调用方法
 		return doInvoke(args);
 	}
 
@@ -154,12 +162,16 @@ public class InvocableHandlerMethod extends HandlerMethod {
 	 * Get the method argument values for the current request, checking the provided
 	 * argument values and falling back to the configured argument resolvers.
 	 * <p>The resulting array will be passed into {@link #doInvoke}.
+	 * <p>
+	 * 获取真正的方法参数值，可能是为了本次请求处理，也可能是为了本次异常处理等
+	 *
+	 * @param providedArgs 方法实参[素材]
 	 * @since 5.1.2
 	 */
 	protected Object[] getMethodArgumentValues(NativeWebRequest request, @Nullable ModelAndViewContainer mavContainer,
-			Object... providedArgs) throws Exception {
+											   Object... providedArgs) throws Exception {
 
-		// 获得返回参数. MethodParameter 这个是 Spring 参数自己包装的类
+		// 获得方法参数列表 (这个才是真正的方法入参)
 		MethodParameter[] parameters = getMethodParameters();
 
 		if (ObjectUtils.isEmpty(parameters)) {
@@ -167,29 +179,30 @@ public class InvocableHandlerMethod extends HandlerMethod {
 			return EMPTY_ARGS;
 		}
 
-		// 先把数组准备好
+		// 先把[实参]数组准备好
 		Object[] args = new Object[parameters.length];
 
-		// 遍历每一个 MethodParameter
+		// 遍历每一个 MethodParameter [形参]
 		for (int i = 0; i < parameters.length; i++) {
 			MethodParameter parameter = parameters[i];
+
+			// 能够找到 parameterName
 			parameter.initParameterNameDiscovery(this.parameterNameDiscoverer);
 
-			// 从 providedArgs 找参数，一般 providedArgs 都没有吧
+			// 从[素材]中找到可以用的，类型匹配
 			args[i] = findProvidedArgument(parameter, providedArgs);
 			if (args[i] != null) {
 				continue;
 			}
 
-			// 解析器无法处理这个参数
+			// 从[素材库]找不到，则通过方法参数解析器找，比如 ServletRequest Session 这些对象的注入
 			if (!this.resolvers.supportsParameter(parameter)) {
 				throw new IllegalStateException(formatArgumentError(parameter, "No suitable resolver"));
 			}
 
 			try {
 				args[i] = this.resolvers.resolveArgument(parameter, mavContainer, request, this.dataBinderFactory);
-			}
-			catch (Exception ex) {
+			} catch (Exception ex) {
 				// Leave stack trace for later, exception may actually be resolved and handled...
 				if (logger.isDebugEnabled()) {
 					String exMsg = ex.getMessage();
@@ -213,26 +226,23 @@ public class InvocableHandlerMethod extends HandlerMethod {
 			if (KotlinDetector.isSuspendingFunction(method)) {
 				return CoroutinesUtils.invokeSuspendingFunction(method, getBean(), args);
 			}
+
+			// 反射调用
 			return method.invoke(getBean(), args);
-		}
-		catch (IllegalArgumentException ex) {
+		} catch (IllegalArgumentException ex) {
 			assertTargetBean(method, getBean(), args);
 			String text = (ex.getMessage() != null ? ex.getMessage() : "Illegal argument");
 			throw new IllegalStateException(formatInvokeError(text, args), ex);
-		}
-		catch (InvocationTargetException ex) {
+		} catch (InvocationTargetException ex) {
 			// Unwrap for HandlerExceptionResolvers ...
 			Throwable targetException = ex.getTargetException();
 			if (targetException instanceof RuntimeException) {
 				throw (RuntimeException) targetException;
-			}
-			else if (targetException instanceof Error) {
+			} else if (targetException instanceof Error) {
 				throw (Error) targetException;
-			}
-			else if (targetException instanceof Exception) {
+			} else if (targetException instanceof Exception) {
 				throw (Exception) targetException;
-			}
-			else {
+			} else {
 				throw new IllegalStateException(formatInvokeError("Invocation failure", args), targetException);
 			}
 		}

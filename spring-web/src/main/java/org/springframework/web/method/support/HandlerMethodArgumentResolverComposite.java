@@ -43,7 +43,6 @@ public class HandlerMethodArgumentResolverComposite implements HandlerMethodArgu
 	private final Map<MethodParameter, HandlerMethodArgumentResolver> argumentResolverCache =
 			new ConcurrentHashMap<>(256);
 
-
 	/**
 	 * Add the given {@link HandlerMethodArgumentResolver}.
 	 */
@@ -54,6 +53,7 @@ public class HandlerMethodArgumentResolverComposite implements HandlerMethodArgu
 
 	/**
 	 * Add the given {@link HandlerMethodArgumentResolver HandlerMethodArgumentResolvers}.
+	 *
 	 * @since 4.3
 	 */
 	public HandlerMethodArgumentResolverComposite addResolvers(
@@ -67,6 +67,8 @@ public class HandlerMethodArgumentResolverComposite implements HandlerMethodArgu
 
 	/**
 	 * Add the given {@link HandlerMethodArgumentResolver HandlerMethodArgumentResolvers}.
+	 * <p>
+	 * 允许添加多个方法参数解析器，并且支持链式调用
 	 */
 	public HandlerMethodArgumentResolverComposite addResolvers(
 			@Nullable List<? extends HandlerMethodArgumentResolver> resolvers) {
@@ -86,13 +88,13 @@ public class HandlerMethodArgumentResolverComposite implements HandlerMethodArgu
 
 	/**
 	 * Clear the list of configured resolvers and the resolver cache.
+	 *
 	 * @since 4.3
 	 */
 	public void clear() {
 		this.argumentResolvers.clear();
 		this.argumentResolverCache.clear();
 	}
-
 
 	/**
 	 * Whether the given {@linkplain MethodParameter method parameter} is
@@ -107,12 +109,13 @@ public class HandlerMethodArgumentResolverComposite implements HandlerMethodArgu
 	 * Iterate over registered
 	 * {@link HandlerMethodArgumentResolver HandlerMethodArgumentResolvers}
 	 * and invoke the one that supports it.
+	 *
 	 * @throws IllegalArgumentException if no suitable argument resolver is found
 	 */
 	@Override
 	@Nullable
 	public Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
-			NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception {
+								  NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception {
 
 		// 找到能处理这个方法参数的解析器，并且还做了缓存。
 		HandlerMethodArgumentResolver resolver = getArgumentResolver(parameter);

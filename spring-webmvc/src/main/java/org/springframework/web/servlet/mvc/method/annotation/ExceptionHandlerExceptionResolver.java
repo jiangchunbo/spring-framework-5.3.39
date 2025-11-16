@@ -97,6 +97,7 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 	@Nullable
 	private HandlerMethodReturnValueHandlerComposite returnValueHandlers;
 
+
 	private List<HttpMessageConverter<?>> messageConverters;
 
 	private ContentNegotiationManager contentNegotiationManager = new ContentNegotiationManager();
@@ -267,11 +268,16 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 		// Do this first, it may add ResponseBodyAdvice beans
 		initExceptionHandlerAdviceCache();
 
+		// 使用默认的参数解析器
 		if (this.argumentResolvers == null) {
+			// 虽然名字叫 getDefault 内部有 CustomArgumentResolvers
 			List<HandlerMethodArgumentResolver> resolvers = getDefaultArgumentResolvers();
 			this.argumentResolvers = new HandlerMethodArgumentResolverComposite().addResolvers(resolvers);
 		}
+
+		// 使用默认的返回值解析器
 		if (this.returnValueHandlers == null) {
+			// 其实也不算默认(default) 内部有 CustomReturnValueHandlers
 			List<HandlerMethodReturnValueHandler> handlers = getDefaultReturnValueHandlers();
 			this.returnValueHandlers = new HandlerMethodReturnValueHandlerComposite().addHandlers(handlers);
 		}
@@ -395,14 +401,18 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 	protected ModelAndView doResolveHandlerMethodException(HttpServletRequest request,
 			HttpServletResponse response, @Nullable HandlerMethod handlerMethod, Exception exception) {
 
+		// 根据异常对象，找到能够处理的 Method，并封装为 ServletInvocableHandlerMethod
 		ServletInvocableHandlerMethod exceptionHandlerMethod = getExceptionHandlerMethod(handlerMethod, exception);
 		if (exceptionHandlerMethod == null) {
 			return null;
 		}
 
+		// HandlerMethodArgumentResolverComposite
 		if (this.argumentResolvers != null) {
 			exceptionHandlerMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
 		}
+
+		// HandlerMethodReturnValueHandlerComposite
 		if (this.returnValueHandlers != null) {
 			exceptionHandlerMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
 		}
@@ -410,21 +420,31 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 		ServletWebRequest webRequest = new ServletWebRequest(request, response);
 		ModelAndViewContainer mavContainer = new ModelAndViewContainer();
 
+		// 收集所有的异常 (因为有 cause)
 		ArrayList<Throwable> exceptions = new ArrayList<>();
 		try {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Using @ExceptionHandler " + exceptionHandlerMethod);
 			}
+
 			// Expose causes as provided arguments as well
+			// 不断递归 getCause 获取所有异常对象
 			Throwable exToExpose = exception;
 			while (exToExpose != null) {
 				exceptions.add(exToExpose);
 				Throwable cause = exToExpose.getCause();
 				exToExpose = (cause != exToExpose ? cause : null);
 			}
+
+
+			// 构建参数列表，但是预留 1 个位置
 			Object[] arguments = new Object[exceptions.size() + 1];
 			exceptions.toArray(arguments);  // efficient arraycopy call in ArrayList
+
+			// 最后一个位置留给 handlerMethod
 			arguments[arguments.length - 1] = handlerMethod;
+
+			// 调用 @ExceptionHandler
 			exceptionHandlerMethod.invokeAndHandle(webRequest, mavContainer, arguments);
 		}
 		catch (Throwable invocationEx) {
@@ -475,18 +495,29 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 		if (handlerMethod != null) {
 			// Local exception handler methods on the controller class itself.
 			// To be invoked through the proxy, even in case of an interface-based proxy.
+
+			// 获得 beanClass
 			handlerType = handlerMethod.getBeanType();
+
+			// 从缓存中找对于这种 bean 的 resolver
 			ExceptionHandlerMethodResolver resolver = this.exceptionHandlerCache.get(handlerType);
 			if (resolver == null) {
+				// 找不到就 put, 其实也可以用 computeIfAbsent
 				resolver = new ExceptionHandlerMethodResolver(handlerType);
 				this.exceptionHandlerCache.put(handlerType, resolver);
 			}
+
+			// 解析器根据 Exception 解析出一个 Method
 			Method method = resolver.resolveMethod(exception);
+
+			// 将 method 封装成 HandlerMethod
 			if (method != null) {
 				return new ServletInvocableHandlerMethod(handlerMethod.getBean(), method, this.applicationContext);
 			}
 			// For advice applicability check below (involving base packages, assignable types
 			// and annotation presence), use target class instead of interface-based proxy.
+			// 类型是 Proxy，为什么调用 AopUtils.getTargetClass 就能拿到目标类型，这是 Spring 特有的
+			// Spring 在使用 JDK 动态代理创建代理对象时，会实现 TargetClassAware 接口，能够获取目标类型
 			if (Proxy.isProxyClass(handlerType)) {
 				handlerType = AopUtils.getTargetClass(handlerMethod.getBean());
 			}

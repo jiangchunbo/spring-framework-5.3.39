@@ -34,9 +34,9 @@ public class ExceptionDepthComparator implements Comparator<Class<? extends Thro
 
 	private final Class<? extends Throwable> targetException;
 
-
 	/**
 	 * Create a new ExceptionDepthComparator for the given exception.
+	 *
 	 * @param exception the target exception to compare to when sorting by depth
 	 */
 	public ExceptionDepthComparator(Throwable exception) {
@@ -46,13 +46,14 @@ public class ExceptionDepthComparator implements Comparator<Class<? extends Thro
 
 	/**
 	 * Create a new ExceptionDepthComparator for the given exception type.
+	 *
 	 * @param exceptionType the target exception type to compare to when sorting by depth
+	 *                      <p>用于比较的目标异常类型
 	 */
 	public ExceptionDepthComparator(Class<? extends Throwable> exceptionType) {
 		Assert.notNull(exceptionType, "Target exception type must not be null");
 		this.targetException = exceptionType;
 	}
-
 
 	@Override
 	public int compare(Class<? extends Throwable> o1, Class<? extends Throwable> o2) {
@@ -61,22 +62,32 @@ public class ExceptionDepthComparator implements Comparator<Class<? extends Thro
 		return (depth1 - depth2);
 	}
 
+	/**
+	 * 获取异常的深度(相似)
+	 *
+	 * @param depth 递归初始值
+	 */
 	private int getDepth(Class<?> declaredException, Class<?> exceptionToMatch, int depth) {
+		// 如果类型完全一直，那么返回当前的 dept
 		if (exceptionToMatch.equals(declaredException)) {
 			// Found it!
 			return depth;
 		}
+
 		// If we've gone as far as we can go and haven't found it...
+		// 走到尽头了，还是没有找到 -> 深度最大
 		if (exceptionToMatch == Throwable.class) {
 			return Integer.MAX_VALUE;
 		}
+
+		// 递归 (获取目标异常类型的父类、深度+1)
 		return getDepth(declaredException, exceptionToMatch.getSuperclass(), depth + 1);
 	}
 
-
 	/**
 	 * Obtain the closest match from the given exception types for the given target exception.
-	 * @param exceptionTypes the collection of exception types
+	 *
+	 * @param exceptionTypes  the collection of exception types
 	 * @param targetException the target exception to find a match for
 	 * @return the closest matching exception type from the given collection
 	 */

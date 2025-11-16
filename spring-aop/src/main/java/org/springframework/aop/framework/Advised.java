@@ -40,7 +40,7 @@ public interface Advised extends TargetClassAware {
 	/**
 	 * Return whether the Advised configuration is frozen,
 	 * in which case no advice changes can be made.
-	 *
+	 * <p>
 	 * 是否这个配置是冻结的，在这种情况下，不可以修改 advice
 	 */
 	boolean isFrozen();

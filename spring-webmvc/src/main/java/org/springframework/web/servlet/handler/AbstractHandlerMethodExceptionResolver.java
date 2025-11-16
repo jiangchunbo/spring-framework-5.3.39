@@ -27,6 +27,10 @@ import org.springframework.web.servlet.ModelAndView;
  * Abstract base class for
  * {@link org.springframework.web.servlet.HandlerExceptionResolver HandlerExceptionResolver}
  * implementations that support handling exceptions from handlers of type {@link HandlerMethod}.
+ * <p>
+ * 抽象基类，用于能够处理来自 HandlerMethod handler 异常的 HandlerExceptionResolver 实现类
+ * <p>
+ * 典型的实现是 ExceptionHandlerExceptionResolver
  *
  * @author Rossen Stoyanchev
  * @since 3.1
@@ -37,21 +41,22 @@ public abstract class AbstractHandlerMethodExceptionResolver extends AbstractHan
 	 * Checks if the handler is a {@link HandlerMethod} and then delegates to the
 	 * base class implementation of {@code #shouldApplyTo(HttpServletRequest, Object)}
 	 * passing the bean of the {@code HandlerMethod}. Otherwise returns {@code false}.
+	 * <p>
+	 * 如果 handler 是 HandlerMethod，那么委托给 基类 实现 shouldApplyTo (同时传递 handler 的 bean)
+	 * <p>
+	 * 否则，返回 false
 	 */
 	@Override
 	protected boolean shouldApplyTo(HttpServletRequest request, @Nullable Object handler) {
 		if (handler == null) {
 			return super.shouldApplyTo(request, null);
-		}
-		else if (handler instanceof HandlerMethod) {
+		} else if (handler instanceof HandlerMethod) {
 			HandlerMethod handlerMethod = (HandlerMethod) handler;
 			handler = handlerMethod.getBean();
 			return super.shouldApplyTo(request, handler);
-		}
-		else if (hasGlobalExceptionHandlers() && hasHandlerMappings()) {
+		} else if (hasGlobalExceptionHandlers() && hasHandlerMappings()) {
 			return super.shouldApplyTo(request, handler);
-		}
-		else {
+		} else {
 			return false;
 		}
 	}
@@ -60,6 +65,7 @@ public abstract class AbstractHandlerMethodExceptionResolver extends AbstractHan
 	 * Whether this resolver has global exception handlers, e.g. not declared in
 	 * the same class as the {@code HandlerMethod} that raised the exception and
 	 * therefore can apply to any handler.
+	 *
 	 * @since 5.3
 	 */
 	protected boolean hasGlobalExceptionHandlers() {
@@ -71,7 +77,10 @@ public abstract class AbstractHandlerMethodExceptionResolver extends AbstractHan
 	protected final ModelAndView doResolveException(
 			HttpServletRequest request, HttpServletResponse response, @Nullable Object handler, Exception ex) {
 
+		// 用于处理 HandlerMethod 的异常 (可能 handler 是 null)
 		HandlerMethod handlerMethod = (handler instanceof HandlerMethod ? (HandlerMethod) handler : null);
+
+		// 处理异常
 		return doResolveHandlerMethodException(request, response, handlerMethod, ex);
 	}
 
@@ -82,11 +91,12 @@ public abstract class AbstractHandlerMethodExceptionResolver extends AbstractHan
 	 * Note that this template method will be invoked <i>after</i> checking whether this
 	 * resolved applies ("mappedHandlers" etc), so an implementation may simply proceed
 	 * with its actual exception handling.
-	 * @param request current HTTP request
-	 * @param response current HTTP response
+	 *
+	 * @param request       current HTTP request
+	 * @param response      current HTTP response
 	 * @param handlerMethod the executed handler method, or {@code null} if none chosen at the time
-	 * of the exception (for example, if multipart resolution failed)
-	 * @param ex the exception that got thrown during handler execution
+	 *                      of the exception (for example, if multipart resolution failed)
+	 * @param ex            the exception that got thrown during handler execution
 	 * @return a corresponding ModelAndView to forward to, or {@code null} for default processing
 	 */
 	@Nullable

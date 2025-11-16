@@ -111,6 +111,8 @@ public abstract class AopUtils {
 	public static Class<?> getTargetClass(Object candidate) {
 		Assert.notNull(candidate, "Candidate object must not be null");
 		Class<?> result = null;
+
+		// Spring 在创建 JDK 动态代理时，会实现 TargetClassAware 接口，从而获得目标类型
 		if (candidate instanceof TargetClassAware) {
 			result = ((TargetClassAware) candidate).getTargetClass();
 		}

@@ -69,7 +69,6 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 	@Nullable
 	private HandlerMethodReturnValueHandlerComposite returnValueHandlers;
 
-
 	/**
 	 * Creates an instance from the given handler and method.
 	 */
@@ -81,6 +80,9 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 	 * Variant of {@link #ServletInvocableHandlerMethod(Object, Method)} that
 	 * also accepts a {@link MessageSource}, e.g. to resolve
 	 * {@code @ResponseStatus} messages with.
+	 * <p>
+	 * 该方法一般用于创建用于处理异常异常的 ExceptionHandler HandlerMethod
+	 *
 	 * @since 5.3.10
 	 */
 	public ServletInvocableHandlerMethod(Object handler, Method method, @Nullable MessageSource messageSource) {
@@ -94,7 +96,6 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		super(handlerMethod);
 	}
 
-
 	/**
 	 * Register {@link HandlerMethodReturnValueHandler} instances to use to
 	 * handle return values.
@@ -103,16 +104,16 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		this.returnValueHandlers = returnValueHandlers;
 	}
 
-
 	/**
 	 * Invoke the method and handle the return value through one of the
 	 * configured {@link HandlerMethodReturnValueHandler HandlerMethodReturnValueHandlers}.
-	 * @param webRequest the current request
+	 *
+	 * @param webRequest   the current request
 	 * @param mavContainer the ModelAndViewContainer for this request
 	 * @param providedArgs "given" arguments matched by type (not resolved)
 	 */
 	public void invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer,
-			Object... providedArgs) throws Exception {
+								Object... providedArgs) throws Exception {
 
 		// 返回值就是 handler 我们自己写的方法的返回值
 		Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
@@ -126,8 +127,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 				mavContainer.setRequestHandled(true);
 				return;
 			}
-		}
-		else if (StringUtils.hasText(getResponseStatusReason())) {
+		} else if (StringUtils.hasText(getResponseStatusReason())) {
 			mavContainer.setRequestHandled(true);
 			return;
 		}
@@ -137,8 +137,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		try {
 			this.returnValueHandlers.handleReturnValue(
 					returnValue, getReturnValueType(returnValue), mavContainer, webRequest);
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			if (logger.isTraceEnabled()) {
 				logger.trace(formatErrorForReturnValue(returnValue), ex);
 			}
@@ -161,8 +160,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 			String reason = getResponseStatusReason();
 			if (StringUtils.hasText(reason)) {
 				response.sendError(status.value(), reason);
-			}
-			else {
+			} else {
 				response.setStatus(status.value());
 			}
 		}
@@ -173,6 +171,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 
 	/**
 	 * Does the given request qualify as "not modified"?
+	 *
 	 * @see ServletWebRequest#checkNotModified(long)
 	 * @see ServletWebRequest#checkNotModified(String)
 	 */
@@ -207,7 +206,6 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		return new ConcurrentResultHandlerMethod(result, new ConcurrentResultMethodParameter(result));
 	}
 
-
 	/**
 	 * A nested subclass of {@code ServletInvocableHandlerMethod} that uses a
 	 * simple {@link Callable} instead of the original controller as the handler in
@@ -222,8 +220,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 			super((Callable<Object>) () -> {
 				if (result instanceof Exception) {
 					throw (Exception) result;
-				}
-				else if (result instanceof Throwable) {
+				} else if (result instanceof Throwable) {
 					throw new NestedServletException("Async processing failed", (Throwable) result);
 				}
 				return result;
@@ -267,8 +264,8 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		public <A extends Annotation> boolean hasMethodAnnotation(Class<A> annotationType) {
 			return ServletInvocableHandlerMethod.this.hasMethodAnnotation(annotationType);
 		}
-	}
 
+	}
 
 	/**
 	 * MethodParameter subclass based on the actual return value type or if
@@ -288,8 +285,8 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 			this.returnType = (returnValue instanceof ReactiveTypeHandler.CollectedValuesList ?
 					((ReactiveTypeHandler.CollectedValuesList) returnValue).getReturnType() :
 					KotlinDetector.isSuspendingFunction(super.getMethod()) ?
-					ResolvableType.forMethodParameter(getReturnType()) :
-					ResolvableType.forType(super.getGenericParameterType()).getGeneric());
+							ResolvableType.forMethodParameter(getReturnType()) :
+							ResolvableType.forType(super.getGenericParameterType()).getGeneric());
 		}
 
 		public ConcurrentResultMethodParameter(ConcurrentResultMethodParameter original) {
@@ -327,6 +324,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		public ConcurrentResultMethodParameter clone() {
 			return new ConcurrentResultMethodParameter(this);
 		}
+
 	}
 
 }

@@ -67,13 +67,11 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 */
 	private static final long serialVersionUID = 2651364800145442165L;
 
-
 	/**
 	 * Canonical TargetSource when there's no target, and behavior is
 	 * supplied by the advisors.
 	 */
 	public static final TargetSource EMPTY_TARGET_SOURCE = EmptyTargetSource.INSTANCE;
-
 
 	/**
 	 * Package-protected to allow direct access for efficiency.
@@ -107,7 +105,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 */
 	private List<Advisor> advisors = new ArrayList<>();
 
-
 	/**
 	 * No-arg constructor for use as a JavaBean.
 	 */
@@ -124,7 +121,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		this();
 		setInterfaces(interfaces);
 	}
-
 
 	/**
 	 * Set the given object as target.
@@ -197,7 +193,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		return this.advisorChainFactory;
 	}
 
-
 	/**
 	 * Set the interfaces to be proxied.
 	 */
@@ -242,6 +237,15 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		return ClassUtils.toClassArray(this.interfaces);
 	}
 
+	/**
+	 * 判断此接口是否被代理了
+	 * <p>
+	 * 实际上只要检查接口列表是否存在该接口，如果存在，那么后续应该就不用重复添加
+	 *
+	 * @param intf the interface to check
+	 *             <p>需要检查的接口
+	 * @return 是否代理了该接口
+	 */
 	@Override
 	public boolean isInterfaceProxied(Class<?> intf) {
 		for (Class<?> proxyIntf : this.interfaces) {
@@ -251,7 +255,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		}
 		return false;
 	}
-
 
 	@Override
 	public final Advisor[] getAdvisors() {
@@ -362,7 +365,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 			adviceChanged();
 		}
 	}
-
 
 	private void validateIntroductionAdvisor(IntroductionAdvisor advisor) {
 		advisor.validateInterfaces();
@@ -487,7 +489,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		return count;
 	}
 
-
 	/**
 	 * Determine a list of {@link org.aopalliance.intercept.MethodInterceptor} objects
 	 * for the given method, based on this configuration.
@@ -564,7 +565,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		return copy;
 	}
 
-
 	//---------------------------------------------------------------------
 	// Serialization support
 	//---------------------------------------------------------------------
@@ -596,7 +596,6 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		sb.append(super.toString());
 		return sb.toString();
 	}
-
 
 	/**
 	 * Simple wrapper class around a Method. Used as the key when
@@ -637,6 +636,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 			}
 			return result;
 		}
+
 	}
 
 }

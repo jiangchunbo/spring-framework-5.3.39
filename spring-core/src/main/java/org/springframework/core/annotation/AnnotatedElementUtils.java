@@ -664,11 +664,17 @@ public abstract class AnnotatedElementUtils {
 	@Nullable
 	public static <A extends Annotation> A findMergedAnnotation(AnnotatedElement element, Class<A> annotationType) {
 		// Shortcut: directly present on the element, with no merging needed?
+		// 捷径：注解直接存在于该元素上，无需合并？
+
+		// (1) 元素仅仅只有普通注解 (2) 需要合并的注解是普通注解
+		// 以上情况都无需合并
 		if (AnnotationFilter.PLAIN.matches(annotationType) ||
 				AnnotationsScanner.hasPlainJavaAnnotationsOnly(element)) {
 			return element.getDeclaredAnnotation(annotationType);
 		}
+
 		// Exhaustive retrieval of merged annotations...
+		// 获取 firstDirectlyDeclared 直接声明的
 		return findAnnotations(element)
 				.get(annotationType, null, MergedAnnotationSelectors.firstDirectlyDeclared())
 				.synthesize(MergedAnnotation::isPresent).orElse(null);

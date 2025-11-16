@@ -56,6 +56,9 @@ import org.springframework.web.servlet.handler.AbstractHandlerExceptionResolver;
  */
 public class ResponseStatusExceptionResolver extends AbstractHandlerExceptionResolver implements MessageSourceAware {
 
+	// 基于 HTTP 状态码的异常处理器
+	// 可以处理 @ResponseStatus
+
 	@Nullable
 	private MessageSource messageSource;
 
@@ -76,13 +79,15 @@ public class ResponseStatusExceptionResolver extends AbstractHandlerExceptionRes
 				return resolveResponseStatusException((ResponseStatusException) ex, request, response, handler);
 			}
 
+			// 检查异常类是否存在 @ResponseStatus 注解
 			ResponseStatus status = AnnotatedElementUtils.findMergedAnnotation(ex.getClass(), ResponseStatus.class);
 			if (status != null) {
 				return resolveResponseStatus(status, request, response, handler, ex);
 			}
 
+			// 获取 cause 递归
 			if (ex.getCause() instanceof Exception) {
-				return doResolveException(request, response, handler, (Exception) ex.getCause());
+				return doResolveException(request, response, handler, (Exception) ex.getCause()); // 递归
 			}
 		}
 		catch (Exception resolveEx) {
@@ -108,8 +113,13 @@ public class ResponseStatusExceptionResolver extends AbstractHandlerExceptionRes
 	protected ModelAndView resolveResponseStatus(ResponseStatus responseStatus, HttpServletRequest request,
 			HttpServletResponse response, @Nullable Object handler, Exception ex) throws Exception {
 
+		// 状态码
 		int statusCode = responseStatus.code().value();
+
+		// 错误原因
 		String reason = responseStatus.reason();
+
+		// 生成 ModelAndView
 		return applyStatusAndReason(statusCode, reason, response);
 	}
 
@@ -130,9 +140,11 @@ public class ResponseStatusExceptionResolver extends AbstractHandlerExceptionRes
 	protected ModelAndView resolveResponseStatusException(ResponseStatusException ex,
 			HttpServletRequest request, HttpServletResponse response, @Nullable Object handler) throws Exception {
 
+		// 获取所有响应头，添加到 response 中
 		ex.getResponseHeaders().forEach((name, values) ->
 				values.forEach(value -> response.addHeader(name, value)));
 
+		// 生成 ModelAndView
 		return applyStatusAndReason(ex.getRawStatusCode(), ex.getReason(), response);
 	}
 
@@ -150,9 +162,12 @@ public class ResponseStatusExceptionResolver extends AbstractHandlerExceptionRes
 	protected ModelAndView applyStatusAndReason(int statusCode, @Nullable String reason, HttpServletResponse response)
 			throws IOException {
 
+		// 没有 reason 消息，直接 sendError 状态码
 		if (!StringUtils.hasLength(reason)) {
 			response.sendError(statusCode);
 		}
+
+		// 国际化解析
 		else {
 			String resolvedReason = (this.messageSource != null ?
 					this.messageSource.getMessage(reason, null, reason, LocaleContextHolder.getLocale()) :

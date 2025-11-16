@@ -65,11 +65,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 public class HandlerMethod {
 
-	/** Logger that is available to subclasses. */
+	/**
+	 * Logger that is available to subclasses.
+	 */
 	protected static final Log logger = LogFactory.getLog(HandlerMethod.class);
 
 	/**
-	 * Handler 对象，也就是持有 Method 方法的对象
+	 * Handler 对象，也就是持有 Method 方法的对象，因为最终反射调用方法需要传入这个对象
+	 * <p>
+	 * HandlerMethod 顾名思义，就是由 handler + method 组成，handler 就是任何 bean，任何 bean 都有机会成为 handler。
 	 */
 	private final Object bean;
 
@@ -110,7 +114,6 @@ public class HandlerMethod {
 
 	private final String description;
 
-
 	/**
 	 * Create an instance from a bean instance and a method.
 	 */
@@ -121,6 +124,7 @@ public class HandlerMethod {
 	/**
 	 * Variant of {@link #HandlerMethod(Object, Method)} that
 	 * also accepts a {@link MessageSource} for use from subclasses.
+	 *
 	 * @since 5.3.10
 	 */
 	protected HandlerMethod(Object bean, Method method, @Nullable MessageSource messageSource) {
@@ -140,6 +144,7 @@ public class HandlerMethod {
 
 	/**
 	 * Create an instance from a bean instance, method name, and parameter types.
+	 *
 	 * @throws NoSuchMethodException when the method cannot be found
 	 */
 	public HandlerMethod(Object bean, String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
@@ -230,7 +235,6 @@ public class HandlerMethod {
 		this.description = handlerMethod.description;
 	}
 
-
 	private MethodParameter[] initMethodParameters() {
 		int count = this.bridgedMethod.getParameterCount();
 		MethodParameter[] result = new MethodParameter[count];
@@ -269,7 +273,6 @@ public class HandlerMethod {
 		}
 		return beanType.getName() + "#" + method.getName() + joiner;
 	}
-
 
 	/**
 	 * Return the bean for this handler method.
@@ -311,8 +314,9 @@ public class HandlerMethod {
 
 	/**
 	 * Return the specified response status, if any.
-	 * @since 4.3.8
+	 *
 	 * @see ResponseStatus#code()
+	 * @since 4.3.8
 	 */
 	@Nullable
 	protected HttpStatus getResponseStatus() {
@@ -321,8 +325,9 @@ public class HandlerMethod {
 
 	/**
 	 * Return the associated response status reason, if any.
-	 * @since 4.3.8
+	 *
 	 * @see ResponseStatus#reason()
+	 * @since 4.3.8
 	 */
 	@Nullable
 	protected String getResponseStatusReason() {
@@ -355,6 +360,7 @@ public class HandlerMethod {
 	 * if no annotation can be found on the given method itself.
 	 * <p>Also supports <em>merged</em> composed annotations with attribute
 	 * overrides as of Spring Framework 4.2.2.
+	 *
 	 * @param annotationType the type of annotation to introspect the method for
 	 * @return the annotation, or {@code null} if none found
 	 * @see AnnotatedElementUtils#findMergedAnnotation
@@ -366,9 +372,10 @@ public class HandlerMethod {
 
 	/**
 	 * Return whether the parameter is declared with the given annotation type.
+	 *
 	 * @param annotationType the annotation type to look for
-	 * @since 4.3
 	 * @see AnnotatedElementUtils#hasAnnotation
+	 * @since 4.3
 	 */
 	public <A extends Annotation> boolean hasMethodAnnotation(Class<A> annotationType) {
 		return AnnotatedElementUtils.hasAnnotation(this.method, annotationType);
@@ -404,13 +411,13 @@ public class HandlerMethod {
 
 	/**
 	 * Return a short representation of this handler method for log message purposes.
+	 *
 	 * @since 4.3
 	 */
 	public String getShortLogMessage() {
 		return getBeanType().getName() + "#" + this.method.getName() +
 				"[" + this.method.getParameterCount() + " args]";
 	}
-
 
 	private List<Annotation[][]> getInterfaceParameterAnnotations() {
 		List<Annotation[][]> parameterAnnotations = this.interfaceParameterAnnotations;
@@ -446,7 +453,6 @@ public class HandlerMethod {
 		return true;
 	}
 
-
 	@Override
 	public boolean equals(@Nullable Object other) {
 		if (this == other) {
@@ -468,7 +474,6 @@ public class HandlerMethod {
 	public String toString() {
 		return this.description;
 	}
-
 
 	// Support methods for use in "InvocableHandlerMethod" sub-class variants..
 
@@ -519,7 +524,6 @@ public class HandlerMethod {
 				"Method [" + getBridgedMethod().toGenericString() + "] " +
 				"with argument values:\n" + formattedArgs;
 	}
-
 
 	/**
 	 * A MethodParameter with HandlerMethod-specific behavior.
@@ -597,8 +601,8 @@ public class HandlerMethod {
 		public HandlerMethodParameter clone() {
 			return new HandlerMethodParameter(this);
 		}
-	}
 
+	}
 
 	/**
 	 * A MethodParameter for a HandlerMethod return type based on an actual return value.
@@ -627,6 +631,7 @@ public class HandlerMethod {
 		public ReturnValueMethodParameter clone() {
 			return new ReturnValueMethodParameter(this);
 		}
+
 	}
 
 }

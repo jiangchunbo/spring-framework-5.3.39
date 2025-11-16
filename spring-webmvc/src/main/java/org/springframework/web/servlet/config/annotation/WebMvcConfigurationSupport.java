@@ -1107,12 +1107,23 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	@Bean
 	public HandlerExceptionResolver handlerExceptionResolver(
 			@Qualifier("mvcContentNegotiationManager") ContentNegotiationManager contentNegotiationManager) {
+		// 其他 HandlerExceptionResolver 不作为 bean
+
+		// HandlerExceptionResolverComposite 内部维护的 List
 		List<HandlerExceptionResolver> exceptionResolvers = new ArrayList<>();
+
+		// 1.1 configure 配置
 		configureHandlerExceptionResolvers(exceptionResolvers);
+
+		// 1.2 没有就默认
 		if (exceptionResolvers.isEmpty()) {
 			addDefaultHandlerExceptionResolvers(exceptionResolvers, contentNegotiationManager);
 		}
+
+		// 2. 总是会走
 		extendHandlerExceptionResolvers(exceptionResolvers);
+
+		// 真正返回的是一个 HandlerExceptionResolverComposite
 		HandlerExceptionResolverComposite composite = new HandlerExceptionResolverComposite();
 		composite.setOrder(0);
 		composite.setExceptionResolvers(exceptionResolvers);
@@ -1154,14 +1165,20 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	 * {@link org.springframework.web.bind.annotation.ResponseStatus}.
 	 * <li>{@link DefaultHandlerExceptionResolver} for resolving known Spring exception types
 	 * </ul>
+	 *
+	 * @param exceptionResolvers 用于出参
 	 */
 	protected final void addDefaultHandlerExceptionResolvers(List<HandlerExceptionResolver> exceptionResolvers,
 															 ContentNegotiationManager mvcContentNegotiationManager) {
 
+		// 1. ExceptionHandlerExceptionResolver
 		ExceptionHandlerExceptionResolver exceptionHandlerResolver = createExceptionHandlerExceptionResolver();
 		exceptionHandlerResolver.setContentNegotiationManager(mvcContentNegotiationManager);
 		exceptionHandlerResolver.setMessageConverters(getMessageConverters());
+
+		// 提供自己的[方法参数解析器]
 		exceptionHandlerResolver.setCustomArgumentResolvers(getArgumentResolvers());
+		// 提供自己的[返回值处理器]
 		exceptionHandlerResolver.setCustomReturnValueHandlers(getReturnValueHandlers());
 		if (jackson2Present) {
 			exceptionHandlerResolver.setResponseBodyAdvice(
@@ -1170,13 +1187,17 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 		if (this.applicationContext != null) {
 			exceptionHandlerResolver.setApplicationContext(this.applicationContext);
 		}
+
+		// 主动调用 afterPropertiesSet 能够设置[方法参数解析器][返回值解析器]
 		exceptionHandlerResolver.afterPropertiesSet();
 		exceptionResolvers.add(exceptionHandlerResolver);
 
+		// 2. ResponseStatusExceptionResolver
 		ResponseStatusExceptionResolver responseStatusResolver = new ResponseStatusExceptionResolver();
 		responseStatusResolver.setMessageSource(this.applicationContext);
 		exceptionResolvers.add(responseStatusResolver);
 
+		// 3. DefaultHandlerExceptionResolver
 		exceptionResolvers.add(new DefaultHandlerExceptionResolver());
 	}
 

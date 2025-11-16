@@ -31,7 +31,7 @@ class DefaultRequestPath implements RequestPath {
 
 	/**
 	 * 请求的全路径，包括 Context Path
-	 *
+	 * <p>
 	 * 完全路径，包括 Servlet 前缀 (contextPath) 以及 pathWithinApplication
 	 */
 	private final PathContainer fullPath;
@@ -53,8 +53,9 @@ class DefaultRequestPath implements RequestPath {
 	DefaultRequestPath(String rawPath, @Nullable String contextPath) {
 		// rawPath 就是 request.getRequestUri() -> 解析得到 fullPath
 		this.fullPath = PathContainer.parsePath(rawPath);
-		//
+		// 从 fullPath 寻找 contextPath 前缀，并返回 contextPath
 		this.contextPath = initContextPath(this.fullPath, contextPath);
+		// 从 contextPath 往后全都是 pathWithinApplication
 		this.pathWithinApplication = extractPathWithinApplication(this.fullPath, this.contextPath);
 	}
 
@@ -64,8 +65,15 @@ class DefaultRequestPath implements RequestPath {
 		this.pathWithinApplication = extractPathWithinApplication(this.fullPath, this.contextPath);
 	}
 
+	/**
+	 * 初始化
+	 *
+	 * @param path        请求完整路径
+	 * @param contextPath 应用上下文路径
+	 * @return 路径
+	 */
 	private static PathContainer initContextPath(PathContainer path, @Nullable String contextPath) {
-		// 应用上下文路径是 / 根路径，那么
+		// 应用上下文路径是根路径，那么返回 ""
 		if (!StringUtils.hasText(contextPath) || StringUtils.matchesCharacter(contextPath, '/')) {
 			return PathContainer.parsePath("");
 		}
@@ -75,6 +83,7 @@ class DefaultRequestPath implements RequestPath {
 		int length = contextPath.length();
 		int counter = 0;
 
+		// 遍历每个元素 (包括分隔符和路径片段)，一直 substring 直到匹配完 contextPath
 		for (int i = 0; i < path.elements().size(); i++) {
 			PathContainer.Element element = path.elements().get(i);
 			counter += element.value().length();
@@ -84,20 +93,37 @@ class DefaultRequestPath implements RequestPath {
 		}
 
 		// Should not happen..
+		// 不应该发生
 		throw new IllegalStateException("Failed to initialize contextPath '" + contextPath + "'" +
 				" for requestPath '" + path.value() + "'");
 	}
 
+	/**
+	 * 该方法是私有方法，传入的 contextPath 永远不可能是 "" 或者是 "/"
+	 *
+	 * @param fullPath    完整请求路径
+	 * @param contextPath 应用上下文
+	 */
 	private static void validateContextPath(String fullPath, String contextPath) {
 		int length = contextPath.length();
+
+		// context path 开头如果不是 '/' 或者结尾是 '/' 都不是合法的
+		// [必须以 '/' 开头，但是不能以 '/' 结束，例如 /api]
 		if (contextPath.charAt(0) != '/' || contextPath.charAt(length - 1) == '/') {
 			throw new IllegalArgumentException("Invalid contextPath: '" + contextPath + "': " +
 					"must start with '/' and not end with '/'");
 		}
+
+		// 如果请求路径不属于这个应用上下文就抛异常
 		if (!fullPath.startsWith(contextPath)) {
 			throw new IllegalArgumentException("Invalid contextPath '" + contextPath + "': " +
 					"must match the start of requestPath: '" + fullPath + "'");
 		}
+
+		// 即使请求路径开头是应用上下文，也不一定就是这个应用上下文
+		// 例如 /api 和 /api2
+
+		// 如果请求路径比应用上下文长，那么接下来必须是 / 另起一个路径，否则就不合法
 		if (fullPath.length() > length && fullPath.charAt(length) != '/') {
 			throw new IllegalArgumentException("Invalid contextPath '" + contextPath + "': " +
 					"must match to full path segments for requestPath: '" + fullPath + "'");

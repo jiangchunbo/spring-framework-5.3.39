@@ -164,14 +164,19 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return get(annotationType, predicate, null);
 	}
 
+	/**
+	 * 获取指定注解对象(最好的)
+	 */
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(Class<A> annotationType,
 														  @Nullable Predicate<? super MergedAnnotation<A>> predicate,
 														  @Nullable MergedAnnotationSelector<A> selector) {
-
+		// 如果被 Filter 拦截了，那么返回 missing
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
 		}
+
+		//
 		MergedAnnotation<A> result = scan(annotationType,
 				new MergedAnnotationFinder<>(annotationType, predicate, selector));
 		return (result != null ? result : MergedAnnotation.missing());
@@ -442,7 +447,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 													 @Nullable Object source, Annotation[] annotations) {
 			// 遍历第一层注解
 			for (Annotation annotation : annotations) {
-				// annotationFilter.matches 就会被丢弃，这里逻辑有些反常，所以逻辑取反
+				// annotationFilter.matches 就会被丢弃(这里逻辑不好理解)，所以逻辑取反
 				if (annotation != null && !annotationFilter.matches(annotation)) {
 
 					MergedAnnotation<A> result = process(type, aggregateIndex, source, annotation);
