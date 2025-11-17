@@ -48,24 +48,31 @@ import org.springframework.util.ClassUtils;
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
- * @since 2.0
  * @see #setProxyTargetClass
+ * @since 2.0
  */
 @SuppressWarnings("serial")
 public class ScopedProxyFactoryBean extends ProxyConfig
 		implements FactoryBean<Object>, BeanFactoryAware, AopInfrastructureBean {
 
-	/** The TargetSource that manages scoping. */
+	/**
+	 * The TargetSource that manages scoping.
+	 * <p>
+	 * 代理对象总是从 TargetSource 获取目标对象，SimpleBeanTargetSource 根据 beanName 从 beanFactory 获取 bean
+	 */
 	private final SimpleBeanTargetSource scopedTargetSource = new SimpleBeanTargetSource();
 
-	/** The name of the target bean. */
+	/**
+	 * The name of the target bean.
+	 */
 	@Nullable
 	private String targetBeanName;
 
-	/** The cached singleton proxy. */
+	/**
+	 * The cached singleton proxy.
+	 */
 	@Nullable
 	private Object proxy;
-
 
 	/**
 	 * Create a new ScopedProxyFactoryBean instance.
@@ -73,7 +80,6 @@ public class ScopedProxyFactoryBean extends ProxyConfig
 	public ScopedProxyFactoryBean() {
 		setProxyTargetClass(true);
 	}
-
 
 	/**
 	 * Set the name of the bean that is to be scoped.
@@ -102,21 +108,27 @@ public class ScopedProxyFactoryBean extends ProxyConfig
 			throw new IllegalStateException("Cannot create scoped proxy for bean '" + this.targetBeanName +
 					"': Target type could not be determined at the time of proxy creation.");
 		}
+
+		// 1. 代理目标类，通常是用户指定的行为
+		// 2. 即使代理目标类，在某些特定场景下，也不会代理目标类 (目标类是个接口/目标类是private)
 		if (!isProxyTargetClass() || beanType.isInterface() || Modifier.isPrivate(beanType.getModifiers())) {
 			pf.setInterfaces(ClassUtils.getAllInterfacesForClass(beanType, cbf.getBeanClassLoader()));
 		}
 
 		// Add an introduction that implements only the methods on ScopedObject.
+		// 创建 introduction 的代理对象
 		ScopedObject scopedObject = new DefaultScopedObject(cbf, this.scopedTargetSource.getTargetBeanName());
+
+		// 使用 introduction interceptor
 		pf.addAdvice(new DelegatingIntroductionInterceptor(scopedObject));
 
 		// Add the AopInfrastructureBean marker to indicate that the scoped proxy
 		// itself is not subject to auto-proxying! Only its target bean is.
+		// 只是一个标记接口
 		pf.addInterface(AopInfrastructureBean.class);
 
 		this.proxy = pf.getProxy(cbf.getBeanClassLoader());
 	}
-
 
 	@Override
 	public Object getObject() {

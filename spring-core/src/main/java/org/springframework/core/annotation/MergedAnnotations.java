@@ -152,6 +152,8 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * meta-present.
 	 * <p>Equivalent to calling {@code get(annotationType).isPresent()}.
 	 *
+	 * <p>确定是否给定的注解类型是直接存在，或者以元注解形式存在
+	 *
 	 * @param annotationType the fully qualified class name of the annotation type
 	 *                       to check
 	 * @return {@code true} if the annotation is present
@@ -234,6 +236,8 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * Get the {@linkplain MergedAnnotationSelectors#nearest() nearest} matching
 	 * annotation or meta-annotation of the specified type, or
 	 * {@link MergedAnnotation#missing()} if none is present.
+	 * <p>
+	 * 获取 neatest (最接近)匹配的注解或者元注解
 	 *
 	 * @param annotationType the fully qualified class name of the annotation type
 	 *                       to get

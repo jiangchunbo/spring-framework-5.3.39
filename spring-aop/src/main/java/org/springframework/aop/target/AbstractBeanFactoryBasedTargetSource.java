@@ -129,15 +129,18 @@ public abstract class AbstractBeanFactoryBasedTargetSource implements TargetSour
 	@Override
 	@Nullable
 	public Class<?> getTargetClass() {
+		// 检查缓存
 		Class<?> targetClass = this.targetClass;
 		if (targetClass != null) {
 			return targetClass;
 		}
+
 		synchronized (this) {
 			// Full check within synchronization, entering the BeanFactory interaction algorithm only once...
 			targetClass = this.targetClass;
 			if (targetClass == null && this.beanFactory != null && this.targetBeanName != null) {
 				// Determine type of the target bean.
+				// 调用 beanFactory 的 getType
 				targetClass = this.beanFactory.getType(this.targetBeanName);
 				if (targetClass == null) {
 					if (logger.isTraceEnabled()) {

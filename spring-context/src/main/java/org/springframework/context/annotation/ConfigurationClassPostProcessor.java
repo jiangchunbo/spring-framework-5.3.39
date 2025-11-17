@@ -97,15 +97,15 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * {@link #setBeanNameGenerator}. Note that the default for component scanning purposes
 	 * is a plain {@link AnnotationBeanNameGenerator#INSTANCE}, unless overridden through
 	 * {@link #setBeanNameGenerator} with a unified user-level bean name generator.
-	 * @since 5.2
+	 *
 	 * @see #setBeanNameGenerator
+	 * @since 5.2
 	 */
 	public static final AnnotationBeanNameGenerator IMPORT_BEAN_NAME_GENERATOR =
 			FullyQualifiedAnnotationBeanNameGenerator.INSTANCE;
 
 	private static final String IMPORT_REGISTRY_BEAN_NAME =
 			ConfigurationClassPostProcessor.class.getName() + ".importRegistry";
-
 
 	private final Log logger = LogFactory.getLog(getClass());
 
@@ -134,14 +134,15 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 	private boolean localBeanNameGeneratorSet = false;
 
-	/* Using short class names as default bean names by default. */
+	/**
+	 * Using short class names as default bean names by default.
+	 */
 	private BeanNameGenerator componentScanBeanNameGenerator = AnnotationBeanNameGenerator.INSTANCE;
 
 	/* Using fully qualified class names as default bean names by default. */
 	private BeanNameGenerator importBeanNameGenerator = IMPORT_BEAN_NAME_GENERATOR;
 
 	private ApplicationStartup applicationStartup = ApplicationStartup.DEFAULT;
-
 
 	@Override
 	public int getOrder() {
@@ -189,9 +190,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * standalone bean definition in XML, e.g. not using the dedicated {@code AnnotationConfig*}
 	 * application contexts or the {@code <context:annotation-config>} element. Any bean name
 	 * generator specified against the application context will take precedence over any set here.
-	 * @since 3.1.1
+	 *
 	 * @see AnnotationConfigApplicationContext#setBeanNameGenerator(BeanNameGenerator)
 	 * @see AnnotationConfigUtils#CONFIGURATION_BEAN_NAME_GENERATOR
+	 * @since 3.1.1
 	 */
 	public void setBeanNameGenerator(BeanNameGenerator beanNameGenerator) {
 		Assert.notNull(beanNameGenerator, "BeanNameGenerator must not be null");
@@ -261,7 +263,6 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 		this.factoriesPostProcessed.add(factoryId);
 
-
 		if (!this.registriesPostProcessed.contains(factoryId)) {
 			// BeanDefinitionRegistryPostProcessor hook apparently not supported...
 			// Simply call processConfigurationClasses lazily at this point then.
@@ -277,19 +278,18 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * {@link Configuration} classes.
 	 */
 	public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
+		// Collect 配置类候选类 / 引导配置类 / 初始配置类
 		List<BeanDefinitionHolder> configCandidates = new ArrayList<>();
-
 		String[] candidateNames = registry.getBeanDefinitionNames();
 		for (String beanName : candidateNames) {
 			BeanDefinition beanDef = registry.getBeanDefinition(beanName);
-
-			// 如果已经标记处理过这个配置类了，那么就不用处理
+			// 避免重复解析 [只有调用过 checkConfigurationClassCandidate 才会有这个属性值]
 			if (beanDef.getAttribute(ConfigurationClassUtils.CONFIGURATION_CLASS_ATTRIBUTE) != null) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Bean definition has already been processed as a configuration class: " + beanDef);
 				}
 			}
-			// 如果没有标记过，并且 check 成功
+			// 检查是否是配置类
 			else if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
 				// 收集起来
 				configCandidates.add(new BeanDefinitionHolder(beanDef, beanName));
@@ -297,14 +297,13 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 
 		// Return immediately if no @Configuration classes were found
-		// 没收集到需要处理的
 		if (configCandidates.isEmpty()) {
 			return;
 		}
 
 		// Sort by previously determined @Order value, if applicable
-		// 排序
 		configCandidates.sort((bd1, bd2) -> {
+			// order 值是 checkConfigurationClassCandidate 阶段设置到 attribute 中的
 			int i1 = ConfigurationClassUtils.getOrder(bd1.getBeanDefinition());
 			int i2 = ConfigurationClassUtils.getOrder(bd2.getBeanDefinition());
 			return Integer.compare(i1, i2);
@@ -333,25 +332,34 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				this.metadataReaderFactory, this.problemReporter, this.environment,
 				this.resourceLoader, this.componentScanBeanNameGenerator, registry);
 
+		// 将 [初始配置类] 先放入集合中，接下来会解析，解析完会 clear 这个集合
 		Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
 		do {
 			StartupStep processConfig = this.applicationStartup.start("spring.context.config-classes.parse");
 
-			// parser 一边解析一边收集信息
+			// 传入需要解析的配置类，进行解析，内部会存储解析出来的各种信息
+			// [parse 只是收集素材]
 			parser.parse(candidates);
+
+			// 验证。full 配置类禁止是 final；非静态 @Bean 方法禁止 final
 			parser.validate();
 
+			// 获取解析到的配置类
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
 			configClasses.removeAll(alreadyParsed);
 
 			// Read the model and create bean definitions based on its content
+			// 惰性创建 ConfigurationClassBeanDefinitionReader
 			if (this.reader == null) {
 				this.reader = new ConfigurationClassBeanDefinitionReader(
 						registry, this.sourceExtractor, this.resourceLoader, this.environment,
 						this.importBeanNameGenerator, parser.getImportRegistry());
 			}
+
+			// 读取配置类，得到一些 BeanDefinition
 			this.reader.loadBeanDefinitions(configClasses);
+
 			alreadyParsed.addAll(configClasses);
 			processConfig.tag("classCount", () -> String.valueOf(configClasses.size())).end();
 
@@ -393,6 +401,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * Post-processes a BeanFactory in search of Configuration class BeanDefinitions;
 	 * any candidates are then enhanced by a {@link ConfigurationClassEnhancer}.
 	 * Candidate status is determined by BeanDefinition attribute metadata.
+	 *
 	 * @see ConfigurationClassEnhancer
 	 */
 	public void enhanceConfigurationClasses(ConfigurableListableBeanFactory beanFactory) {
@@ -416,12 +425,11 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				if (!abd.hasBeanClass()) {
 					boolean liteConfigurationCandidateWithoutBeanMethods =
 							(ConfigurationClassUtils.CONFIGURATION_CLASS_LITE.equals(configClassAttr) &&
-								annotationMetadata != null && !ConfigurationClassUtils.hasBeanMethods(annotationMetadata));
+									annotationMetadata != null && !ConfigurationClassUtils.hasBeanMethods(annotationMetadata));
 					if (!liteConfigurationCandidateWithoutBeanMethods) {
 						try {
 							abd.resolveBeanClass(this.beanClassLoader);
-						}
-						catch (Throwable ex) {
+						} catch (Throwable ex) {
 							throw new IllegalStateException(
 									"Cannot load configuration class: " + beanDef.getBeanClassName(), ex);
 						}
@@ -432,8 +440,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				if (!(beanDef instanceof AbstractBeanDefinition)) {
 					throw new BeanDefinitionStoreException("Cannot enhance @Configuration bean definition '" +
 							beanName + "' since it is not stored in an AbstractBeanDefinition subclass");
-				}
-				else if (logger.isInfoEnabled() && beanFactory.containsSingleton(beanName)) {
+				} else if (logger.isInfoEnabled() && beanFactory.containsSingleton(beanName)) {
 					logger.info("Cannot enhance @Configuration bean definition '" + beanName +
 							"' since its singleton instance has been created too early. The typical cause " +
 							"is a non-static @Bean method with a BeanDefinitionRegistryPostProcessor " +
@@ -466,7 +473,6 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 		enhanceConfigClasses.tag("classCount", () -> String.valueOf(configBeanDefs.keySet().size())).end();
 	}
-
 
 	/**
 	 * 一个私有的用于特殊处理 @Import 导入的 bean 的处理器
@@ -504,6 +510,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			}
 			return bean;
 		}
+
 	}
 
 }

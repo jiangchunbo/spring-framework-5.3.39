@@ -54,19 +54,20 @@ import org.springframework.util.StringUtils;
  *
  * @author Juergen Hoeller
  * @author Mark Fisher
- * @since 2.5
  * @see org.springframework.stereotype.Component#value()
  * @see org.springframework.stereotype.Repository#value()
  * @see org.springframework.stereotype.Service#value()
  * @see org.springframework.stereotype.Controller#value()
  * @see javax.inject.Named#value()
  * @see FullyQualifiedAnnotationBeanNameGenerator
+ * @since 2.5
  */
 public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 
 	/**
 	 * A convenient constant for a default {@code AnnotationBeanNameGenerator} instance,
 	 * as used for component scanning purposes.
+	 *
 	 * @since 5.2
 	 */
 	public static final AnnotationBeanNameGenerator INSTANCE = new AnnotationBeanNameGenerator();
@@ -75,9 +76,9 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 
 	private final Map<String, Set<String>> metaAnnotationTypesCache = new ConcurrentHashMap<>();
 
-
 	@Override
 	public String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) {
+		// 1) 通过注解获取 beanName
 		if (definition instanceof AnnotatedBeanDefinition) {
 			String beanName = determineBeanNameFromAnnotation((AnnotatedBeanDefinition) definition);
 			if (StringUtils.hasText(beanName)) {
@@ -85,32 +86,41 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 				return beanName;
 			}
 		}
+
 		// Fallback: generate a unique default bean name.
+		// 2) 注解无法获取 beanName，则通过 beanClassName 获得一个短名字
 		return buildDefaultBeanName(definition, registry);
 	}
 
 	/**
 	 * Derive a bean name from one of the annotations on the class.
+	 *
 	 * @param annotatedDef the annotation-aware bean definition
 	 * @return the bean name, or {@code null} if none is found
 	 */
 	@Nullable
 	protected String determineBeanNameFromAnnotation(AnnotatedBeanDefinition annotatedDef) {
 		AnnotationMetadata amd = annotatedDef.getMetadata();
+		// 获取直接注解
 		Set<String> types = amd.getAnnotationTypes();
 		String beanName = null;
 		for (String type : types) {
 			AnnotationAttributes attributes = AnnotationConfigUtils.attributesFor(amd, type);
 			if (attributes != null) {
+				// 获取[直接注解]的元注解 (递归)
+				// 比如获取 @RestController 能够获取 @Controller @ResponseBody @Component @Indexed
 				Set<String> metaTypes = this.metaAnnotationTypesCache.computeIfAbsent(type, key -> {
 					Set<String> result = amd.getMetaAnnotationTypes(key);
 					return (result.isEmpty() ? Collections.emptySet() : result);
 				});
+
+				// 判断是否是范式注解
 				if (isStereotypeWithNameValue(type, metaTypes, attributes)) {
 					Object value = attributes.get("value");
 					if (value instanceof String) {
 						String strVal = (String) value;
 						if (StringUtils.hasLength(strVal)) {
+							// 防止增加了多个范式注解，但是 beanName 不一致的情况
 							if (beanName != null && !strVal.equals(beanName)) {
 								throw new IllegalStateException("Stereotype annotations suggest inconsistent " +
 										"component names: '" + beanName + "' versus '" + strVal + "'");
@@ -127,14 +137,19 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	/**
 	 * Check whether the given annotation is a stereotype that is allowed
 	 * to suggest a component name through its annotation {@code value()}.
-	 * @param annotationType the name of the annotation class to check
+	 * <p>
+	 * 检查给定的注解，是否是一种能够提供 component name 的范式注解
+	 *
+	 * @param annotationType      the name of the annotation class to check
 	 * @param metaAnnotationTypes the names of meta-annotations on the given annotation
-	 * @param attributes the map of attributes for the given annotation
+	 * @param attributes          the map of attributes for the given annotation
 	 * @return whether the annotation qualifies as a stereotype with component name
 	 */
 	protected boolean isStereotypeWithNameValue(String annotationType,
-			Set<String> metaAnnotationTypes, @Nullable Map<String, Object> attributes) {
+												Set<String> metaAnnotationTypes, @Nullable Map<String, Object> attributes) {
 
+		// 本身是 @Component
+		// 或者，元注解是 @Component
 		boolean isStereotype = annotationType.equals(COMPONENT_ANNOTATION_CLASSNAME) ||
 				metaAnnotationTypes.contains(COMPONENT_ANNOTATION_CLASSNAME) ||
 				annotationType.equals("javax.annotation.ManagedBean") ||
@@ -146,8 +161,9 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	/**
 	 * Derive a default bean name from the given bean definition.
 	 * <p>The default implementation delegates to {@link #buildDefaultBeanName(BeanDefinition)}.
+	 *
 	 * @param definition the bean definition to build a bean name for
-	 * @param registry the registry that the given bean definition is being registered with
+	 * @param registry   the registry that the given bean definition is being registered with
 	 * @return the default bean name (never {@code null})
 	 */
 	protected String buildDefaultBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) {
@@ -161,6 +177,7 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	 * <p>Note that inner classes will thus have names of the form
 	 * "outerClassName.InnerClassName", which because of the period in the
 	 * name may be an issue if you are autowiring by name.
+	 *
 	 * @param definition the bean definition to build a bean name for
 	 * @return the default bean name (never {@code null})
 	 */

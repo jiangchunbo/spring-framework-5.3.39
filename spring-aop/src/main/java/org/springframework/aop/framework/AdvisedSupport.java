@@ -274,9 +274,11 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 
 	@Override
 	public void addAdvisor(int pos, Advisor advisor) throws AopConfigException {
+		// 校验 IntroductionAdvisor
 		if (advisor instanceof IntroductionAdvisor) {
 			validateIntroductionAdvisor((IntroductionAdvisor) advisor);
 		}
+
 		addAdvisorInternal(pos, advisor);
 	}
 

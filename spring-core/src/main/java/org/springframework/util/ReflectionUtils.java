@@ -60,7 +60,6 @@ public abstract class ReflectionUtils {
 	public static final FieldFilter COPYABLE_FIELDS =
 			(field -> !(Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())));
 
-
 	/**
 	 * Naming prefix for CGLIB-renamed methods.
 	 *
@@ -76,7 +75,6 @@ public abstract class ReflectionUtils {
 
 	private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
-
 	/**
 	 * Cache for {@link Class#getDeclaredMethods()} plus equivalent default methods
 	 * from Java 8 based interfaces, allowing for fast iteration.
@@ -87,7 +85,6 @@ public abstract class ReflectionUtils {
 	 * Cache for {@link Class#getDeclaredFields()}, allowing for fast iteration.
 	 */
 	private static final Map<Class<?>, Field[]> declaredFieldsCache = new ConcurrentReferenceHashMap<>(256);
-
 
 	// Exception handling
 
@@ -174,7 +171,6 @@ public abstract class ReflectionUtils {
 		throw new UndeclaredThrowableException(ex);
 	}
 
-
 	// Constructor handling
 
 	/**
@@ -210,7 +206,6 @@ public abstract class ReflectionUtils {
 			ctor.setAccessible(true);
 		}
 	}
-
 
 	// Method handling
 
@@ -425,6 +420,8 @@ public abstract class ReflectionUtils {
 	 * Get the unique set of declared methods on the leaf class and all superclasses.
 	 * Leaf class methods are included first and while traversing the superclass hierarchy
 	 * any methods found with signatures matching a method already included are filtered out.
+	 * <p>
+	 * 获取去重之后的方法。从叶子类开始，遍历所有父类。
 	 *
 	 * @param leafClass the class to introspect
 	 * @param mf        the filter that determines the methods to take into account
@@ -432,27 +429,42 @@ public abstract class ReflectionUtils {
 	 * @since 5.2
 	 */
 	public static Method[] getUniqueDeclaredMethods(Class<?> leafClass, @Nullable MethodFilter mf) {
+		// 预留 20 个空位
 		final List<Method> methods = new ArrayList<>(20);
+
+		// 从叶子类开始
 		doWithMethods(leafClass, method -> {
 			boolean knownSignature = false;
 			Method methodBeingOverriddenWithCovariantReturnType = null;
+
+			// 每次遇到一个新的方法，都会遍历目前所有的方法集合
 			for (Method existingMethod : methods) {
+
+				// 方法名，方法参数列表相同，重载方法
 				if (method.getName().equals(existingMethod.getName()) &&
 						method.getParameterCount() == existingMethod.getParameterCount() &&
 						Arrays.equals(method.getParameterTypes(), existingMethod.getParameterTypes())) {
+
 					// Is this a covariant return type situation?
+					// 重载方法，之前的返回值更宽松，返回更严格
 					if (existingMethod.getReturnType() != method.getReturnType() &&
 							existingMethod.getReturnType().isAssignableFrom(method.getReturnType())) {
 						methodBeingOverriddenWithCovariantReturnType = existingMethod;
 					} else {
+						// 1) 可能遇到父类的同签名方法
+						// 2) 可能遇到桥接方法
 						knownSignature = true;
 					}
 					break;
 				}
 			}
+
+			// 需要覆盖，那么删除原来的 method
 			if (methodBeingOverriddenWithCovariantReturnType != null) {
 				methods.remove(methodBeingOverriddenWithCovariantReturnType);
 			}
+
+			// 发现新方法，而且不是 cglib 命名的方法
 			if (!knownSignature && !isCglibRenamedMethod(method)) {
 				methods.add(method);
 			}
@@ -598,7 +610,6 @@ public abstract class ReflectionUtils {
 			method.setAccessible(true);
 		}
 	}
-
 
 	// Field handling
 
@@ -819,7 +830,6 @@ public abstract class ReflectionUtils {
 		}
 	}
 
-
 	// Cache handling
 
 	/**
@@ -831,7 +841,6 @@ public abstract class ReflectionUtils {
 		declaredMethodsCache.clear();
 		declaredFieldsCache.clear();
 	}
-
 
 	/**
 	 * Action to take on each method.
@@ -845,8 +854,8 @@ public abstract class ReflectionUtils {
 		 * @param method the method to operate on
 		 */
 		void doWith(Method method) throws IllegalArgumentException, IllegalAccessException;
-	}
 
+	}
 
 	/**
 	 * Callback optionally used to filter methods to be operated on by a method callback.
@@ -874,8 +883,8 @@ public abstract class ReflectionUtils {
 			Assert.notNull(next, "Next MethodFilter must not be null");
 			return method -> matches(method) && next.matches(method);
 		}
-	}
 
+	}
 
 	/**
 	 * Callback interface invoked on each field in the hierarchy.
@@ -889,8 +898,8 @@ public abstract class ReflectionUtils {
 		 * @param field the field to operate on
 		 */
 		void doWith(Field field) throws IllegalArgumentException, IllegalAccessException;
-	}
 
+	}
 
 	/**
 	 * Callback optionally used to filter fields to be operated on by a field callback.
@@ -918,6 +927,7 @@ public abstract class ReflectionUtils {
 			Assert.notNull(next, "Next FieldFilter must not be null");
 			return field -> matches(field) && next.matches(field);
 		}
+
 	}
 
 }

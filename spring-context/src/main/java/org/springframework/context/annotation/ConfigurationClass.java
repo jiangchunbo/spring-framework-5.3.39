@@ -42,9 +42,9 @@ import org.springframework.util.ClassUtils;
  * @author Chris Beams
  * @author Juergen Hoeller
  * @author Phillip Webb
- * @since 3.0
  * @see BeanMethod
  * @see ConfigurationClassParser
+ * @since 3.0
  */
 final class ConfigurationClass {
 
@@ -55,6 +55,9 @@ final class ConfigurationClass {
 	@Nullable
 	private String beanName;
 
+	/**
+	 * 收集该配置类是被 [哪些配置类] 导入，一般只有 1 个，除非多次导入
+	 */
 	private final Set<ConfigurationClass> importedBy = new LinkedHashSet<>(1);
 
 	private final Set<BeanMethod> beanMethods = new LinkedHashSet<>();
@@ -67,11 +70,11 @@ final class ConfigurationClass {
 
 	final Set<String> skippedBeanMethods = new HashSet<>();
 
-
 	/**
 	 * Create a new {@link ConfigurationClass} with the given name.
+	 *
 	 * @param metadataReader reader used to parse the underlying {@link Class}
-	 * @param beanName must not be {@code null}
+	 * @param beanName       must not be {@code null}
 	 */
 	ConfigurationClass(MetadataReader metadataReader, String beanName) {
 		Assert.notNull(beanName, "Bean name must not be null");
@@ -84,8 +87,9 @@ final class ConfigurationClass {
 	 * Create a new {@link ConfigurationClass} representing a class that was imported
 	 * using the {@link Import} annotation or automatically processed as a nested
 	 * configuration class (if importedBy is not {@code null}).
+	 *
 	 * @param metadataReader reader used to parse the underlying {@link Class}
-	 * @param importedBy the configuration class importing this one
+	 * @param importedBy     the configuration class importing this one
 	 * @since 3.1.1
 	 */
 	ConfigurationClass(MetadataReader metadataReader, ConfigurationClass importedBy) {
@@ -96,7 +100,8 @@ final class ConfigurationClass {
 
 	/**
 	 * Create a new {@link ConfigurationClass} with the given name.
-	 * @param clazz the underlying {@link Class} to represent
+	 *
+	 * @param clazz    the underlying {@link Class} to represent
 	 * @param beanName name of the {@code @Configuration} class bean
 	 */
 	ConfigurationClass(Class<?> clazz, String beanName) {
@@ -110,7 +115,8 @@ final class ConfigurationClass {
 	 * Create a new {@link ConfigurationClass} representing a class that was imported
 	 * using the {@link Import} annotation or automatically processed as a nested
 	 * configuration class (if imported is {@code true}).
-	 * @param clazz the underlying {@link Class} to represent
+	 *
+	 * @param clazz      the underlying {@link Class} to represent
 	 * @param importedBy the configuration class importing this one
 	 * @since 3.1.1
 	 */
@@ -122,6 +128,7 @@ final class ConfigurationClass {
 
 	/**
 	 * Create a new {@link ConfigurationClass} with the given name.
+	 *
 	 * @param metadata the metadata for the underlying class to represent
 	 * @param beanName name of the {@code @Configuration} class bean
 	 */
@@ -131,7 +138,6 @@ final class ConfigurationClass {
 		this.resource = new DescriptiveResource(metadata.getClassName());
 		this.beanName = beanName;
 	}
-
 
 	AnnotationMetadata getMetadata() {
 		return this.metadata;
@@ -157,8 +163,9 @@ final class ConfigurationClass {
 	/**
 	 * Return whether this configuration class was registered via @{@link Import} or
 	 * automatically registered due to being nested within another configuration class.
-	 * @since 3.1.1
+	 *
 	 * @see #getImportedBy()
+	 * @since 3.1.1
 	 */
 	boolean isImported() {
 		return !this.importedBy.isEmpty();
@@ -166,17 +173,20 @@ final class ConfigurationClass {
 
 	/**
 	 * Merge the imported-by declarations from the given configuration class into this one.
+	 *
 	 * @since 4.0.5
 	 */
 	void mergeImportedBy(ConfigurationClass otherConfigClass) {
+		// 当前的配置类也是被 import 进来的，那么把 importedBy 放到集合中
 		this.importedBy.addAll(otherConfigClass.importedBy);
 	}
 
 	/**
 	 * Return the configuration classes that imported this class,
 	 * or an empty Set if this configuration was not imported.
-	 * @since 4.0.5
+	 *
 	 * @see #isImported()
+	 * @since 4.0.5
 	 */
 	Set<ConfigurationClass> getImportedBy() {
 		return this.importedBy;
@@ -210,6 +220,7 @@ final class ConfigurationClass {
 		// A configuration class may not be final (CGLIB limitation) unless it declares proxyBeanMethods=false
 		Map<String, Object> attributes = this.metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (attributes != null && (Boolean) attributes.get("proxyBeanMethods")) {
+			// 如果配置类是 full，那么不能是 final，否则无法使用 cglib
 			if (this.metadata.isFinal()) {
 				problemReporter.error(new FinalConfigurationProblem());
 			}
@@ -235,7 +246,6 @@ final class ConfigurationClass {
 		return "ConfigurationClass: beanName '" + this.beanName + "', " + this.resource;
 	}
 
-
 	/**
 	 * Configuration classes must be non-final to accommodate CGLIB subclassing.
 	 */
@@ -245,6 +255,7 @@ final class ConfigurationClass {
 			super(String.format("@Configuration class '%s' may not be final. Remove the final modifier to continue.",
 					getSimpleName()), new Location(getResource(), getMetadata()));
 		}
+
 	}
 
 }

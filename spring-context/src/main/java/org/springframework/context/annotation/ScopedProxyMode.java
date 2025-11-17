@@ -29,6 +29,10 @@ package org.springframework.context.annotation;
  */
 public enum ScopedProxyMode {
 
+	// scope 代理的模式
+	// 从是否代理的角度看，无非就是 (1) 代理和 (2) 不代理
+	// 如果是代理，还可以分为代理接口 (interfaces) 和代理目标类 (cglib)
+
 	/**
 	 * Default typically equals {@link #NO}, unless a different default
 	 * has been configured at the component-scan instruction level.

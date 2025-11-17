@@ -45,9 +45,9 @@ import org.springframework.util.Assert;
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
- * @since 16.11.2003
  * @see #suppressInterface
  * @see DelegatePerTargetObjectIntroductionInterceptor
+ * @since 16.11.2003
  */
 @SuppressWarnings("serial")
 public class DelegatingIntroductionInterceptor extends IntroductionInfoSupport
@@ -56,14 +56,16 @@ public class DelegatingIntroductionInterceptor extends IntroductionInfoSupport
 	/**
 	 * Object that actually implements the interfaces.
 	 * May be "this" if a subclass implements the introduced interfaces.
+	 * <p>
+	 * 实际实现了接口的对象，也可以认为是代理对象。
 	 */
 	@Nullable
 	private Object delegate;
 
-
 	/**
 	 * Construct a new DelegatingIntroductionInterceptor, providing
 	 * a delegate that implements the interfaces to be introduced.
+	 *
 	 * @param delegate the delegate that implements the introduced interfaces
 	 */
 	public DelegatingIntroductionInterceptor(Object delegate) {
@@ -79,24 +81,26 @@ public class DelegatingIntroductionInterceptor extends IntroductionInfoSupport
 		init(this);
 	}
 
-
 	/**
 	 * Both constructors use this init method, as it is impossible to pass
 	 * a "this" reference from one constructor to another.
+	 *
 	 * @param delegate the delegate object
 	 */
 	private void init(Object delegate) {
 		Assert.notNull(delegate, "Delegate must not be null");
+		// 设置代理对象
 		this.delegate = delegate;
 
 		// 获得 delegate 所有实现的接口，添加到发布接口中
+		// [delegate] 有的接口我们也有
 		implementInterfacesOnObject(delegate);
 
 		// We don't want to expose the control interface
+		// 删除不需要暴露的接口
 		suppressInterface(IntroductionInterceptor.class);
 		suppressInterface(DynamicIntroductionAdvice.class);
 	}
-
 
 	/**
 	 * Subclasses may need to override this if they want to perform custom
@@ -106,6 +110,7 @@ public class DelegatingIntroductionInterceptor extends IntroductionInfoSupport
 	@Override
 	@Nullable
 	public Object invoke(MethodInvocation mi) throws Throwable {
+		// 如果调用的方法是 delegate 实现接口的方法，那么走 delegate 逻辑
 		if (isMethodOnIntroducedInterface(mi)) {
 			// Using the following method rather than direct reflection, we
 			// get correct handling of InvocationTargetException
@@ -123,6 +128,7 @@ public class DelegatingIntroductionInterceptor extends IntroductionInfoSupport
 			return retVal;
 		}
 
+		// 其他方法走正常逻辑
 		return doProceed(mi);
 	}
 

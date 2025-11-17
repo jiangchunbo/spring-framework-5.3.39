@@ -62,6 +62,8 @@ public interface AnnotatedTypeMetadata {
 	 * <p>If this method returns {@code true}, then
 	 * {@link #getAnnotationAttributes} will return a non-null Map.
 	 *
+	 * 确定是否底层的元素，具有指定的 [注解] 或者 [元注解]
+	 *
 	 * @param annotationName the fully qualified class name of the annotation
 	 *                       type to look for
 	 * @return whether a matching annotation is defined

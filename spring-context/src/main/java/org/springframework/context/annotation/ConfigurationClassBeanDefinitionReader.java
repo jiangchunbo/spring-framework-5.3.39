@@ -123,6 +123,8 @@ class ConfigurationClassBeanDefinitionReader {
 	 */
 	public void loadBeanDefinitions(Set<ConfigurationClass> configurationModel) {
 		TrackedConditionEvaluator trackedConditionEvaluator = new TrackedConditionEvaluator();
+
+		// 从配置类中创建 BeanDefinition
 		for (ConfigurationClass configClass : configurationModel) {
 			loadBeanDefinitionsForConfigurationClass(configClass, trackedConditionEvaluator);
 		}
@@ -135,8 +137,11 @@ class ConfigurationClassBeanDefinitionReader {
 	private void loadBeanDefinitionsForConfigurationClass(
 			ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator) {
 
+		// 检查配置类是否应该跳过 (不符合条件)
 		if (trackedConditionEvaluator.shouldSkip(configClass)) {
 			String beanName = configClass.getBeanName();
+
+			// 删除 bean definition
 			if (StringUtils.hasLength(beanName) && this.registry.containsBeanDefinition(beanName)) {
 				this.registry.removeBeanDefinition(beanName);
 			}
@@ -162,15 +167,26 @@ class ConfigurationClassBeanDefinitionReader {
 	 */
 	private void registerBeanDefinitionForImportedConfigurationClass(ConfigurationClass configClass) {
 		AnnotationMetadata metadata = configClass.getMetadata();
+
+		// 创建 BeanDefinition !
 		AnnotatedGenericBeanDefinition configBeanDef = new AnnotatedGenericBeanDefinition(metadata);
 
+		// 设置 scope 。解析配置类的 Scope
 		ScopeMetadata scopeMetadata = scopeMetadataResolver.resolveScopeMetadata(configBeanDef);
 		configBeanDef.setScope(scopeMetadata.getScopeName());
+
 		String configBeanName = this.importBeanNameGenerator.generateBeanName(configBeanDef, this.registry);
+
+		// 处理通用的注解
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(configBeanDef, metadata);
 
+		// 包装成 BeanDefinitionHolder
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(configBeanDef, configBeanName);
+
+		// 根据 scopedProxyMode 可能转换为一个全新的 BeanDefinitionHolder
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+
+		// 注册
 		this.registry.registerBeanDefinition(definitionHolder.getBeanName(), definitionHolder.getBeanDefinition());
 		configClass.setBeanName(configBeanName);
 
@@ -475,7 +491,12 @@ class ConfigurationClassBeanDefinitionReader {
 		public boolean shouldSkip(ConfigurationClass configClass) {
 			Boolean skip = this.skipped.get(configClass);
 			if (skip == null) {
+
+				// 思考这么一个道理：A 条件评估失败，那么 A 导入的 C 应该作为配置类吗？
+				// 答案是: C 可能可以配置类，只要至少存在一个 B 也导入了 C，且 B 条件通过
 				if (configClass.isImported()) {
+
+					// 检查配置类的 importedBy，只要 [任意一个] 条件评估通过，那么它就允许继续留下
 					boolean allSkipped = true;
 					for (ConfigurationClass importedBy : configClass.getImportedBy()) {
 						if (!shouldSkip(importedBy)) {
@@ -483,11 +504,16 @@ class ConfigurationClassBeanDefinitionReader {
 							break;
 						}
 					}
+
+					// 所有的 importedBy 评估都失败
 					if (allSkipped) {
 						// The config classes that imported this one were all skipped, therefore we are skipped...
 						skip = true;
 					}
 				}
+
+				// 情况 1: importedBy [任何一个] 条件评估通过
+				// 情况 2: 配置类不是被导入的
 				if (skip == null) {
 					skip = conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN);
 				}

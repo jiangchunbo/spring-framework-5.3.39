@@ -36,9 +36,9 @@ import org.springframework.util.Assert;
  *
  * @author Juergen Hoeller
  * @author Chris Beams
- * @since 2.5
  * @see AnnotatedBeanDefinition#getMetadata()
  * @see org.springframework.core.type.StandardAnnotationMetadata
+ * @since 2.5
  */
 @SuppressWarnings("serial")
 public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implements AnnotatedBeanDefinition {
@@ -51,9 +51,11 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 	@Nullable
 	private MethodMetadata factoryMethodMetadata;
 
-
 	/**
 	 * Create a new AnnotatedGenericBeanDefinition for the given bean class.
+	 * <p>
+	 * 给定 beanClass(已经完成类加载) 然后内省得到 metadata
+	 *
 	 * @param beanClass the loaded bean class
 	 */
 	public AnnotatedGenericBeanDefinition(Class<?> beanClass) {
@@ -68,14 +70,21 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 	 * {@link org.springframework.context.annotation.ScannedGenericBeanDefinition
 	 * ScannedGenericBeanDefinition}, however the semantics of the latter indicate that a
 	 * bean was discovered specifically via component-scanning as opposed to other means.
+	 * <p>
+	 * 为给定的注解元数据 [AnnotationMetadata] 创建 AnnotatedGenericBeanDefinition，
+	 * 以便进行[基于ASM]的处理并避免提前加载 bean 类
+	 *
 	 * @param metadata the annotation metadata for the bean class in question
 	 * @since 3.1.1
 	 */
 	public AnnotatedGenericBeanDefinition(AnnotationMetadata metadata) {
 		Assert.notNull(metadata, "AnnotationMetadata must not be null");
+
+		// 1) 标准反射，已经类加载，直接获取类
 		if (metadata instanceof StandardAnnotationMetadata) {
 			setBeanClass(((StandardAnnotationMetadata) metadata).getIntrospectedClass());
 		}
+		// 2) ASM
 		else {
 			setBeanClassName(metadata.getClassName());
 		}
@@ -85,7 +94,8 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 	/**
 	 * Create a new AnnotatedGenericBeanDefinition for the given annotation metadata,
 	 * based on an annotated class and a factory method on that class.
-	 * @param metadata the annotation metadata for the bean class in question
+	 *
+	 * @param metadata              the annotation metadata for the bean class in question
 	 * @param factoryMethodMetadata metadata for the selected factory method
 	 * @since 4.1.1
 	 */
@@ -95,7 +105,6 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 		setFactoryMethodName(factoryMethodMetadata.getMethodName());
 		this.factoryMethodMetadata = factoryMethodMetadata;
 	}
-
 
 	@Override
 	public final AnnotationMetadata getMetadata() {

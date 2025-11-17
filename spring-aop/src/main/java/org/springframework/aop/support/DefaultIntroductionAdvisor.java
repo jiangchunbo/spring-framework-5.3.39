@@ -51,7 +51,6 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 
 	private int order = Ordered.LOWEST_PRECEDENCE;
 
-
 	/**
 	 * Create a DefaultIntroductionAdvisor for the given advice.
 	 *
@@ -65,6 +64,8 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 
 	/**
 	 * Create a DefaultIntroductionAdvisor for the given advice.
+	 * <p>
+	 * 对于给定的 Advice 创建 DefaultIntroductionAdvisor
 	 *
 	 * @param advice           the Advice to apply
 	 * @param introductionInfo the IntroductionInfo that describes
@@ -72,7 +73,11 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 	 */
 	public DefaultIntroductionAdvisor(Advice advice, @Nullable IntroductionInfo introductionInfo) {
 		Assert.notNull(advice, "Advice must not be null");
+
+		// 引介的拦截器
 		this.advice = advice;
+
+		// 获取引介的接口，将接口存储到 interfaces 中
 		if (introductionInfo != null) {
 			Class<?>[] introducedInterfaces = introductionInfo.getInterfaces();
 			if (introducedInterfaces.length == 0) {
@@ -97,7 +102,6 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 		addInterface(ifc);
 	}
 
-
 	/**
 	 * Add the specified interface to the list of interfaces to introduce.
 	 * <p>添加引介接口
@@ -117,7 +121,6 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 		// 转换成数组
 		return ClassUtils.toClassArray(this.interfaces);
 	}
-
 
 	@Override
 	public void validateInterfaces() throws IllegalArgumentException {
@@ -162,7 +165,6 @@ public class DefaultIntroductionAdvisor implements IntroductionAdvisor, ClassFil
 	public boolean matches(Class<?> clazz) {
 		return true;
 	}
-
 
 	@Override
 	public boolean equals(@Nullable Object other) {

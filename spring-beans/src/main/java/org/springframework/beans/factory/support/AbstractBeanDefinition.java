@@ -853,6 +853,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * Return the factory bean name, if any.
+	 * <p>
+	 * 返回工厂 bean 的名字(如果存在)。静态工厂方法该值是 null。
+	 * 也就是谁来调用这个工厂方法，谁就是返回值的 name。
 	 */
 	@Override
 	@Nullable

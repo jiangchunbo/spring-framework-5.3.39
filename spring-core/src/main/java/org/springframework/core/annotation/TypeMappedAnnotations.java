@@ -124,9 +124,12 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Override
 	public boolean isPresent(String annotationType) {
+		// 过滤器快速检测
 		if (this.annotationFilter.matches(annotationType)) {
 			return false;
 		}
+
+		// scan 并判断返回值是否等于 true
 		return Boolean.TRUE.equals(scan(annotationType,
 				IsPresent.get(this.repeatableContainers, this.annotationFilter, false)));
 	}

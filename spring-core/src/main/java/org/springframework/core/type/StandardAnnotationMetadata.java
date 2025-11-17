@@ -36,6 +36,8 @@ import org.springframework.util.ReflectionUtils;
 /**
  * {@link AnnotationMetadata} implementation that uses standard reflection
  * to introspect a given {@link Class}.
+ * <p>
+ * 使用标准反射去内省给定 Class 的 AnnotationMetadata 实现
  *
  * @author Juergen Hoeller
  * @author Mark Fisher
