@@ -122,6 +122,7 @@ class ConfigurationClassBeanDefinitionReader {
 	 * with the registry based on its contents.
 	 */
 	public void loadBeanDefinitions(Set<ConfigurationClass> configurationModel) {
+		// 具有跟踪能力的条件评估器
 		TrackedConditionEvaluator trackedConditionEvaluator = new TrackedConditionEvaluator();
 
 		// 从配置类中创建 BeanDefinition

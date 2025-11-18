@@ -575,19 +575,31 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws NoSuchBeanDefinitionException {
 
 		String beanName = transformedBeanName(name);
+
+		// --> isFactoryDereference 调用者只关注解引用
 		boolean isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name);
 
 		// Check manually registered singletons.
+		// beanInstance 或者是普通 bean 实例，也可能是 FactoryBean
 		Object beanInstance = getSingleton(beanName, false);
+
+		// 实例已经存在
 		if (beanInstance != null && beanInstance.getClass() != NullBean.class) {
+			// 处理 FactoryBean
 			if (beanInstance instanceof FactoryBean) {
+				// 如果关注 FactoryBean 的产物，那么调用 getObjectType -> 并不是 getObject().getClass()
 				if (!isFactoryDereference) {
 					Class<?> type = getTypeForFactoryBean((FactoryBean<?>) beanInstance);
 					return (type != null && typeToMatch.isAssignableFrom(type));
-				} else {
+				}
+				// 如果只关注  FactoryBean 本身，那么 typeToMatch 必须是 FactoryBean 类型
+				else {
 					return typeToMatch.isInstance(beanInstance);
 				}
-			} else if (!isFactoryDereference) {
+			}
+			// 处理普通 bean，但是调用者不应该传入以 & 开头
+			else if (!isFactoryDereference) {
+				// 这里面的判断挺复杂的
 				if (typeToMatch.isInstance(beanInstance)) {
 					// Direct match for exposed instance?
 					return true;
@@ -595,6 +607,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					// Generics potentially only match on the target class, not on the proxy...
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 					Class<?> targetType = mbd.getTargetType();
+
+
+					// 从 mbd 中获取的 targetType 与通过 beanInstance 获取的 Class 不相同
 					if (targetType != null && targetType != ClassUtils.getUserClass(beanInstance)) {
 						// Check raw class match as well, making sure it's exposed on the proxy.
 						Class<?> classToMatch = typeToMatch.resolve();

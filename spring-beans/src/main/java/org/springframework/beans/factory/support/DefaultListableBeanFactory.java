@@ -668,7 +668,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
 						BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 						boolean matchFound = false;
+
+						// 感觉这个变量名字应该叫 allowBeanInit -> 因为下面不管是否是 factory bean，都使用了
 						boolean allowFactoryBeanInit = (allowEagerInit || containsSingleton(beanName));
+
+						// 内部包含了一个装饰起来的 bean definition，但是 mbd 非懒加载
 						boolean isNonLazyDecorated = (dbd != null && !mbd.isLazyInit());
 
 						// 处理非 factory bean
@@ -751,14 +755,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * Check whether the specified bean would need to be eagerly initialized
 	 * in order to determine its type.
 	 * <p>
-	 * 是否为了得到 bean 的类型，只能快速初始化该 bean。
+	 * 检查是否为了得到 beanClass，只能快速初始化该 bean
+	 * <p>
+	 * 只有 FactoryBean 才无法知道其真实类型，除非创建出 bean，通过 getObjectType，还是通过 getObject.getClass() ?
 	 *
 	 * @param factoryBeanName a factory-bean reference that the bean definition
 	 *                        defines a factory method for
 	 * @return whether eager initialization is necessary
 	 */
 	private boolean requiresEagerInitForType(@Nullable String factoryBeanName) {
-		// 如果是 FactoryBean 类型，而且 singletonObjects 还不存在 (还未创建)，也就是说为了得到这个类型，必须创建 FactoryBean
+		// 只有 FactoryBean 的对象创建好了，才能知道真实类型
 		return (factoryBeanName != null && isFactoryBean(factoryBeanName) && !containsSingleton(factoryBeanName));
 	}
 

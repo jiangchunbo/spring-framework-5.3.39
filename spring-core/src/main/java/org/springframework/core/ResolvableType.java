@@ -250,6 +250,8 @@ public class ResolvableType implements Serializable {
 
 	/**
 	 * Determine whether the given object is an instance of this {@code ResolvableType}.
+	 * <p>
+	 * 确定是否给定的对象，是当前类型的实例
 	 *
 	 * @param obj the object to check
 	 * @see #isAssignableFrom(Class)
