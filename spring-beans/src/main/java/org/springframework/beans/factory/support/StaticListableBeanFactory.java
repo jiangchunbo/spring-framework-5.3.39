@@ -61,14 +61,15 @@ import org.springframework.util.StringUtils;
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 06.01.2003
  * @see DefaultListableBeanFactory
+ * @since 06.01.2003
  */
 public class StaticListableBeanFactory implements ListableBeanFactory {
 
-	/** Map from bean name to bean instance. */
+	/**
+	 * Map from bean name to bean instance.
+	 */
 	private final Map<String, Object> beans;
-
 
 	/**
 	 * Create a regular {@code StaticListableBeanFactory}, to be populated
@@ -84,8 +85,9 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 	 * or new, still allowing for beans to be registered via {@link #addBean};
 	 * or {@link java.util.Collections#emptyMap()} for a dummy factory which
 	 * enforces operating against an empty set of beans.
+	 *
 	 * @param beans a {@code Map} for holding this factory's beans, with the
-	 * bean name as key and the corresponding singleton object as value
+	 *              bean name as key and the corresponding singleton object as value
 	 * @since 4.3
 	 */
 	public StaticListableBeanFactory(Map<String, Object> beans) {
@@ -93,17 +95,16 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 		this.beans = beans;
 	}
 
-
 	/**
 	 * Add a new singleton bean.
 	 * <p>Will overwrite any existing instance for the given name.
+	 *
 	 * @param name the name of the bean
 	 * @param bean the bean instance
 	 */
 	public void addBean(String name, Object bean) {
 		this.beans.put(name, bean);
 	}
-
 
 	//---------------------------------------------------------------------
 	// Implementation of BeanFactory interface
@@ -132,12 +133,10 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 					throw new BeanCreationException(beanName, "FactoryBean exposed null object");
 				}
 				return exposedObject;
-			}
-			catch (Exception ex) {
+			} catch (Exception ex) {
 				throw new BeanCreationException(beanName, "FactoryBean threw exception on object creation", ex);
 			}
-		}
-		else {
+		} else {
 			return bean;
 		}
 	}
@@ -166,11 +165,9 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 		String[] beanNames = getBeanNamesForType(requiredType);
 		if (beanNames.length == 1) {
 			return getBean(beanNames[0], requiredType);
-		}
-		else if (beanNames.length > 1) {
+		} else if (beanNames.length > 1) {
 			throw new NoUniqueBeanDefinitionException(requiredType, beanNames);
-		}
-		else {
+		} else {
 			throw new NoSuchBeanDefinitionException(requiredType);
 		}
 	}
@@ -256,7 +253,6 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 		return new String[0];
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation of ListableBeanFactory interface
 	//---------------------------------------------------------------------
@@ -290,56 +286,54 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 				String[] beanNames = getBeanNamesForType(requiredType);
 				if (beanNames.length == 1) {
 					return (T) getBean(beanNames[0], requiredType);
-				}
-				else if (beanNames.length > 1) {
+				} else if (beanNames.length > 1) {
 					throw new NoUniqueBeanDefinitionException(requiredType, beanNames);
-				}
-				else {
+				} else {
 					throw new NoSuchBeanDefinitionException(requiredType);
 				}
 			}
+
 			@Override
 			public T getObject(Object... args) throws BeansException {
 				String[] beanNames = getBeanNamesForType(requiredType);
 				if (beanNames.length == 1) {
 					return (T) getBean(beanNames[0], args);
-				}
-				else if (beanNames.length > 1) {
+				} else if (beanNames.length > 1) {
 					throw new NoUniqueBeanDefinitionException(requiredType, beanNames);
-				}
-				else {
+				} else {
 					throw new NoSuchBeanDefinitionException(requiredType);
 				}
 			}
+
 			@Override
 			@Nullable
 			public T getIfAvailable() throws BeansException {
 				String[] beanNames = getBeanNamesForType(requiredType);
 				if (beanNames.length == 1) {
 					return (T) getBean(beanNames[0]);
-				}
-				else if (beanNames.length > 1) {
+				} else if (beanNames.length > 1) {
 					throw new NoUniqueBeanDefinitionException(requiredType, beanNames);
-				}
-				else {
+				} else {
 					return null;
 				}
 			}
+
 			@Override
 			@Nullable
 			public T getIfUnique() throws BeansException {
 				String[] beanNames = getBeanNamesForType(requiredType);
 				if (beanNames.length == 1) {
 					return (T) getBean(beanNames[0]);
-				}
-				else {
+				} else {
 					return null;
 				}
 			}
+
 			@Override
 			public Stream<T> stream() {
 				return Arrays.stream(getBeanNamesForType(requiredType)).map(name -> (T) getBean(name));
 			}
+
 			@Override
 			public Stream<T> orderedStream() {
 				return stream().sorted(OrderComparator.INSTANCE);
@@ -354,10 +348,13 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 
 	@Override
 	public String[] getBeanNamesForType(@Nullable ResolvableType type,
-			boolean includeNonSingletons, boolean allowEagerInit) {
-
+										boolean includeNonSingletons, boolean allowEagerInit) {
+		// 尝试获取解析完毕的 Class
 		Class<?> resolved = (type != null ? type.resolve() : null);
+
+		// 检查是否时 FactoryBean (可能因为没有类加载导致无法判断)
 		boolean isFactoryType = resolved != null && FactoryBean.class.isAssignableFrom(resolved);
+
 		List<String> matches = new ArrayList<>();
 
 		for (Map.Entry<String, Object> entry : this.beans.entrySet()) {
@@ -370,8 +367,7 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 						objectType != null && (type == null || type.isAssignableFrom(objectType))) {
 					matches.add(beanName);
 				}
-			}
-			else {
+			} else {
 				if (type == null || type.isInstance(beanInstance)) {
 					matches.add(beanName);
 				}
@@ -389,6 +385,11 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 		return getBeanNamesForType(ResolvableType.forClass(type));
 	}
 
+	/**
+	 * 给定 Class 查询 beanNames
+	 * <p>
+	 * 底层还是依赖的 ResolvableType 重载函数
+	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 		return getBeanNamesForType(ResolvableType.forClass(type), includeNonSingletons, allowEagerInit);
@@ -419,8 +420,7 @@ public class StaticListableBeanFactory implements ListableBeanFactory {
 						objectType != null && (type == null || type.isAssignableFrom(objectType))) {
 					matches.put(beanName, getBean(beanName, type));
 				}
-			}
-			else {
+			} else {
 				if (type == null || type.isInstance(beanInstance)) {
 					// If type to match is FactoryBean, return FactoryBean itself.
 					// Else, return bean instance.

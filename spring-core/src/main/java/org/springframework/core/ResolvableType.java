@@ -752,9 +752,13 @@ public class ResolvableType implements Serializable {
 	 * @see #resolveGenerics()
 	 */
 	public ResolvableType[] getGenerics() {
+
+		// 已经解析过，且一定没有泛型
 		if (this == NONE) {
 			return EMPTY_TYPES_ARRAY;
 		}
+
+		// 如果没有解析过，则执行解析；否则，直接返回结果
 		ResolvableType[] generics = this.generics;
 		if (generics == null) {
 			if (this.type instanceof Class) {
@@ -1582,11 +1586,17 @@ public class ResolvableType implements Serializable {
 
 	}
 
+	/**
+	 * 变量解析器？用于解析泛型参数
+	 */
 	@SuppressWarnings("serial")
 	private static class DefaultVariableResolver implements VariableResolver {
 
 		private final ResolvableType source;
 
+		/**
+		 * 把 owner 作为解析器传入
+		 */
 		DefaultVariableResolver(ResolvableType resolvableType) {
 			this.source = resolvableType;
 		}

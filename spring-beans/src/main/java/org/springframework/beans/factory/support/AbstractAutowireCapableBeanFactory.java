@@ -778,17 +778,21 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 			// If all factory methods have the same return type, return that type.
 			// Can't clearly figure out exact method due to type converting / autowiring!
+			// 最少参数就是提供给构造函数的参数
 			int minNrOfArgs =
 					(mbd.hasConstructorArgumentValues() ? mbd.getConstructorArgumentValues().getArgumentCount() : 0);
 
-			// 决定方法候选人
+			// 获取去重之后的方法 (挑选返回值更严格的 Method)
 			Method[] candidates = this.factoryMethodCandidateCache.computeIfAbsent(factoryClass,
 					clazz -> ReflectionUtils.getUniqueDeclaredMethods(clazz, ReflectionUtils.USER_DECLARED_METHODS));
 
 			for (Method candidate : candidates) {
-				// 先过滤是否是静态
-				if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate) &&
-						candidate.getParameterCount() >= minNrOfArgs) {
+				// 1) static 修饰符一致
+				// 2) 方法名看上去是工厂方法
+				// 3) 方法参数个数必须足够多 (>=minNrOfArgs)
+				if (Modifier.isStatic(candidate.getModifiers()) == isStatic
+						&& mbd.isFactoryMethod(candidate)
+						&& candidate.getParameterCount() >= minNrOfArgs) {
 					// Declared type variables to inspect?
 					if (candidate.getTypeParameters().length > 0) {
 						try {

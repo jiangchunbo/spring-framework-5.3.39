@@ -472,6 +472,8 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Check whether the given candidate qualifies as a factory method.
+	 * <p>
+	 * 检查给定的方法，是否是工厂方法
 	 */
 	public boolean isFactoryMethod(Method candidate) {
 		return candidate.getName().equals(getFactoryMethodName());
