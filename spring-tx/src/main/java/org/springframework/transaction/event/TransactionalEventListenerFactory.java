@@ -48,6 +48,7 @@ public class TransactionalEventListenerFactory implements EventListenerFactory, 
 
 	@Override
 	public boolean supportsMethod(Method method) {
+		// 必须具有 @TransactionalEventListener 才能开启特殊监听
 		return AnnotatedElementUtils.hasAnnotation(method, TransactionalEventListener.class);
 	}
 

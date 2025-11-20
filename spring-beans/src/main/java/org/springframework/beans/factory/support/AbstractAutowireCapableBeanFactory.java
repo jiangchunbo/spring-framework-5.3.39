@@ -589,7 +589,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		if (instanceWrapper == null) {
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
+
+		// 获取创建的 instance
 		Object bean = instanceWrapper.getWrappedInstance();
+
+		// 获取 instance getClass
 		Class<?> beanType = instanceWrapper.getWrappedClass();
 		if (beanType != NullBean.class) {
 			mbd.resolvedTargetType = beanType;
@@ -613,6 +617,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 当前正在创建的是单例，那么就暴露早期的单例
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
+
+		// isSingletonCurrentlyInCreation(beanName) 为什么要判断是否在创建中，因为可能并不总是从 getSingleton 方法调用过来，可能直接调用了 createBean
+
+		// 如果需要早期暴露 singleton，那么添加一个 singleton factory
 		if (earlySingletonExposure) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Eagerly caching bean '" + beanName +
@@ -1203,32 +1211,38 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
 		// 创建 Bean 实例。
-		// 思考一下：Bean 实例是否总是通过构造函数创建？
 
 		// Make sure bean class is actually resolved at this point.
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
 
+		// 如果 beanClass 修饰符不是 public，且不允许访问 non public [默认 true 能访问]
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
 			throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
 		}
 
-		// 通过 Supplier
+		// 1） 通过 Supplier 获取对象
 		Supplier<?> instanceSupplier = mbd.getInstanceSupplier();
 		if (instanceSupplier != null) {
 			return obtainFromSupplier(instanceSupplier, beanName);
 		}
 
-		// 通过 Factory Method
+		// 2) 通过 Factory Method 调用这个方法得到对象
 		if (mbd.getFactoryMethodName() != null) {
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
 		}
 
 		// Shortcut when re-creating the same bean...
+		// 3) 你可能多次创建相同的 bean (prototype)
 		boolean resolved = false;
 		boolean autowireNecessary = false;
+
+		// 下面的场景一定是 constructor 创建 bean，因为 factory method 总是走上面的逻辑
+		// 无显式参数
+		// --> 因为之前已经处理过 1 次无显式参数的场景，解析过，所以会有缓存
 		if (args == null) {
 			synchronized (mbd.constructorArgumentLock) {
+				// 缓存了构造器
 				if (mbd.resolvedConstructorOrFactoryMethod != null) {
 					resolved = true;
 					autowireNecessary = mbd.constructorArgumentsResolved;
@@ -1236,9 +1250,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 		if (resolved) {
+			// 需要自动装配构造器
 			if (autowireNecessary) {
 				return autowireConstructor(beanName, mbd, null, null);
-			} else {
+			}
+			// 直接实例化，通常是无参构造
+			else {
 				return instantiateBean(beanName, mbd);
 			}
 		}

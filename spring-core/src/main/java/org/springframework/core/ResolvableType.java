@@ -329,9 +329,10 @@ public class ResolvableType implements Serializable {
 		boolean checkGenerics = true;
 		Class<?> ourResolved = null;
 
-		// 如果类型是一个 <T>
+		// 如果是 Class 上面声明的那个泛型参数 例如 ApplicationListener<E extends ApplicationEvent>
 		if (this.type instanceof TypeVariable) {
 			TypeVariable<?> variable = (TypeVariable<?>) this.type;
+
 			// Try default variable resolution
 			if (this.variableResolver != null) {
 				ResolvableType resolved = this.variableResolver.resolveVariable(variable);
@@ -354,6 +355,8 @@ public class ResolvableType implements Serializable {
 				exactMatch = false;
 			}
 		}
+
+		// 如果双方都没有 variableResolver，则获取 T 的上界粗略判断
 		if (ourResolved == null) {
 			ourResolved = toClass();
 		}
@@ -361,6 +364,7 @@ public class ResolvableType implements Serializable {
 
 		// We need an exact type match for generics
 		// List<CharSequence> is not assignable from List<String>
+		// 是否需要精确匹配，示例表示泛型类型都要完全匹配，否则使用向上兼容匹配
 		if (exactMatch ? !ourResolved.equals(otherResolved) :
 				!ClassUtils.isAssignable(ourResolved, otherResolved)) {
 			return false;
@@ -369,6 +373,7 @@ public class ResolvableType implements Serializable {
 		if (checkGenerics) {
 			// Recursively check each generic
 			ResolvableType[] ourGenerics = getGenerics();
+			// 另一个类型转换为 our 类型，并获取对应的泛型参数类型
 			ResolvableType[] typeGenerics = other.as(ourResolved).getGenerics();
 			if (ourGenerics.length != typeGenerics.length) {
 				return false;
@@ -1148,6 +1153,8 @@ public class ResolvableType implements Serializable {
 
 	/**
 	 * Return a {@code ResolvableType} for the specified {@link Class} with pre-declared generics.
+	 * <p>
+	 * 传入一个 Class，但是这个类可能有泛型参数，所以可变参数传递具体的实参
 	 *
 	 * @param clazz    the class (or interface) to introspect
 	 * @param generics the generics of the class
@@ -1236,6 +1243,8 @@ public class ResolvableType implements Serializable {
 	 */
 	public static ResolvableType forField(Field field, Class<?> implementationClass) {
 		Assert.notNull(field, "Field must not be null");
+
+		// 例如 ArrayList<T> 你看不出元素类型是什么，但是如果结合第二个参数 Files extends ArrayList<File> 就能知道
 		ResolvableType owner = forType(implementationClass).as(field.getDeclaringClass());
 		return forType(null, new FieldTypeProvider(field), owner.asVariableResolver());
 	}
@@ -1790,8 +1799,14 @@ public class ResolvableType implements Serializable {
 				resolveToWildcard = resolveToWildcard.resolveType();
 			}
 			WildcardType wildcardType = (WildcardType) resolveToWildcard.type;
+
+			// 判断通配符类型是下边界，还是上边界
 			Kind boundsType = (wildcardType.getLowerBounds().length > 0 ? Kind.LOWER : Kind.UPPER);
+
+			// 获取对应的边界类型
 			Type[] bounds = (boundsType == Kind.UPPER ? wildcardType.getUpperBounds() : wildcardType.getLowerBounds());
+
+			// 将每个边界类型都封装成 ResolvableType
 			ResolvableType[] resolvableBounds = new ResolvableType[bounds.length];
 			for (int i = 0; i < bounds.length; i++) {
 				resolvableBounds[i] = ResolvableType.forType(bounds[i], type.variableResolver);

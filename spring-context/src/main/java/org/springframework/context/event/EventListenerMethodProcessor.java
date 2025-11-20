@@ -190,9 +190,12 @@ public class EventListenerMethodProcessor
 				// Non-empty set of methods
 				ConfigurableApplicationContext context = this.applicationContext;
 				Assert.state(context != null, "No ApplicationContext set");
+
+				// 所有的 EventListener 工厂
 				List<EventListenerFactory> factories = this.eventListenerFactories;
 				Assert.state(factories != null, "EventListenerFactory List not initialized");
 				for (Method method : annotatedMethods.keySet()) {
+					// 一旦 Factory 可以创建，就 break
 					for (EventListenerFactory factory : factories) {
 						if (factory.supportsMethod(method)) {
 							Method methodToUse = AopUtils.selectInvocableMethod(method, context.getType(beanName));

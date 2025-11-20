@@ -114,6 +114,10 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Package-visible field for caching the resolved constructor or factory method.
+	 * <p>
+	 * 缓存已经解析过的 constructor 或者 factory method
+	 * <p>
+	 * 只有不显式传递参数的情况下调用 getBean 才会缓存这个属性
 	 */
 	@Nullable
 	Executable resolvedConstructorOrFactoryMethod;

@@ -1371,10 +1371,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param bw the BeanWrapper to initialize
 	 */
 	protected void initBeanWrapper(BeanWrapper bw) {
-		// 设置转换服务
+		// 设置 ConversionService
 		bw.setConversionService(getConversionService());
 
-		// 设置
+		// 设置 PropertyEditor
 		registerCustomEditors(bw);
 	}
 

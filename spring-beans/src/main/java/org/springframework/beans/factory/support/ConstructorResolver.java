@@ -132,6 +132,7 @@ class ConstructorResolver {
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}
+		// 没有显式参数
 		else {
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
@@ -165,12 +166,17 @@ class ConstructorResolver {
 				}
 			}
 
+			// 1) 构造器只有 1 个，也没有显式传参，没有配构造器参数值
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Constructor<?> uniqueCandidate = candidates[0];
+				// 无参构造器
 				if (uniqueCandidate.getParameterCount() == 0) {
 					synchronized (mbd.constructorArgumentLock) {
+						// 对于唯一的无参构造器，确定就是这个构造器
 						mbd.resolvedConstructorOrFactoryMethod = uniqueCandidate;
+						// 没有参数，属于特别的参数已经解析完毕
 						mbd.constructorArgumentsResolved = true;
+						// 不需要传参，所以空数组
 						mbd.resolvedConstructorArguments = EMPTY_ARGS;
 					}
 					bw.setBeanInstance(instantiate(beanName, mbd, uniqueCandidate, EMPTY_ARGS));
@@ -393,15 +399,17 @@ class ConstructorResolver {
 
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 
-		// initBeanWrapper 是一个 protected 方法，但是可以包内调用
+		// 设置 ConversionService 以及 PropertyEditor
 		this.beanFactory.initBeanWrapper(bw);
 
 		Object factoryBean;
 		Class<?> factoryClass;
 		boolean isStatic;
 
-		// 根据是否有 factoryBeanName 分别讨论
+		// factoryBeanName 是拥有这个 method 的 bean 的名字
 		String factoryBeanName = mbd.getFactoryBeanName();
+
+		// 如果有 factoryBeanName 就表示需要实例化这个 bean 才能调用方法创建
 		if (factoryBeanName != null) {
 			// 可能是 XML 里面 <bean> 配置错误
 			if (factoryBeanName.equals(beanName)) {
@@ -421,6 +429,7 @@ class ConstructorResolver {
 			factoryClass = factoryBean.getClass();
 			isStatic = false;
 		}
+		// 如果没有 factoryBeanName 就必须获取 beanClass
 		else {
 			// It's a static factory method on the bean class.
 			if (!mbd.hasBeanClass()) {
@@ -436,13 +445,18 @@ class ConstructorResolver {
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
 
+		// 如果传了参数，那么就用这些参数
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}
+		// 如果没有传参数，那么检查缓存，缓存没有就需要解析参数
 		else {
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
+				// 解析好的 Method (因为可能多个 factory method 需要挑选)
 				factoryMethodToUse = (Method) mbd.resolvedConstructorOrFactoryMethod;
+
+				// 如果用于构造 bean 的参数也解析完毕，都可以直接获取参数值了
 				if (factoryMethodToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached factory method...
 					argsToUse = mbd.resolvedConstructorArguments;
@@ -485,8 +499,11 @@ class ConstructorResolver {
 				if (uniqueCandidate.getParameterCount() == 0) {
 					mbd.factoryMethodToIntrospect = uniqueCandidate;
 					synchronized (mbd.constructorArgumentLock) {
+						// 已经确定，唯一的无参 Method
 						mbd.resolvedConstructorOrFactoryMethod = uniqueCandidate;
+						// 没有参数，所以参数解析完毕
 						mbd.constructorArgumentsResolved = true;
+						// 参数保存是空数组
 						mbd.resolvedConstructorArguments = EMPTY_ARGS;
 					}
 					bw.setBeanInstance(instantiate(beanName, mbd, factoryBean, uniqueCandidate, EMPTY_ARGS));
@@ -1028,6 +1045,7 @@ class ConstructorResolver {
 
 		public void storeCache(RootBeanDefinition mbd, Executable constructorOrFactoryMethod) {
 			synchronized (mbd.constructorArgumentLock) {
+				// 缓存没有显式参数时，选择的 constructor 或者 method
 				mbd.resolvedConstructorOrFactoryMethod = constructorOrFactoryMethod;
 				mbd.constructorArgumentsResolved = true;
 				if (this.resolveNecessary) {
