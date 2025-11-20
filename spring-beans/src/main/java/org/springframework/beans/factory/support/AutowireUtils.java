@@ -126,6 +126,8 @@ abstract class AutowireUtils {
 	/**
 	 * Resolve the given autowiring value against the given required type,
 	 * e.g. an {@link ObjectFactory} value to its actual object result.
+	 * <p>
+	 * 这个方法专门给 resolvableDependencies 使用
 	 *
 	 * @param autowiringValue the value to resolve
 	 *                        <p>从 resolvableDependencies 映射出来的对象

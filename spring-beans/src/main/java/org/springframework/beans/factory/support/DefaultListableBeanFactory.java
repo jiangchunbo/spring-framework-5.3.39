@@ -1776,7 +1776,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		Map<String, Object> result = CollectionUtils.newLinkedHashMap(candidateNames.length);
 
 		// resolvableDependencies: 通过类型直接找到对应的 bean，应该不算 bean，是一种依赖的补充
-		// 1. 查找 resolvableDependencies 是否有匹配的
+		// 1) 查找 resolvableDependencies 是否有匹配的
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
 			// 获取 resolvableDependencies 里面的类型，一般就是一些非常基础的接口
 			Class<?> autowiringType = classObjectEntry.getKey();
@@ -1785,6 +1785,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			if (autowiringType.isAssignableFrom(requiredType)) {
 				// 直接 getValue，或者检查是否需要进一步解析，一般只有 ObjectFactory(从 ThreadLocal 获取等) 才会进一步处理
 				Object autowiringValue = classObjectEntry.getValue();
+				// 调用一个独特的方法解析出真正的对象 (比如 JDK Proxy)
 				autowiringValue = AutowireUtils.resolveAutowiringValue(autowiringValue, requiredType);
 
 				// 检查实例对象是否兼容类型
@@ -1797,7 +1798,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		// candidateNames 这个应该算 bean
-		// 2. 检查每一个按类型查找到的 bean，将这些 bean 找到并放到 result 里面
+		// 2) 检查每一个按类型查找到的 bean，将这些 bean 找到并放到 result 里面
 		for (String candidate : candidateNames) {
 			// 确保自己不会找到自己
 			// 检查是否有资格成为候选人 (比如 scope 原始 bean 是不能作为候选人的，只有它的代理对象可以)
@@ -2080,8 +2081,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * 判定是否给定的 beanName/candidateName 这一对是一个自引用，
 	 * 例如，是否 candidate 指回到最初的 bean，或者指回到一个最初 bean 的一个工厂方法
 	 *
-	 * @param beanName      requesting -> 表示正在寻找依赖的 bean 名字
-	 * @param candidateName 正在寻找的依赖项的 beanName
+	 * @param beanName      表示正在寻找依赖的 bean
+	 * @param candidateName 找到的依赖项 bean
 	 */
 	private boolean isSelfReference(@Nullable String beanName, @Nullable String candidateName) {
 		// 情况一 我正在找我自己
