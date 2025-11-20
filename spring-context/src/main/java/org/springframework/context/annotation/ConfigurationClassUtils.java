@@ -86,7 +86,7 @@ abstract class ConfigurationClassUtils {
 	public static boolean checkConfigurationClassCandidate(
 			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
 
-		// 工厂方法创建的 bean 直接排除，可能是静态方法，也可能是实例方法，总之都不需要
+		// 1) 工厂方法的产物不可能是配置类
 		String className = beanDef.getBeanClassName();
 		if (className == null || beanDef.getFactoryMethodName() != null) {
 			return false;

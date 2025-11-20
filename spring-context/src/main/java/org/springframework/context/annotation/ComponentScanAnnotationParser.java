@@ -36,13 +36,15 @@ import org.springframework.util.StringUtils;
 
 /**
  * Parser for the @{@link ComponentScan} annotation.
+ * <p>
+ * 该类特别为配置类的 @ComponentScan 组件扫描注解提供支持
  *
  * @author Chris Beams
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 3.1
  * @see ClassPathBeanDefinitionScanner#scan(String...)
  * @see ComponentScanBeanDefinitionParser
+ * @since 3.1
  */
 class ComponentScanAnnotationParser {
 
@@ -54,9 +56,8 @@ class ComponentScanAnnotationParser {
 
 	private final BeanDefinitionRegistry registry;
 
-
 	public ComponentScanAnnotationParser(Environment environment, ResourceLoader resourceLoader,
-			BeanNameGenerator beanNameGenerator, BeanDefinitionRegistry registry) {
+										 BeanNameGenerator beanNameGenerator, BeanDefinitionRegistry registry) {
 
 		this.environment = environment;
 		this.resourceLoader = resourceLoader;
@@ -64,22 +65,23 @@ class ComponentScanAnnotationParser {
 		this.registry = registry;
 	}
 
-
 	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, String declaringClass) {
-		// 构造一个底层的 Scanner，这个方法最后会使用这个扫描器获取 bean definition
+		// ClassPathBeanDefinitionScanner 底层的组件扫描器
+		// 调用 doScan 能够扫描并返回一些 Bean Definition
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
 				componentScan.getBoolean("useDefaultFilters"), this.environment, this.resourceLoader);
 
+		// 扫描过程中使用的 [名称生成器]
 		Class<? extends BeanNameGenerator> generatorClass = componentScan.getClass("nameGenerator");
 		boolean useInheritedGenerator = (BeanNameGenerator.class == generatorClass);
 		scanner.setBeanNameGenerator(useInheritedGenerator ? this.beanNameGenerator :
 				BeanUtils.instantiateClass(generatorClass));
 
+		// 使用的 scope 代理模式
 		ScopedProxyMode scopedProxyMode = componentScan.getEnum("scopedProxy");
 		if (scopedProxyMode != ScopedProxyMode.DEFAULT) {
 			scanner.setScopedProxyMode(scopedProxyMode);
-		}
-		else {
+		} else {
 			Class<? extends ScopeMetadataResolver> resolverClass = componentScan.getClass("scopeResolver");
 			scanner.setScopeMetadataResolver(BeanUtils.instantiateClass(resolverClass));
 		}
@@ -95,7 +97,7 @@ class ComponentScanAnnotationParser {
 		}
 		for (AnnotationAttributes excludeFilterAttributes : componentScan.getAnnotationArray("excludeFilters")) {
 			List<TypeFilter> typeFilters = TypeFilterUtils.createTypeFiltersFor(excludeFilterAttributes, this.environment,
-				this.resourceLoader, this.registry);
+					this.resourceLoader, this.registry);
 			for (TypeFilter typeFilter : typeFilters) {
 				scanner.addExcludeFilter(typeFilter);
 			}

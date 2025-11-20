@@ -46,7 +46,7 @@ import org.springframework.util.ObjectUtils;
  * Wraps a constructor parameter, a method parameter or a field,
  * allowing unified access to their metadata.
  * <p>
- * DependencyDescriptor 翻译为依赖描述符，差不多这样翻译一下吧
+ * DependencyDescriptor 翻译为依赖描述符
  * <p>
  * 这个类用于描述将要被注入的依赖
  * <p>
@@ -77,6 +77,8 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 	/**
 	 * 嵌套层数，默认是 1，也可以推测是从 1 开始
+	 *
+	 * List<Map<String,Handler>>
 	 */
 	private int nestingLevel = 1;
 
@@ -411,6 +413,7 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 		if (this.field != null) {
 			// 如果 level > 1，说明类型没有那么简单
 			if (this.nestingLevel > 1) {
+
 				// JDK API 获取能够反应泛型的类型
 				Type type = this.field.getGenericType();
 

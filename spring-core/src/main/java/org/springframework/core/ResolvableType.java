@@ -298,10 +298,13 @@ public class ResolvableType implements Serializable {
 		}
 
 		// Deal with array by delegating to the component type
+		// 如果 other 是数组，且 component type 兼容
+		// (第一次看这个方法可以先跳过)
 		if (isArray()) {
 			return (other.isArray() && getComponentType().isAssignableFrom(other.getComponentType()));
 		}
 
+		// 防止内部无限递归
 		if (matchedBefore != null && matchedBefore.get(this.type) == other.type) {
 			return true;
 		}
@@ -325,6 +328,8 @@ public class ResolvableType implements Serializable {
 		boolean exactMatch = (matchedBefore != null);  // We're checking nested generic variables now...
 		boolean checkGenerics = true;
 		Class<?> ourResolved = null;
+
+		// 如果类型是一个 <T>
 		if (this.type instanceof TypeVariable) {
 			TypeVariable<?> variable = (TypeVariable<?>) this.type;
 			// Try default variable resolution
@@ -417,8 +422,7 @@ public class ResolvableType implements Serializable {
 
 		// 否则，需要解析
 
-		// 如果类型是类似于 int[] String[] 之类的，可以直接获取其中的组件类型
-		// List<?>[] 这种也可能
+		// 如果类型是类似于 int[] String[] List<?>[] 之类的，可以直接获取其中的组件类型
 		if (this.type instanceof Class) {
 			Class<?> componentType = ((Class<?>) this.type).getComponentType();
 			return forType(componentType, this.variableResolver);

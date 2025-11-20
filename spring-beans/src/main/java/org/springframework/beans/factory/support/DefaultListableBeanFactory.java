@@ -675,7 +675,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						// 内部包含了一个装饰起来的 bean definition，但是 mbd 非懒加载
 						boolean isNonLazyDecorated = (dbd != null && !mbd.isLazyInit());
 
-						// 处理非 factory bean
+						// 处理普通 bean
 						if (!isFactoryBean) {
 							// includeNonSingletons 意思就是啥都行
 							// 或者，必须是 单例

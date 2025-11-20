@@ -583,31 +583,35 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// beanInstance 或者是普通 bean 实例，也可能是 FactoryBean
 		Object beanInstance = getSingleton(beanName, false);
 
+		// 总的来说还是要依靠 isAssignableFrom (重点学习)
+		// isInstance 底层也是 isAssignableFrom
+
 		// 实例已经存在
 		if (beanInstance != null && beanInstance.getClass() != NullBean.class) {
 			// 处理 FactoryBean
 			if (beanInstance instanceof FactoryBean) {
-				// 如果关注 FactoryBean 的产物，那么调用 getObjectType -> 并不是 getObject().getClass()
+				// 关注 [产物]
 				if (!isFactoryDereference) {
 					Class<?> type = getTypeForFactoryBean((FactoryBean<?>) beanInstance);
 					return (type != null && typeToMatch.isAssignableFrom(type));
 				}
-				// 如果只关注  FactoryBean 本身，那么 typeToMatch 必须是 FactoryBean 类型
+				// 关注 [FactoryBean] 本身
 				else {
 					return typeToMatch.isInstance(beanInstance);
 				}
 			}
 			// 处理普通 bean，但是调用者不应该传入以 & 开头
 			else if (!isFactoryDereference) {
-				// 这里面的判断挺复杂的
+				// 1) 检查是否能够向上转型
 				if (typeToMatch.isInstance(beanInstance)) {
 					// Direct match for exposed instance?
 					return true;
 				} else if (typeToMatch.hasGenerics() && containsBeanDefinition(beanName)) {
 					// Generics potentially only match on the target class, not on the proxy...
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
-					Class<?> targetType = mbd.getTargetType();
 
+					// bean targetType
+					Class<?> targetType = mbd.getTargetType();
 
 					// 从 mbd 中获取的 targetType 与通过 beanInstance 获取的 Class 不相同
 					if (targetType != null && targetType != ClassUtils.getUserClass(beanInstance)) {
