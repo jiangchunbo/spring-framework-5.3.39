@@ -1652,8 +1652,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 		// 3. 集合
 		else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
-			// 获取 elementType，进而进行 findAutowireCandidates
+			// 获得 Collection 的元素类型
 			Class<?> elementType = descriptor.getResolvableType().asCollection().resolveGeneric();
+
+			// 没有获得元素类型，没有定义泛型 ?
 			if (elementType == null) {
 				return null;
 			}
@@ -1822,6 +1824,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					addCandidateEntry(result, candidate, descriptor, requiredType);
 				}
 			}
+
+
+			// 如果还是没有找到，比如 Component 依赖自己的产物 Bean
 			if (result.isEmpty() && !multiple) {
 				// Consider self references as a final pass...
 				// but in the case of a dependency collection, not the very same bean itself.

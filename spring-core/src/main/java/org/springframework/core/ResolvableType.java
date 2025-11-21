@@ -127,6 +127,11 @@ public class ResolvableType implements Serializable {
 	@Nullable
 	private Class<?> resolved;
 
+	/**
+	 * 取值只可能是 null 或者有意义的父类。
+	 * <p>
+	 * 这个值永远不可能是 NONE。
+	 */
 	@Nullable
 	private volatile ResolvableType superType;
 
@@ -168,6 +173,8 @@ public class ResolvableType implements Serializable {
 		this.variableResolver = variableResolver;
 		this.componentType = null;
 		this.hash = hash;
+
+		// resolveClass 方法依赖于 type 属性
 		this.resolved = resolveClass();
 	}
 
@@ -469,6 +476,11 @@ public class ResolvableType implements Serializable {
 	 * {@link #getSuperType() supertype} and {@link #getInterfaces() interface}
 	 * hierarchies to find a match, returning {@link #NONE} if this type does not
 	 * implement or extend the specified class.
+	 * <p>
+	 * 以指定类型的 ResolvableType 返回该类型。
+	 * <p>
+	 * 会在 getSuperType 和 getInterfaces 中搜索匹配项:
+	 * 如果此类型没有实现或者继承指定的类型，则返回 NONE
 	 *
 	 * @param type the required type (typically narrowed)
 	 * @return a {@code ResolvableType} representing this object as the specified
@@ -482,16 +494,22 @@ public class ResolvableType implements Serializable {
 		if (this == NONE) {
 			return NONE;
 		}
+
+		// 获取解析之后的类型，如果等于 type 那么直接找到
 		Class<?> resolved = resolve();
 		if (resolved == null || resolved == type) {
 			return this;
 		}
+
+		// 接口递归，检查是否有一个接口是 type 类型
 		for (ResolvableType interfaceType : getInterfaces()) {
 			ResolvableType interfaceAsType = interfaceType.as(type);
 			if (interfaceAsType != NONE) {
 				return interfaceAsType;
 			}
 		}
+
+		// 父类递归
 		return getSuperType().as(type);
 	}
 
@@ -504,18 +522,22 @@ public class ResolvableType implements Serializable {
 	 */
 	public ResolvableType getSuperType() {
 		Class<?> resolved = resolve();
+
+		// 如果当前已经不是一个正常的类了，例如 Object 的 superType，此时返回 NONE
 		if (resolved == null) {
 			return NONE;
 		}
+
+		// 否则，通过 JDK Reflect API 获取父类
 		try {
 			Type superclass = resolved.getGenericSuperclass();
 
-			// 如果是 Object、interface、primitive、void 就没有 superclass
+			// Object、interface、primitive、void 没有 superclass
 			if (superclass == null) {
 				return NONE;
 			}
 
-			// 获取 superType (惰性解析)
+			// 那么应该是有 superClass，先看是否解析过，没有解析就解析并保存到 superType
 			ResolvableType superType = this.superType;
 			if (superType == null) {
 				superType = forType(superclass, this);
@@ -734,6 +756,8 @@ public class ResolvableType implements Serializable {
 	 */
 	public ResolvableType getGeneric(@Nullable int... indexes) {
 		ResolvableType[] generics = getGenerics();
+
+		// 如果没有指定索引，那么仅当泛型只有 1 个时，才返回那个唯一的一个
 		if (indexes == null || indexes.length == 0) {
 			return (generics.length == 0 ? NONE : generics[0]);
 		}
