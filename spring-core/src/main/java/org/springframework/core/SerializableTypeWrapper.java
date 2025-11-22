@@ -60,10 +60,8 @@ final class SerializableTypeWrapper {
 
 	static final ConcurrentReferenceHashMap<Type, Type> cache = new ConcurrentReferenceHashMap<>(256);
 
-
 	private SerializableTypeWrapper() {
 	}
-
 
 	/**
 	 * Return a {@link Serializable} variant of {@link Field#getGenericType()}.
@@ -84,6 +82,7 @@ final class SerializableTypeWrapper {
 
 	/**
 	 * Unwrap the given type, effectively returning the original non-serializable type.
+	 *
 	 * @param type the type to unwrap
 	 * @return the original non-serializable type
 	 */
@@ -122,7 +121,7 @@ final class SerializableTypeWrapper {
 		for (Class<?> type : SUPPORTED_SERIALIZABLE_TYPES) {
 			if (type.isInstance(providedType)) {
 				ClassLoader classLoader = provider.getClass().getClassLoader();
-				Class<?>[] interfaces = new Class<?>[] {type, SerializableTypeProxy.class, Serializable.class};
+				Class<?>[] interfaces = new Class<?>[]{type, SerializableTypeProxy.class, Serializable.class};
 				InvocationHandler handler = new TypeProxyInvocationHandler(provider);
 				cached = (Type) Proxy.newProxyInstance(classLoader, interfaces, handler);
 				cache.put(providedType, cached);
@@ -131,7 +130,6 @@ final class SerializableTypeWrapper {
 		}
 		throw new IllegalArgumentException("Unsupported Type class: " + providedType.getClass().getName());
 	}
-
 
 	/**
 	 * Additional interface implemented by the type proxy.
@@ -142,8 +140,8 @@ final class SerializableTypeWrapper {
 		 * Return the underlying type provider.
 		 */
 		TypeProvider getTypeProvider();
-	}
 
+	}
 
 	/**
 	 * A {@link Serializable} interface providing access to a {@link Type}.
@@ -165,8 +163,8 @@ final class SerializableTypeWrapper {
 		default Object getSource() {
 			return null;
 		}
-	}
 
+	}
 
 	/**
 	 * {@link Serializable} {@link InvocationHandler} used by the proxied {@link Type}.
@@ -201,8 +199,7 @@ final class SerializableTypeWrapper {
 
 			if (Type.class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
 				return forTypeProvider(new MethodInvokeTypeProvider(this.provider, method, -1));
-			}
-			else if (Type[].class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
+			} else if (Type[].class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
 				Object returnValue = ReflectionUtils.invokeMethod(method, this.provider.getType());
 				if (returnValue == null) {
 					return null;
@@ -221,11 +218,15 @@ final class SerializableTypeWrapper {
 			}
 			return ReflectionUtils.invokeMethod(method, type, args);
 		}
-	}
 
+	}
 
 	/**
 	 * {@link TypeProvider} for {@link Type Types} obtained from a {@link Field}.
+	 * <p>
+	 * 从 Field 字段中获取 Type
+	 * <p>
+	 * 有些场景暂时拿不到真正的 Type，又想先生成 ResolvableType
 	 */
 	@SuppressWarnings("serial")
 	static class FieldTypeProvider implements TypeProvider {
@@ -244,6 +245,7 @@ final class SerializableTypeWrapper {
 
 		@Override
 		public Type getType() {
+			// this.field.getType() 太 low 都不用了
 			return this.field.getGenericType();
 		}
 
@@ -256,27 +258,40 @@ final class SerializableTypeWrapper {
 			inputStream.defaultReadObject();
 			try {
 				this.field = this.declaringClass.getDeclaredField(this.fieldName);
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Could not find original class structure", ex);
 			}
 		}
-	}
 
+	}
 
 	/**
 	 * {@link TypeProvider} for {@link Type Types} obtained from a {@link MethodParameter}.
+	 * <p>
+	 * 从 MethodParameter 中获取 Type
 	 */
 	@SuppressWarnings("serial")
 	static class MethodParameterTypeProvider implements TypeProvider {
 
+		/**
+		 * 方法的名字
+		 */
 		@Nullable
 		private final String methodName;
 
+		/**
+		 * 获取方法所有的参数类型
+		 */
 		private final Class<?>[] parameterTypes;
 
+		/**
+		 * 获取方法声明类
+		 */
 		private final Class<?> declaringClass;
 
+		/**
+		 * 获取方法索引
+		 */
 		private final int parameterIndex;
 
 		private transient MethodParameter methodParameter;
@@ -305,18 +320,16 @@ final class SerializableTypeWrapper {
 				if (this.methodName != null) {
 					this.methodParameter = new MethodParameter(
 							this.declaringClass.getDeclaredMethod(this.methodName, this.parameterTypes), this.parameterIndex);
-				}
-				else {
+				} else {
 					this.methodParameter = new MethodParameter(
 							this.declaringClass.getDeclaredConstructor(this.parameterTypes), this.parameterIndex);
 				}
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Could not find original class structure", ex);
 			}
 		}
-	}
 
+	}
 
 	/**
 	 * {@link TypeProvider} for {@link Type Types} obtained by invoking a no-arg method.
@@ -376,6 +389,7 @@ final class SerializableTypeWrapper {
 			}
 			this.method = method;
 		}
+
 	}
 
 }

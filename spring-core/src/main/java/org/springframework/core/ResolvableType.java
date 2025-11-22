@@ -147,6 +147,8 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Private constructor used to create a new {@code ResolvableType} for cache key purposes,
 	 * with no upfront resolution.
+	 * <p>
+	 * 用作缓存 Key，不做预解析
 	 */
 	private ResolvableType(
 			Type type, @Nullable TypeProvider typeProvider, @Nullable VariableResolver variableResolver) {
@@ -155,13 +157,15 @@ public class ResolvableType implements Serializable {
 		this.typeProvider = typeProvider;
 		this.variableResolver = variableResolver;
 		this.componentType = null;
-		this.hash = calculateHashCode();
+		this.hash = calculateHashCode(); // 计算 hash
 		this.resolved = null;
 	}
 
 	/**
 	 * Private constructor used to create a new {@code ResolvableType} for cache value purposes,
 	 * with upfront resolution and a pre-calculated hash.
+	 * <p>
+	 * 用作缓存 Key，立即解析，预计算 hash
 	 *
 	 * @since 4.2
 	 */
@@ -1498,6 +1502,12 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Return a {@code ResolvableType} for the specified {@link Type}.
 	 * <p>Note: The resulting {@code ResolvableType} instance may not be {@link Serializable}.
+	 * <p>
+	 * 返回一个给定 Type 的 ResolvableType
+	 * <p>
+	 * 注意：结果 ResolvableType 可能不是 Serializable，这是因为这个方法直接把 Type 保存下来了，
+	 * JDK 中大部分 Type(例如 ParameterizeTypeImpl、TypeVariableImpl、GenericArrayTypeImpl 等运行时内部类)
+	 * 本身并没有实现 Serializable，当你序列化 ResolvableType 时会触发 NotSerializableException
 	 *
 	 * @param type the source type (potentially {@code null})
 	 * @return a {@code ResolvableType} for the specified {@link Type}
@@ -1553,6 +1563,8 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Return a {@code ResolvableType} for the specified {@link Type} backed by a given
 	 * {@link VariableResolver}.
+	 * <p>
+	 * 这个方法没有访问修饰符，是内部用的
 	 *
 	 * @param type             the source type or {@code null}
 	 * @param typeProvider     the type provider or {@code null}
@@ -1562,6 +1574,7 @@ public class ResolvableType implements Serializable {
 	static ResolvableType forType(
 			@Nullable Type type, @Nullable TypeProvider typeProvider, @Nullable VariableResolver variableResolver) {
 
+		// 如果没有传入 type，但是提供了 TypeProvider
 		if (type == null && typeProvider != null) {
 			type = SerializableTypeWrapper.forTypeProvider(typeProvider);
 		}
@@ -1571,25 +1584,30 @@ public class ResolvableType implements Serializable {
 
 		// For simple Class references, build the wrapper right away -
 		// no expensive resolution necessary, so not worth caching...
+		// 为什么只要是 Class 就如此确信？因为大部分都是使用包含 generic 的 API，所以如果是泛型 Type 就不会是 Class
 		// 普通的 Class 并不包含任何泛型信息，无需复杂解析，也不值得放入缓存，直接 new
 		if (type instanceof Class) {
 			return new ResolvableType(type, typeProvider, variableResolver, (ResolvableType) null);
 		}
 
 		// Purge empty entries on access since we don't have a clean-up thread or the like.
+		// 清理
 		cache.purgeUnreferencedEntries();
 
 		// Check the cache - we may have a ResolvableType which has been resolved before...
+		// 检查缓存 - 我们可能已经有一个解析好的 ResolvableType
+		// 这里构建的 resultType 只是用于计算他的 hash 并查询缓存
 		ResolvableType resultType = new ResolvableType(type, typeProvider, variableResolver);
+
+		// 检查缓存
 		ResolvableType cachedType = cache.get(resultType);
 		if (cachedType == null) {
-			// K V 都是同一个对象
+			// 使用 key.hash 当参数，[重]解析后放入缓存，把解析的结果，作为 key 又作为 value 存进去
 			cachedType = new ResolvableType(type, typeProvider, variableResolver, resultType.hash);
 			cache.put(cachedType, cachedType);
 		}
 
-		// 创建了一个新的对象，并且把 从缓存中获取的 resolved 给了 resultType
-		// 也就是基尔希 resolved 可能比较重
+		// 然后返回的是之前作为 key 索引的对象，赋予其 resolved
 		resultType.resolved = cachedType.resolved;
 		return resultType;
 	}

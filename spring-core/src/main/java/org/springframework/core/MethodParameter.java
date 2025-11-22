@@ -123,6 +123,7 @@ public class MethodParameter {
 	 * @param parameterIndex the index of the parameter: -1 for the method
 	 *                       return type; 0 for the first method parameter; 1 for the second method
 	 *                       parameter, etc.
+	 *                       <p>对于方法返回值是 -1
 	 * @param nestingLevel   the nesting level of the target type
 	 *                       (typically 1; e.g. in case of a List of Lists, 1 would indicate the
 	 *                       nested List, whereas 2 would indicate the element of the nested List)
@@ -536,14 +537,18 @@ public class MethodParameter {
 	public Type getGenericParameterType() {
 		Type paramType = this.genericParameterType;
 		if (paramType == null) {
+			// 这表示返回值
 			if (this.parameterIndex < 0) {
 				Method method = getMethod();
 				paramType = (method != null ?
 						(KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(getContainingClass()) ?
 								KotlinDelegate.getGenericReturnType(method) : method.getGenericReturnType()) : void.class);
-			} else {
+			}
+			// 常规方法参数
+			else {
 				Type[] genericParameterTypes = this.executable.getGenericParameterTypes();
 				int index = this.parameterIndex;
+				// 修正 index
 				if (this.executable instanceof Constructor &&
 						ClassUtils.isInnerClass(this.executable.getDeclaringClass()) &&
 						genericParameterTypes.length == this.executable.getParameterCount() - 1) {
