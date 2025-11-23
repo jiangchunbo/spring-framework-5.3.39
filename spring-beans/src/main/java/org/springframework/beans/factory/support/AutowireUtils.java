@@ -192,24 +192,33 @@ abstract class AutowireUtils {
 		Assert.notNull(args, "Argument array must not be null");
 
 		TypeVariable<Method>[] declaredTypeVariables = method.getTypeParameters();
-		Type genericReturnType = method.getGenericReturnType();
+		Type genericReturnType = method.getGenericReturnType(); // 带有泛型的返回值
 		Type[] methodParameterTypes = method.getGenericParameterTypes();
 		Assert.isTrue(args.length == methodParameterTypes.length, "Argument array does not match parameter count");
 
 		// Ensure that the type variable (e.g., T) is declared directly on the method
 		// itself (e.g., via <T>), not on the enclosing class or interface.
+		// 确定是否 TypeVariable 是由 Method 自己声明的，而不是封闭类或接口
 		boolean locallyDeclaredTypeVariableMatchesReturnType = false;
 		for (TypeVariable<Method> currentTypeVariable : declaredTypeVariables) {
 			if (currentTypeVariable.equals(genericReturnType)) {
+				// 此刻 genericReturnType 类型应该看作 TypeVariable
 				locallyDeclaredTypeVariableMatchesReturnType = true;
 				break;
 			}
 		}
 
+		// ps: 这个方法没有那么强大，只有当返回值刚好是 T 这样的类型变量时，才能通过 args 解析出来
+		//     而且，参数也不能太复杂，例如 Map<String, List<T>> List<T> 又是一个 methodParameterType 该方法根本不能解析出来
+
+
+		// 方法自己声明的泛型
 		if (locallyDeclaredTypeVariableMatchesReturnType) {
 			for (int i = 0; i < methodParameterTypes.length; i++) {
 				Type methodParameterType = methodParameterTypes[i];
 				Object arg = args[i];
+
+				// 1) 参数直接就是 T，例如 <T> T getProperty(String key, Class<T> targetType, T defaultValue)
 				if (methodParameterType.equals(genericReturnType)) {
 					if (arg instanceof TypedStringValue) {
 						TypedStringValue typedValue = ((TypedStringValue) arg);
@@ -227,13 +236,21 @@ abstract class AutowireUtils {
 						}
 					} else if (arg != null && !(arg instanceof BeanMetadataElement)) {
 						// Only consider argument type if it is a simple value...
+						// 一般参数类型也不太可能是 TypedStringValue 吧
 						return arg.getClass();
 					}
 					return method.getReturnType();
-				} else if (methodParameterType instanceof ParameterizedType) {
+				}
+				// 2) 参数是类似于 Class<T>
+				else if (methodParameterType instanceof ParameterizedType) {
 					ParameterizedType parameterizedType = (ParameterizedType) methodParameterType;
+					// 检查顶层泛型参数，类型参数可能是 Class、TypeVariable、ParameterizedType 等
 					Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
 					for (Type typeArg : actualTypeArguments) {
+						// 如果参数 Class<T> typeArg 是 T，能解析
+						// 如果参数 List<T> typeArg 是 T，能解析
+						// 如果参数是 Map<String, List<T>>，actual 拿到的是 String 和 List<T>，List<T> 是 ParameterizeType，不等于 T
+
 						if (typeArg.equals(genericReturnType)) {
 							if (arg instanceof Class) {
 								return (Class<?>) arg;

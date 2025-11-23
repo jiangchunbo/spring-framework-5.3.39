@@ -1010,6 +1010,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Stop using the temporary ClassLoader for type matching.
+		// 停止使用临时的类加载器，用于类型匹配
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.

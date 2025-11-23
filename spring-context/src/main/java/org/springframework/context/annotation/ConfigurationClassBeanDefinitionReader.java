@@ -202,8 +202,11 @@ class ConfigurationClassBeanDefinitionReader {
 	 */
 	@SuppressWarnings("deprecation")  // for RequiredAnnotationBeanPostProcessor.SKIP_REQUIRED_CHECK_ATTRIBUTE
 	private void loadBeanDefinitionsForBeanMethod(BeanMethod beanMethod) {
+		// 配置类信息
 		ConfigurationClass configClass = beanMethod.getConfigurationClass();
+		// 方法元数据，待会要传给 bean definition
 		MethodMetadata metadata = beanMethod.getMetadata();
+		// 方法名，待会可能成为 beanName
 		String methodName = metadata.getMethodName();
 
 		// Do we need to mark the bean as skipped by its condition?
@@ -244,28 +247,36 @@ class ConfigurationClassBeanDefinitionReader {
 		ConfigurationClassBeanDefinition beanDef = new ConfigurationClassBeanDefinition(configClass, metadata, beanName);
 		beanDef.setSource(this.sourceExtractor.extractSource(metadata, configClass.getResource()));
 
-		// @Bean 方法允许是 static
+		// 复习: @Bean 方法允许是 static
 
 		if (metadata.isStatic()) {
-			// static @Bean method
+			// 1) 标准反射，直接拿内省类
+			// 2) 非反射，先存储 className，稍后解析
 			if (configClass.getMetadata() instanceof StandardAnnotationMetadata) {
 				beanDef.setBeanClass(((StandardAnnotationMetadata) configClass.getMetadata()).getIntrospectedClass());
 			} else {
 				beanDef.setBeanClassName(configClass.getMetadata().getClassName());
 			}
+
+			// 设置 methodName
 			beanDef.setUniqueFactoryMethodName(methodName);
 		} else {
 			// instance @Bean method
 			// 如果 method 不是静态的，也就是实例方法，那么这里设置了 FactoryBeanName，意思就是要这个类实例化之后才能调用这个方法
 			beanDef.setFactoryBeanName(configClass.getBeanName());
+
+			// 设置 methodName
 			beanDef.setUniqueFactoryMethodName(methodName);
 		}
 
+		// 如果是标准反射设置 Method
 		if (metadata instanceof StandardMethodMetadata) {
 			beanDef.setResolvedFactoryMethod(((StandardMethodMetadata) metadata).getIntrospectedMethod());
 		}
 
 		beanDef.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
+
+		// skipRequiredCheck=true
 		beanDef.setAttribute(org.springframework.beans.factory.annotation.RequiredAnnotationBeanPostProcessor.
 				SKIP_REQUIRED_CHECK_ATTRIBUTE, Boolean.TRUE);
 
@@ -419,16 +430,27 @@ class ConfigurationClassBeanDefinitionReader {
 	 * was created from a configuration class as opposed to any other configuration source.
 	 * Used in bean overriding cases where it's necessary to determine whether the bean
 	 * definition was created externally.
-	 * <p>
-	 * 其实这个类就是专门给配置类里面的 @Bean 工厂方法 bean 设计的吧？！
+	 *
+	 * <p>这是 RootBeanDefinition 的 “标记型” 子类，用来表明该 BeanDefinition 是由 [配置类] 生成的，
+	 * 而不是来自其他配置源。
+	 * 在出现 Bean 覆盖 (overriding) 时，框架需要判断当前 BeanDefinition 是否由外部(非配置类)创建，就会用到这个标记。
 	 */
 	@SuppressWarnings("serial")
 	private static class ConfigurationClassBeanDefinition extends RootBeanDefinition implements AnnotatedBeanDefinition {
 
+		/**
+		 * 配置类的元数据。@Bean 属于工厂方法，所以它依赖于工厂，这个就是工厂类的元数据。
+		 */
 		private final AnnotationMetadata annotationMetadata;
 
+		/**
+		 * 工厂方法元数据
+		 */
 		private final MethodMetadata factoryMethodMetadata;
 
+		/**
+		 * beanName，derived 这个形容词可能想表达这是由配置类派生出来的 bean
+		 */
 		private final String derivedBeanName;
 
 		public ConfigurationClassBeanDefinition(
@@ -437,6 +459,8 @@ class ConfigurationClassBeanDefinitionReader {
 			this.annotationMetadata = configClass.getMetadata();
 			this.factoryMethodMetadata = beanMethodMetadata;
 			this.derivedBeanName = derivedBeanName;
+
+			// 设置配置类的 Resource
 			setResource(configClass.getResource());
 			setLenientConstructorResolution(false);
 		}
@@ -470,6 +494,9 @@ class ConfigurationClassBeanDefinitionReader {
 
 		@Override
 		public boolean isFactoryMethod(Method candidate) {
+			// 1) method name 长得像候选项
+			// 2) 方法有 @Bean 注解
+			// 3) beanName 匹配
 			return (super.isFactoryMethod(candidate) && BeanAnnotationHelper.isBeanAnnotated(candidate) &&
 					BeanAnnotationHelper.determineBeanNameFor(candidate).equals(this.derivedBeanName));
 		}

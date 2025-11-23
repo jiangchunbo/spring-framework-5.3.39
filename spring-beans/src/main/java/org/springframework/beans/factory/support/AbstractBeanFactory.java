@@ -831,6 +831,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	@Override
 	public boolean containsLocalBean(String name) {
+		// 思考: 调用者传入 &userService，刚好碰巧有一个 userService 的 bean，但是它只是一个普通 bean
+		// 		并不存在 userService factory bean 这违背了用户的意图，所以也算不存在
+
 		String beanName = transformedBeanName(name);
 		return ((containsSingleton(beanName) || containsBeanDefinition(beanName)) &&
 				(!BeanFactoryUtils.isFactoryDereference(name) || isFactoryBean(beanName)));
@@ -1216,15 +1219,19 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// 1. 从 bean 对象推测
 		// 2. 没有 bean 对象就从 beanClass 推测
 
-		// 找单例池 检查是否是 FactoryBean
-		String beanName = transformedBeanName(name); // 剥离，裸露出来
+		String beanName = transformedBeanName(name);
+
+		// singletonObjects 永远是优先检查的地方
+		// 复习: FactoryBean 存储在 singletonObjects
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null) {
 			return (beanInstance instanceof FactoryBean);
 		}
 
+		// singletonObjects 没有可能是没有创建，需要再检查是否存在 bean definition
+
 		// No singleton instance found -> check bean definition.
-		// 没有找到单例 bean，而且也没有对应的 BeanDefinition，尝试从寻找 ParentBeanFactory
+		// 没有 BeanDefinition，允许 parent bean factory 找
 		if (!containsBeanDefinition(beanName) && getParentBeanFactory() instanceof ConfigurableBeanFactory) {
 			// No bean definition found in this factory -> delegate to parent.
 			return ((ConfigurableBeanFactory) getParentBeanFactory()).isFactoryBean(name);
@@ -1611,9 +1618,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * Resolve the bean class for the specified bean definition,
 	 * resolving a bean class name into a Class reference (if necessary)
 	 * and storing the resolved Class in the bean definition for further use.
+	 * <p>
+	 * 为指定的 bean definition 解析 bean class，
+	 * 将 bean class name 解析为 class 引用(如果需要的话)
+	 * 然后，将解析得到的 class 存储到 bean definition 供未来使用
+	 * <p>
+	 * 该方法解析得到的 class 未必就是 bean 的类型，也有可能是 factory method 的 factory bean class
 	 *
 	 * @param mbd          the merged bean definition to determine the class for
 	 * @param beanName     the name of the bean (for error handling purposes)
+	 *                     <p>
+	 *                     该参数仅仅只是为了错误处理时使用
 	 * @param typesToMatch the types to match in case of internal type matching purposes
 	 *                     (also signals that the returned {@code Class} will never be exposed to application code)
 	 * @return the resolved bean class (or {@code null} if none)
@@ -1637,11 +1652,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				return doResolveBeanClass(mbd, typesToMatch);
 			}
 		} catch (PrivilegedActionException pae) {
+			// 权限问题
 			ClassNotFoundException ex = (ClassNotFoundException) pae.getException();
 			throw new CannotLoadBeanClassException(mbd.getResourceDescription(), beanName, mbd.getBeanClassName(), ex);
 		} catch (ClassNotFoundException ex) {
+			// 找不到类型
 			throw new CannotLoadBeanClassException(mbd.getResourceDescription(), beanName, mbd.getBeanClassName(), ex);
 		} catch (LinkageError err) {
+			// 链接错误
 			throw new CannotLoadBeanClassException(mbd.getResourceDescription(), beanName, mbd.getBeanClassName(), err);
 		}
 	}

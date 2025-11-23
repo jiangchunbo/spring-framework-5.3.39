@@ -1783,14 +1783,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			// 获取 resolvableDependencies 里面的类型，一般就是一些非常基础的接口
 			Class<?> autowiringType = classObjectEntry.getKey();
 
-			// 检查依赖注入的类型兼容性
+			// 检查依赖注入类型 [初步判断 是否支持这种类型的注入]
 			if (autowiringType.isAssignableFrom(requiredType)) {
 				// 直接 getValue，或者检查是否需要进一步解析，一般只有 ObjectFactory(从 ThreadLocal 获取等) 才会进一步处理
 				Object autowiringValue = classObjectEntry.getValue();
 				// 调用一个独特的方法解析出真正的对象 (比如 JDK Proxy)
 				autowiringValue = AutowireUtils.resolveAutowiringValue(autowiringValue, requiredType);
 
-				// 检查实例对象是否兼容类型
+				// 检查实例对象是否兼容类型 [获取到实例对象之后再判断是否能够赋值给这种类型]
 				if (requiredType.isInstance(autowiringValue)) {
 					// 这种 bean 没有名字，临时给他生成的 beanName
 					result.put(ObjectUtils.identityToString(autowiringValue), autowiringValue);

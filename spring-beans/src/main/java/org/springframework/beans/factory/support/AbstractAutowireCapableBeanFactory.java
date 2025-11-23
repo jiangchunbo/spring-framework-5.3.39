@@ -748,7 +748,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	@Nullable
 	protected Class<?> getTypeForFactoryMethod(String beanName, RootBeanDefinition mbd, Class<?>... typesToMatch) {
 		// 快速检查缓存
-		ResolvableType cachedReturnType = mbd.factoryMethodReturnType;
+		ResolvableType cachedReturnType = mbd.factoryMethodReturnType; // 检查缓存，若存在，则返回
 		if (cachedReturnType != null) {
 			return cachedReturnType.resolve();
 		}
@@ -762,26 +762,31 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 			// 获取 [工厂 beanClass]
 			Class<?> factoryClass;
-			boolean isStatic = true; // 方法是静态的
-			String factoryBeanName = mbd.getFactoryBeanName();
+
+			boolean isStatic = true; // 方法是静态的吗？
+
+			String factoryBeanName = mbd.getFactoryBeanName(); // 获取工厂名字，也是为了判断是否是静态方法
+
+			// 1) 获取工厂类
 			if (factoryBeanName != null) {
-				if (factoryBeanName.equals(beanName)) {
+				if (factoryBeanName.equals(beanName)) { // 工厂不能产生工厂自己
 					throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 							"factory-bean reference points back to the same bean definition");
 				}
 				// Check declared factory method return type on factory class.
-				// 其实是递归
 				factoryClass = getType(factoryBeanName);
 				isStatic = false;
 			} else {
 				// Check declared factory method return type on bean class.
-				// 静态方法
-				factoryClass = resolveBeanClass(mbd, beanName, typesToMatch);
+				factoryClass = resolveBeanClass(mbd, beanName, typesToMatch); // 静态方法存储了 beanClass 信息
 			}
 
+			// 不正常
 			if (factoryClass == null) {
 				return null;
 			}
+
+			// 获取 CGLIB 父类
 			factoryClass = ClassUtils.getUserClass(factoryClass);
 
 			// If all factory methods have the same return type, return that type.
@@ -791,12 +796,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					(mbd.hasConstructorArgumentValues() ? mbd.getConstructorArgumentValues().getArgumentCount() : 0);
 
 			// 获取去重之后的方法 (挑选返回值更严格的 Method)
+			// 传入 class 获取一些 method，这些 method 都有可能是 @Bean
 			Method[] candidates = this.factoryMethodCandidateCache.computeIfAbsent(factoryClass,
 					clazz -> ReflectionUtils.getUniqueDeclaredMethods(clazz, ReflectionUtils.USER_DECLARED_METHODS));
 
 			for (Method candidate : candidates) {
-				// 1) static 修饰符一致
-				// 2) 方法名看上去是工厂方法
+				// 1) 静态修饰符是一致的
+				// 2) BeanDefinition 认为该 Method 是个候选人
 				// 3) 方法参数个数必须足够多 (>=minNrOfArgs)
 				if (Modifier.isStatic(candidate.getModifiers()) == isStatic
 						&& mbd.isFactoryMethod(candidate)
@@ -813,10 +819,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 							}
 							ConstructorArgumentValues cav = mbd.getConstructorArgumentValues();
 							Set<ConstructorArgumentValues.ValueHolder> usedValueHolders = new HashSet<>(paramTypes.length);
-							Object[] args = new Object[paramTypes.length];
+							Object[] args = new Object[paramTypes.length]; // 最终就是为了得到参数值
 							for (int i = 0; i < args.length; i++) {
+
+								// 找 indexed 和 generic 参数值列表
 								ConstructorArgumentValues.ValueHolder valueHolder = cav.getArgumentValue(
 										i, paramTypes[i], (paramNames != null ? paramNames[i] : null), usedValueHolders);
+
+								// 找不到就找下一个能用的
 								if (valueHolder == null) {
 									valueHolder = cav.getGenericArgumentValue(null, null, usedValueHolders);
 								}
@@ -840,8 +850,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 							}
 						}
 					} else {
+						// 赋予唯一的 method (如果以后发现了其他 method，就赋予 null)
 						uniqueCandidate = (commonType == null ? candidate : null);
+
+						// 确定两个返回值之间共同的祖先
 						commonType = ClassUtils.determineCommonAncestor(candidate.getReturnType(), commonType);
+
+						// 两个返回值有歧义，类型不兼容
 						if (commonType == null) {
 							// Ambiguous return types found: return null to indicate "not determinable".
 							return null;
@@ -858,9 +873,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Common return type found: all factory methods return same type. For a non-parameterized
 		// unique candidate, cache the full type declaration context of the target factory method.
+		// 已找到共同的返回类型：所有工厂方法都返回同一种类型。
+		// 如果这是一个非参数化且唯一的候选项，就把目标工厂方法的完整类型声明上下文缓存起来
 		cachedReturnType = (uniqueCandidate != null ?
 				ResolvableType.forMethodReturnType(uniqueCandidate) : ResolvableType.forClass(commonType));
-		mbd.factoryMethodReturnType = cachedReturnType;
+		mbd.factoryMethodReturnType = cachedReturnType; // 解析完就缓存起来
 		return cachedReturnType.resolve();
 	}
 

@@ -244,7 +244,7 @@ public abstract class AnnotationConfigUtils {
 	/**
 	 * 没有访问修饰符，所以只是为了方便使用可能
 	 *
-	 * @param metadata 便捷访问 AnnotatedTypeMetadata
+	 * @param metadata 便捷访问 AnnotatedTypeMetadata，可能是方法，可能是类
 	 */
 	static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd, AnnotatedTypeMetadata metadata) {
 		AnnotationAttributes lazy = attributesFor(metadata, Lazy.class);

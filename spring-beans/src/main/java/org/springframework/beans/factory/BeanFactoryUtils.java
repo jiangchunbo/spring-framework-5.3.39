@@ -275,7 +275,6 @@ public abstract class BeanFactoryUtils {
 			ListableBeanFactory lbf, Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 
 		// 根据类型查找 beanName，并且支持 [bean factory] 向上递归
-
 		Assert.notNull(lbf, "ListableBeanFactory must not be null");
 
 		// 根据类型获取 beanName
@@ -290,6 +289,8 @@ public abstract class BeanFactoryUtils {
 			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {
 				String[] parentResult = beanNamesForTypeIncludingAncestors(
 						(ListableBeanFactory) hbf.getParentBeanFactory(), type, includeNonSingletons, allowEagerInit);
+
+				// 合并结果的时候需要把 local bean factory 传入判断是否存在 beanName 隐藏问题
 				result = mergeNamesWithParent(result, parentResult, hbf);
 			}
 		}
@@ -554,12 +555,17 @@ public abstract class BeanFactoryUtils {
 	 * @since 4.3.15
 	 */
 	private static String[] mergeNamesWithParent(String[] result, String[] parentResult, HierarchicalBeanFactory hbf) {
+		// parent 没有找到，直接返回当前 result
 		if (parentResult.length == 0) {
 			return result;
 		}
+
 		List<String> merged = new ArrayList<>(result.length + parentResult.length);
 		merged.addAll(Arrays.asList(result));
 		for (String beanName : parentResult) {
+			// 仅添加 local 不存在，parent 存在的 beanName
+			// [防止同名 beanName 存在 local hiding 问题]
+			// [如果 local 存在，但是却没有出现在 result 中，说明一定是类型不匹配]
 			if (!merged.contains(beanName) && !hbf.containsLocalBean(beanName)) {
 				merged.add(beanName);
 			}

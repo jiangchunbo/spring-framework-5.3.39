@@ -96,9 +96,9 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 			// targetType 是一个缓存，首次肯定没有，所以下面 cacheType 标记需要缓存
 			targetType = rbd.targetType;
 			if (targetType == null) {
-				cacheType = true;
-				// First, check factory method return type, if applicable
+				cacheType = true; // 用于标记是否缓存
 
+				// First, check factory method return type, if applicable
 				// 方法返回类型
 				targetType = getReturnTypeForFactoryMethod(rbd, descriptor);
 				if (targetType == null) {
@@ -138,7 +138,7 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 
 		// 将 targetType 缓存起来
 		if (cacheType) {
-			rbd.targetType = targetType;
+			rbd.targetType = targetType; // 进行类型匹配之后，缓存 targetType
 		}
 		if (descriptor.fallbackMatchAllowed() &&
 				(targetType.hasUnresolvableGenerics() || targetType.resolve() == Properties.class)) {
