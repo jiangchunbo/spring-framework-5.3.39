@@ -258,7 +258,6 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				// 标记 singleton 正在创建 bean [singletonsCurrentlyInCreation.add]
 				beforeSingletonCreation(beanName);
 
-
 				boolean newSingleton = false;
 
 				// Bean 创建的过程中，如果发生异常，比如说是循环依赖，那么会把异常记录到这个 Set 中

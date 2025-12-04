@@ -215,6 +215,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Names of beans that are currently in creation.
+	 * <p>
+	 * 当前正在创建中的 bean name(s)，之所以用 Object 泛型，是因为可能会从 String 升级到 {@code Set<String>}
 	 */
 	private final ThreadLocal<Object> prototypesCurrentlyInCreation =
 			new NamedThreadLocal<>("Prototype beans currently in creation");
@@ -372,7 +374,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 
 				// Create bean instance.
+				// Spring 创建 bean 目前就 3 种 scope
+				// 1) singleton
 				if (mbd.isSingleton()) {
+					// ps: 由于 singleton 是单例，所以 Spring 将变量名取为 shared 表示共享的实例
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							return createBean(beanName, mbd, args);
@@ -386,19 +391,22 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					});
 					beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
-				// 如果是 prototype，直接去创建
+				// 2) prototype
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
+						// 将当前正在创建的 prototype 记录到 ThreadLocal 中
 						beforePrototypeCreation(beanName);
+
+						// prototype 和 singleton 都是一样的方法创建 bean instance
 						prototypeInstance = createBean(beanName, mbd, args);
 					} finally {
 						afterPrototypeCreation(beanName);
 					}
 					beanInstance = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
-				// 其他 scope
+				// 3) 其他 scope
 				else {
 					String scopeName = mbd.getScope();
 					if (!StringUtils.hasLength(scopeName)) {
@@ -1269,9 +1277,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	@SuppressWarnings("unchecked")
 	protected void beforePrototypeCreation(String beanName) {
 		Object curVal = this.prototypesCurrentlyInCreation.get();
+
+		// 如果当前 ThreadLocal 没有值，就设置 beanName (直接用 String 轻量)
 		if (curVal == null) {
 			this.prototypesCurrentlyInCreation.set(beanName);
-		} else if (curVal instanceof String) {
+		}
+		// 如果当前 ThreadLocal 是 String 表示之前设置了 1 次 beanName
+		// 这是因为创建一个 prototype bean 时，又遇到另一个 prototype bean 的创建，特别少见的情况！！！
+		else if (curVal instanceof String) {
 			Set<String> beanNameSet = new HashSet<>(2);
 			beanNameSet.add((String) curVal);
 			beanNameSet.add(beanName);
@@ -1994,36 +2007,45 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.
-		// name 是用户传入的，如果开头是 & 意味着返回 FactoryBean 对象
+		// 1. 用户希望获取 Factory Bean  -> 如果不是 FactoryBean 就要报错
 		if (BeanFactoryUtils.isFactoryDereference(name)) {
+
+			// NullBean
 			if (beanInstance instanceof NullBean) {
 				return beanInstance;
 			}
-			// 强制校验类型是 FactoryBean
+
+			// 如果不是 FactoryBean 就要报错
 			if (!(beanInstance instanceof FactoryBean)) {
 				throw new BeanIsNotAFactoryException(beanName, beanInstance.getClass());
 			}
+
+			// 缓存
 			if (mbd != null) {
 				mbd.isFactoryBean = true;
 			}
 			return beanInstance;
 		}
 
+		// 1) 是 normal bean ?
+		// 2) 是 FactoryBean ?
+
 		// Now we have the bean instance, which may be a normal bean or a FactoryBean.
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
-		// 如果类型是普通 bean，直接返回就好了
+
+		// normal bean 直接返回
 		if (!(beanInstance instanceof FactoryBean)) {
 			return beanInstance;
 		}
 
-		// 接下来是非常多的对 FactoryBean 的处理
 		Object object = null;
+
+		// 当 mbd == null 传入时，表示调用者只期望从缓存中获取数据，只有 doGetBean 开始检查缓存时才会传入 null
 		if (mbd != null) {
-			mbd.isFactoryBean = true; // 只是标记一下 mbd 是 factory bean
+			// 1. 标记为 FactoryBean 且 object == null
+			mbd.isFactoryBean = true;
 		} else {
-			// 如果没有传入 mbd，就从缓存获取
-			// 什么意思啊，因为这里很巧思，如果传入了的是 null，就表示 FactoryBean 是单例，不会再构造新的对象了，也就是不再 getObject
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 
