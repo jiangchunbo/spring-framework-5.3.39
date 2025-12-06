@@ -170,7 +170,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	public static final String LIFECYCLE_PROCESSOR_BEAN_NAME = "lifecycleProcessor";
 
-
 	/**
 	 * Boolean flag controlled by a {@code spring.spel.ignore} system property that
 	 * instructs Spring to ignore SpEL, i.e. to not initialize the SpEL infrastructure.
@@ -178,13 +177,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	private static final boolean shouldIgnoreSpel = SpringProperties.getFlag("spring.spel.ignore");
 
-
 	static {
 		// Eagerly load the ContextClosedEvent class to avoid weird classloader issues
 		// on application shutdown in WebLogic 8.1. (Reported by Dustin Woods.)
 		ContextClosedEvent.class.getName();
 	}
-
 
 	/**
 	 * Logger used by this class. Available to subclasses.
@@ -289,7 +286,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	@Nullable
 	private Set<ApplicationEvent> earlyApplicationEvents;
 
-
 	/**
 	 * Create a new AbstractApplicationContext with no parent.
 	 */
@@ -306,7 +302,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		this();
 		setParent(parent);
 	}
-
 
 	//---------------------------------------------------------------------
 	// Implementation of ApplicationContext interface
@@ -557,7 +552,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return new PathMatchingResourcePatternResolver(this);
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation of ConfigurableApplicationContext interface
 	//---------------------------------------------------------------------
@@ -624,6 +618,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			// 对于 BeanFactory 来说 3 个动作：拿到、准备、处理
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
@@ -737,6 +732,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Tell the subclass to refresh the internal bean factory.
+	 * <p>
+	 * 告诉子类刷新内部的 bean factory
 	 *
 	 * @return the fresh BeanFactory instance
 	 * @see #refreshBeanFactory()
@@ -1078,7 +1075,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		CachedIntrospectionResults.clearClassLoader(getClassLoader());
 	}
 
-
 	/**
 	 * Register a shutdown hook {@linkplain Thread#getName() named}
 	 * {@code SpringContextShutdownHook} with the JVM runtime, closing this
@@ -1256,7 +1252,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation of BeanFactory interface
 	//---------------------------------------------------------------------
@@ -1350,7 +1345,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public String[] getAliases(String name) {
 		return getBeanFactory().getAliases(name);
 	}
-
 
 	//---------------------------------------------------------------------
 	// Implementation of ListableBeanFactory interface
@@ -1454,7 +1448,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return getBeanFactory().findAnnotationOnBean(beanName, annotationType, allowFactoryBeanInit);
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation of HierarchicalBeanFactory interface
 	//---------------------------------------------------------------------
@@ -1481,7 +1474,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return (getParent() instanceof ConfigurableApplicationContext ?
 				((ConfigurableApplicationContext) getParent()).getBeanFactory() : getParent());
 	}
-
 
 	//---------------------------------------------------------------------
 	// Implementation of MessageSource interface
@@ -1526,7 +1518,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				((AbstractApplicationContext) getParent()).messageSource : getParent());
 	}
 
-
 	//---------------------------------------------------------------------
 	// Implementation of ResourcePatternResolver interface
 	//---------------------------------------------------------------------
@@ -1535,7 +1526,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public Resource[] getResources(String locationPattern) throws IOException {
 		return this.resourcePatternResolver.getResources(locationPattern);
 	}
-
 
 	//---------------------------------------------------------------------
 	// Implementation of Lifecycle interface
@@ -1557,7 +1547,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public boolean isRunning() {
 		return (this.lifecycleProcessor != null && this.lifecycleProcessor.isRunning());
 	}
-
 
 	//---------------------------------------------------------------------
 	// Abstract methods that must be implemented by subclasses
@@ -1599,7 +1588,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	@Override
 	public abstract ConfigurableListableBeanFactory getBeanFactory() throws IllegalStateException;
-
 
 	/**
 	 * Return information about this context.

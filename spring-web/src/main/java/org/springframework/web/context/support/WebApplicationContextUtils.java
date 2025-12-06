@@ -129,6 +129,9 @@ public abstract class WebApplicationContextUtils {
 		if (!(attr instanceof WebApplicationContext)) {
 			throw new IllegalStateException("Context attribute is not of type WebApplicationContext: " + attr);
 		}
+
+
+		// 期望获得一个对象是 WebApplicationContext
 		return (WebApplicationContext) attr;
 	}
 
