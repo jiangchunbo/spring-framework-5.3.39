@@ -283,9 +283,10 @@ class ConfigurationClassParser {
 			ConfigurationClass configClass, SourceClass sourceClass, Predicate<String> filter)
 			throws IOException {
 
-		// 1) 如果是 @Component，那么处理 member class
+		// 1) 如果是 @Component，那么处理 member class (哪些是成员类)
 		if (configClass.getMetadata().isAnnotated(Component.class.getName())) {
 			// Recursively process any member (nested) classes first
+			// 递归处理成员类，因为成员类可能里面还有成员类，不停地嵌套
 			processMemberClasses(configClass, sourceClass, filter);
 		}
 
@@ -377,7 +378,7 @@ class ConfigurationClassParser {
 	 */
 	private void processMemberClasses(ConfigurationClass configClass, SourceClass sourceClass,
 									  Predicate<String> filter) throws IOException {
-		// 获取配置类的 [直接成员类]
+		// 获取配置类的 [直接成员类] 不过下面会递归
 		Collection<SourceClass> memberClasses = sourceClass.getMemberClasses();
 		if (!memberClasses.isEmpty()) {
 			List<SourceClass> candidates = new ArrayList<>(memberClasses.size());
@@ -390,17 +391,20 @@ class ConfigurationClassParser {
 				}
 			}
 
-			// 排序
+			// 排序 (通过 @Order 注解的是属性值进行排序)
 			OrderComparator.sort(candidates);
 
 			// 解析每个 [直接成员类]
 			for (SourceClass candidate : candidates) {
+				// 递归的过程理想情况就像 tree 的遍历，如果又遍历到之前已经遍历过的节点，表示发生循环依赖(循环导入)
+
+				// 1) 循环导入
 				if (this.importStack.contains(configClass)) {
 					this.problemReporter.error(new CircularImportProblem(configClass, this.importStack));
 				} else {
 					this.importStack.push(configClass);
 					try {
-						// 递归，重新解析配置类
+						// [递归] 解析配置类(直接成员类)
 						processConfigurationClass(candidate.asConfigClass(configClass), filter);
 					} finally {
 						this.importStack.pop();
@@ -977,6 +981,10 @@ class ConfigurationClassParser {
 	/**
 	 * Simple wrapper that allows annotated source classes to be dealt with
 	 * in a uniform manner, regardless of how they are loaded.
+	 * <p>
+	 * 暂且翻译成 [源类]，源可能是 Class 也可能是 MetadataReader (资源，需要读取)
+	 * <p>
+	 * [源类] 实现了 Ordered 这用于排序，例如当类还未加载的时候就支持排序，排序值 order 从注解 {@link org.springframework.core.annotation.Order} 读取
 	 */
 	private class SourceClass implements Ordered {
 
@@ -999,6 +1007,7 @@ class ConfigurationClassParser {
 
 		@Override
 		public int getOrder() {
+			// 从注解 @Order 解析属性值，得到排序值，否则就是最低优先级
 			Integer order = ConfigurationClassUtils.getOrder(this.metadata);
 			return (order != null ? order : Ordered.LOWEST_PRECEDENCE);
 		}

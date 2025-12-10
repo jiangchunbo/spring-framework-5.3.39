@@ -347,11 +347,13 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 			// 获取解析到的配置类
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
+
+			// 避免重复解析
 			configClasses.removeAll(alreadyParsed);
 
 			// Read the model and create bean definitions based on its content
-			// 惰性创建 ConfigurationClassBeanDefinitionReader
-			if (this.reader == null) {
+			// 这个 reader 就是专门为这里提供支持的，专门解析 ConfigurationClass 得到 BeanDefinition
+			if (this.reader == null) { // 惰性创建
 				this.reader = new ConfigurationClassBeanDefinitionReader(
 						registry, this.sourceExtractor, this.resourceLoader, this.environment,
 						this.importBeanNameGenerator, parser.getImportRegistry());
@@ -360,20 +362,32 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			// 读取配置类，得到一些 BeanDefinition
 			this.reader.loadBeanDefinitions(configClasses);
 
+			// 放到集合中标记为 [解析过]
 			alreadyParsed.addAll(configClasses);
+
 			processConfig.tag("classCount", () -> String.valueOf(configClasses.size())).end();
 
 			candidates.clear();
+
+			// 下面这一大段的目的是：上面加载了一些新的 bean definition，可能其中存在配置类，所以需要再次解析
 			if (registry.getBeanDefinitionCount() > candidateNames.length) {
+				// 最新的 bean definition
 				String[] newCandidateNames = registry.getBeanDefinitionNames();
+				// 解析之前获取的、旧的 bean definition (转换成 Set，因为下面会多次访问这个集合的 contains)
 				Set<String> oldCandidateNames = new HashSet<>(Arrays.asList(candidateNames));
+
+				// alreadyParsedClasses 的作用场景: 存在不同 bean，但是类型一样，这些 bean 作为配置类也不需要重复解析
 				Set<String> alreadyParsedClasses = new HashSet<>();
 				for (ConfigurationClass configurationClass : alreadyParsed) {
 					alreadyParsedClasses.add(configurationClass.getMetadata().getClassName());
 				}
+
+				// [传统方法] 比较哪些是 [新增的 bean]
 				for (String candidateName : newCandidateNames) {
 					if (!oldCandidateNames.contains(candidateName)) {
+						// 拿到 bd 判断是否是配置类
 						BeanDefinition bd = registry.getBeanDefinition(candidateName);
+						// 检查是否是一个配置类 (而且不能之前解析过)
 						if (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, this.metadataReaderFactory) &&
 								!alreadyParsedClasses.contains(bd.getBeanClassName())) {
 							candidates.add(new BeanDefinitionHolder(bd, candidateName));

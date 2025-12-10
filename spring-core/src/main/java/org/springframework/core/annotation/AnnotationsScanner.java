@@ -272,6 +272,18 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	/**
+	 *
+	 * @param context
+	 * @param aggregateIndex    长度固定是 1，便于递归共享数据
+	 * @param sourceClass       当前正在遍历的类或接口
+	 * @param processor
+	 * @param rootMethod        初始的 Method 对象，即你最初关心的方法 (通常来自某个具体类)
+	 * @param includeInterfaces
+	 * @param <C>
+	 * @param <R>
+	 * @return
+	 */
 	@Nullable
 	private static <C, R> R processMethodHierarchy(C context, int[] aggregateIndex,
 												   Class<?> sourceClass, AnnotationsProcessor<C, R> processor, Method rootMethod,
@@ -286,6 +298,8 @@ abstract class AnnotationsScanner {
 				return null;
 			}
 			boolean calledProcessor = false;
+
+			// sourceClass 是否就是 rootMethod 声明所在的类
 			if (sourceClass == rootMethod.getDeclaringClass()) {
 				result = processMethodAnnotations(context, aggregateIndex[0],
 						rootMethod, processor);

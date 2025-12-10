@@ -187,6 +187,8 @@ public class OrderComparator implements Comparator<Object> {
 	 * Sort the given List with a default OrderComparator.
 	 * <p>Optimized to skip sorting for lists with size 0 or 1,
 	 * in order to avoid unnecessary array extraction.
+	 * <p>
+	 * 排序对象
 	 *
 	 * @param list the List to sort
 	 * @see java.util.List#sort(java.util.Comparator)
