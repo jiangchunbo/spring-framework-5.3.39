@@ -1693,7 +1693,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 		// 4. Map
 		else if (Map.class == type) {
+			// asMap 是一个特殊的方法，标识按照 Map 类型解析类型
 			ResolvableType mapType = descriptor.getResolvableType().asMap();
+
+			// 获取第0 0 个
 			Class<?> keyType = mapType.resolveGeneric(0);
 			if (String.class != keyType) {
 				return null;
@@ -1832,7 +1835,6 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					addCandidateEntry(result, candidate, descriptor, requiredType);
 				}
 			}
-
 
 			// 如果还是没有找到，比如 Component 依赖自己的产物 Bean
 			if (result.isEmpty() && !multiple) {
@@ -2159,8 +2161,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// 创建了一个新的 DependencyDescriptor，封装之前的 DependencyDescriptor
 		DependencyDescriptor descriptorToUse = new NestedDependencyDescriptor(descriptor) {
+
 			@Override
 			public boolean isRequired() {
+				// 重写这个方法，返回 false 就表示不必需
 				return false;
 			}
 
@@ -2241,12 +2245,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * A dependency descriptor marker for nested elements.
+	 * <p>
+	 * 特殊的依赖描述符，用于嵌套的元素，比如 {@link Optional}
 	 */
 	private static class NestedDependencyDescriptor extends DependencyDescriptor {
 
 		public NestedDependencyDescriptor(DependencyDescriptor original) {
 			super(original);
-			increaseNestingLevel();
+			increaseNestingLevel(); // 增加深度
 		}
 
 	}
