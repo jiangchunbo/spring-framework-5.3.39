@@ -496,6 +496,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	@Override
 	@Nullable
 	public Object resolveDependency(DependencyDescriptor descriptor, @Nullable String requestingBeanName) throws BeansException {
+		// 底层依赖另一个 resolveDependency，只不过不需要添加找到的所有 bean name，也不用类型转换
 		return resolveDependency(descriptor, requestingBeanName, null, null);
 	}
 

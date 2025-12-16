@@ -1696,8 +1696,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			// asMap 是一个特殊的方法，标识按照 Map 类型解析类型
 			ResolvableType mapType = descriptor.getResolvableType().asMap();
 
-			// 获取第0 0 个
+			// 获取 Map Key 的类型 (因为 Map 有 2 个泛型参数，第 0 个是 Key)
 			Class<?> keyType = mapType.resolveGeneric(0);
+
+			// Key 必须是 String，这体现了可能意图是 bean name
 			if (String.class != keyType) {
 				return null;
 			}
