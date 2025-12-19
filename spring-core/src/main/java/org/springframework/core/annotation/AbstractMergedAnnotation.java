@@ -28,16 +28,15 @@ import org.springframework.util.Assert;
 /**
  * Abstract base class for {@link MergedAnnotation} implementations.
  *
+ * @param <A> the annotation type
  * @author Phillip Webb
  * @author Juergen Hoeller
  * @since 5.2
- * @param <A> the annotation type
  */
 abstract class AbstractMergedAnnotation<A extends Annotation> implements MergedAnnotation<A> {
 
 	@Nullable
 	private volatile A synthesizedAnnotation;
-
 
 	@Override
 	public boolean isDirectlyPresent() {
@@ -193,6 +192,13 @@ abstract class AbstractMergedAnnotation<A extends Annotation> implements MergedA
 		return asMap(mergedAnnotation -> new AnnotationAttributes(mergedAnnotation.getType()), adaptations);
 	}
 
+	/**
+	 * 合成注解 (有条件地)
+	 *
+	 * @param condition 条件
+	 * @return 可选地注解
+	 * @throws NoSuchElementException
+	 */
 	@Override
 	public Optional<A> synthesize(Predicate<? super MergedAnnotation<A>> condition)
 			throws NoSuchElementException {
@@ -200,6 +206,11 @@ abstract class AbstractMergedAnnotation<A extends Annotation> implements MergedA
 		return (condition.test(this) ? Optional.of(synthesize()) : Optional.empty());
 	}
 
+	/**
+	 * 合成注解
+	 *
+	 * @return 注解
+	 */
 	@Override
 	public A synthesize() {
 		if (!isPresent()) {
@@ -224,13 +235,14 @@ abstract class AbstractMergedAnnotation<A extends Annotation> implements MergedA
 
 	/**
 	 * Get the underlying attribute value.
+	 *
 	 * @param attributeName the attribute name
-	 * @param type the type to return (see {@link MergedAnnotation} class
-	 * documentation for details)
+	 * @param type          the type to return (see {@link MergedAnnotation} class
+	 *                      documentation for details)
 	 * @return the attribute value or {@code null} if the value is not found and
 	 * is not required
 	 * @throws IllegalArgumentException if the source type is not compatible
-	 * @throws NoSuchElementException if the value is required but not found
+	 * @throws NoSuchElementException   if the value is required but not found
 	 */
 	@Nullable
 	protected abstract <T> T getAttributeValue(String attributeName, Class<T> type);

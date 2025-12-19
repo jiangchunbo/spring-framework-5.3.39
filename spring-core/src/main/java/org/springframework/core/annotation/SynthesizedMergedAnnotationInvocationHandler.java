@@ -38,12 +38,12 @@ import org.springframework.util.ReflectionUtils;
  * <em>synthesized</em> (i.e. wrapped in a dynamic proxy) with additional
  * functionality such as attribute alias handling.
  *
+ * @param <A> the annotation type
  * @author Sam Brannen
  * @author Phillip Webb
- * @since 5.2
- * @param <A> the annotation type
  * @see Annotation
  * @see AnnotationUtils#synthesizeAnnotation(Annotation, AnnotatedElement)
+ * @since 5.2
  */
 final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> implements InvocationHandler {
 
@@ -61,7 +61,6 @@ final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> i
 	@Nullable
 	private volatile String string;
 
-
 	private SynthesizedMergedAnnotationInvocationHandler(MergedAnnotation<A> annotation, Class<A> type) {
 		Assert.notNull(annotation, "MergedAnnotation must not be null");
 		Assert.notNull(type, "Type must not be null");
@@ -70,7 +69,6 @@ final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> i
 		this.type = type;
 		this.attributes = AttributeMethods.forAnnotationType(type);
 	}
-
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) {
@@ -99,6 +97,7 @@ final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> i
 
 	/**
 	 * See {@link Annotation#equals(Object)} for a definition of the required algorithm.
+	 *
 	 * @param other the other object to compare against
 	 */
 	private boolean annotationEquals(Object other) {
@@ -204,6 +203,7 @@ final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> i
 	 * <li>formatting for float and double values does not take into account whether
 	 * a value is not a number (NaN) or infinite.</li>
 	 * </ul>
+	 *
 	 * @param value the attribute value to format
 	 * @return the formatted string representation
 	 */
@@ -264,6 +264,7 @@ final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> i
 
 	/**
 	 * Clone the provided array, ensuring that the original component type is retained.
+	 *
 	 * @param array the array to clone
 	 */
 	private Object cloneArray(Object array) {
@@ -296,12 +297,23 @@ final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> i
 		return ((Object[]) array).clone();
 	}
 
+	/**
+	 * 该方法只允许包内调用，用于创建一个代理对象，而且是一个注解对象
+	 *
+	 * @param annotation
+	 * @param type       注解类型
+	 * @param <A>
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	static <A extends Annotation> A createProxy(MergedAnnotation<A> annotation, Class<A> type) {
 		ClassLoader classLoader = type.getClassLoader();
+		// Proxy Handler，代理了所有注解方法
 		InvocationHandler handler = new SynthesizedMergedAnnotationInvocationHandler<>(annotation, type);
+
+		// 我们尽可能让使用者能够通过 instanceof SynthesizedAnnotation 判断是否是合成注解
 		Class<?>[] interfaces = isVisible(classLoader, SynthesizedAnnotation.class) ?
-				new Class<?>[] {type, SynthesizedAnnotation.class} : new Class<?>[] {type};
+				new Class<?>[]{type, SynthesizedAnnotation.class} : new Class<?>[]{type};
 		return (A) Proxy.newProxyInstance(classLoader, interfaces, handler);
 	}
 
@@ -310,15 +322,13 @@ final class SynthesizedMergedAnnotationInvocationHandler<A extends Annotation> i
 		return (canonicalName != null ? canonicalName : clazz.getName());
 	}
 
-
 	private static boolean isVisible(ClassLoader classLoader, Class<?> interfaceClass) {
 		if (classLoader == interfaceClass.getClassLoader()) {
 			return true;
 		}
 		try {
 			return Class.forName(interfaceClass.getName(), false, classLoader) == interfaceClass;
-		}
-		catch (ClassNotFoundException ex) {
+		} catch (ClassNotFoundException ex) {
 			return false;
 		}
 	}

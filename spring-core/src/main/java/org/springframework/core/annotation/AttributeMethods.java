@@ -31,7 +31,7 @@ import org.springframework.util.ReflectionUtils;
  * Provides a quick way to access the attribute methods of an {@link Annotation}
  * with consistent ordering as well as a few useful utility methods.
  * <p>
- * 其实就是注解里面的属性方法。里面封装了 {@link annotationType} 注解类型，还有它所有的属性方法 {@link attributeMethods}
+ * 封装注解属性。里面封装了 {@link AttributeMethods#annotationType} 注解类型，还有它所有的属性方法 {@link AttributeMethods#attributeMethods}
  *
  * @author Phillip Webb
  * @author Sam Brannen

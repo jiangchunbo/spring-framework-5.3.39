@@ -79,7 +79,6 @@ public abstract class StringUtils {
 
 	private static final String TRUNCATION_SUFFIX = " (truncated)...";
 
-
 	//---------------------------------------------------------------------
 	// General convenience methods for working with Strings
 	//---------------------------------------------------------------------
@@ -411,6 +410,8 @@ public abstract class StringUtils {
 	/**
 	 * Test whether the given string matches the given substring
 	 * at the given index.
+	 * <p>
+	 * 其实就是判断是不是从 index 开始，向后的字符与 substring 匹配
 	 *
 	 * @param str       the original string (or StringBuilder)
 	 * @param index     the index in the original string to start matching against
@@ -969,7 +970,6 @@ public abstract class StringUtils {
 		}
 		return timeZone;
 	}
-
 
 	//---------------------------------------------------------------------
 	// Convenience methods for working with String arrays

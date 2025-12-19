@@ -240,6 +240,7 @@ final class PostProcessorRegistrationDelegate {
 		// Register BeanPostProcessorChecker that logs an info message when
 		// a bean is created during BeanPostProcessor instantiation, i.e. when
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
+		// bean factory 已经添加的 processor + 等待处理的 bean definition 定义的 + 1 (checker)
 		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
 		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));
 
@@ -381,6 +382,13 @@ final class PostProcessorRegistrationDelegate {
 			return bean;
 		}
 
+		/**
+		 * 如果所有的 BeanPostProcessor 还没有全部注册完毕之前，一旦发现有普通 bean 被提前实例化，就会打印 INFO 日志
+		 *
+		 * @param bean     the new bean instance
+		 * @param beanName the name of the bean
+		 * @return bean
+		 */
 		@Override
 		public Object postProcessAfterInitialization(Object bean, String beanName) {
 			if (!(bean instanceof BeanPostProcessor) && !isInfrastructureBean(beanName) &&

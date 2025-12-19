@@ -329,6 +329,8 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 		if (path.startsWith("/")) {
 			path = path.substring(1);
 		}
+
+		// 加载 path URL (如果 10 个 classpath，最多也不会超过 10 个)
 		Set<Resource> result = doFindAllClassPathResources(path);
 		if (logger.isTraceEnabled()) {
 			logger.trace("Resolved classpath location [" + location + "] to resources " + result);
@@ -346,9 +348,12 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 */
 	protected Set<Resource> doFindAllClassPathResources(String path) throws IOException {
 		Set<Resource> result = new LinkedHashSet<>(16);
+
+		// 使用类加载器加载 path URL (如果有 10 个 classpath，最多也不会超过 10 个资源)
 		ClassLoader cl = getClassLoader();
 		Enumeration<URL> resourceUrls = (cl != null ? cl.getResources(path) : ClassLoader.getSystemResources(path));
 		while (resourceUrls.hasMoreElements()) {
+			// 封装为 UrlResource
 			URL url = resourceUrls.nextElement();
 			result.add(convertClassLoaderURL(url));
 		}
@@ -506,9 +511,13 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * @see org.springframework.util.PathMatcher
 	 */
 	protected Resource[] findPathMatchingResources(String locationPattern) throws IOException {
+		// 确定 root (需要不断试探从哪里开始才是具体的路径)
 		String rootDirPath = determineRootDir(locationPattern);
+		// 截取 root 后面的 pattern 部分
 		String subPattern = locationPattern.substring(rootDirPath.length());
+		// 获取的是 Path URL 资源 (不是文件，所以数量不会特别多)
 		Resource[] rootDirResources = getResources(rootDirPath);
+
 		Set<Resource> result = new LinkedHashSet<>(64);
 		for (Resource rootDirResource : rootDirResources) {
 			rootDirResource = resolveRootDirResource(rootDirResource);
@@ -520,11 +529,12 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 				}
 				rootDirResource = new UrlResource(rootDirUrl);
 			}
+
 			if (rootDirUrl.getProtocol().startsWith(ResourceUtils.URL_PROTOCOL_VFS)) {
 				result.addAll(VfsResourceMatchingDelegate.findMatchingResources(rootDirUrl, subPattern, getPathMatcher()));
-			} else if (ResourceUtils.isJarURL(rootDirUrl) || isJarResource(rootDirResource)) {
+			} else if (ResourceUtils.isJarURL(rootDirUrl) || isJarResource(rootDirResource)) { // JAR 协议
 				result.addAll(doFindPathMatchingJarResources(rootDirResource, rootDirUrl, subPattern));
-			} else {
+			} else { // 一般地文件系统
 				result.addAll(doFindPathMatchingFileResources(rootDirResource, subPattern));
 			}
 		}
@@ -548,14 +558,14 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * @see #retrieveMatchingFiles
 	 */
 	protected String determineRootDir(String location) {
-		// 找到 : 。比如可能 chasspath: 或者也可能是 classpath*:
-		// prefixEnd 这个不就是 start  我们关心的 package 的第一个字符所在的位置么？！
-		int prefixEnd = location.indexOf(':') + 1;
+		final int prefixEnd = location.indexOf(':') + 1; // prefixEnd 是不变的
 		int rootDirEnd = location.length();
 
-		// rootDirEnd > prefixEnd ： rootDirEnd 每次循环都会变化的，直到达到 start，也就是到头了
-		// 第二个条件是 不断检查是不是通配符，如果是，那么继续往前找，直到找到一个具体的 root
+		// 特殊地，如果 location 整体都不是 pattern，就直接返回
+
+		// 每次移动的都是 rootDirEnd，并检查 prefix 到 rootDirEnd 之间是否是 pattern
 		while (rootDirEnd > prefixEnd && getPathMatcher().isPattern(location.substring(prefixEnd, rootDirEnd))) {
+			// rootDirEnd - 2 是因为每次 rootDirEnd 都指向 '/' 后面 1 个位置，如果只是减 1，又会命中自己
 			rootDirEnd = location.lastIndexOf('/', rootDirEnd - 2) + 1;
 		}
 		if (rootDirEnd == 0) {

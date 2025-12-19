@@ -73,6 +73,9 @@ public class ThreadPoolExecutorFactoryBean extends ExecutorConfigurationSupport
 
 	private boolean allowCoreThreadTimeOut = false;
 
+	/**
+	 * 是否预先启动所有核心线程
+	 */
 	private boolean prestartAllCoreThreads = false;
 
 	private int queueCapacity = Integer.MAX_VALUE;
@@ -156,8 +159,10 @@ public class ThreadPoolExecutorFactoryBean extends ExecutorConfigurationSupport
 	@Override
 	protected ExecutorService initializeExecutor(
 			ThreadFactory threadFactory, RejectedExecutionHandler rejectedExecutionHandler) {
-
+		// 创建阻塞队列。如果容量是 0，则使用 SynchronousQueue
 		BlockingQueue<Runnable> queue = createQueue(this.queueCapacity);
+
+		//
 		ThreadPoolExecutor executor  = createExecutor(this.corePoolSize, this.maxPoolSize,
 				this.keepAliveSeconds, queue, threadFactory, rejectedExecutionHandler);
 		if (this.allowCoreThreadTimeOut) {

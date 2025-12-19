@@ -138,6 +138,8 @@ public class PropertySourcesPlaceholderConfigurer extends PlaceholderConfigurerS
 				// local PropertyResolver to enforce that setting, since the Environment is most
 				// likely not configured with ignoreUnresolvablePlaceholders set to true.
 				// See https://github.com/spring-projects/spring-framework/issues/27947
+
+				// 如果忽略不可解析的占位符，那么创建一个新的 resolver，显式设置 ignoreUnresolvableNestedPlaceholders
 				if (this.ignoreUnresolvablePlaceholders && (this.environment instanceof ConfigurableEnvironment)) {
 					ConfigurableEnvironment configurableEnvironment = (ConfigurableEnvironment) this.environment;
 					PropertySourcesPropertyResolver resolver =
@@ -146,6 +148,8 @@ public class PropertySourcesPlaceholderConfigurer extends PlaceholderConfigurerS
 					propertyResolver = resolver;
 				}
 				PropertyResolver propertyResolverToUse = propertyResolver;
+
+				// 其实是添加第一个属性源，通过
 				this.propertySources.addLast(
 					new PropertySource<Environment>(ENVIRONMENT_PROPERTIES_PROPERTY_SOURCE_NAME, this.environment) {
 						@Override

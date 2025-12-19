@@ -838,6 +838,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return result;
 	}
 
+	/**
+	 * 找到 bean 上面的注解
+	 * <p>
+	 * 与其说找到 bean 上面的注解，不如说找到 bean 对应类型上面的注解
+	 *
+	 * @param beanName bean name
+	 * @param <A>      注解类型
+	 * @return {@link Annotation}
+	 * @throws NoSuchBeanDefinitionException 找不到这个 bean，也就是 bean name 是错的
+	 */
 	@Override
 	@Nullable
 	public <A extends Annotation> A findAnnotationOnBean(String beanName, Class<A> annotationType)
@@ -856,6 +866,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				.synthesize(MergedAnnotation::isPresent).orElse(null);
 	}
 
+	/**
+	 * 找到 bean 上面的合并注解
+	 * <p>
+	 * 目前看来，也就一个地方会调用这个方法
+	 */
 	private <A extends Annotation> MergedAnnotation<A> findMergedAnnotationOnBean(
 			String beanName, Class<A> annotationType, boolean allowFactoryBeanInit) {
 

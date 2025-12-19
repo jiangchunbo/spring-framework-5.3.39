@@ -744,16 +744,20 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return getType(name, true);
 	}
 
+	/**
+	 * 给你一个 bean name 如何获得它的类型
+	 * <p>
+	 * 通常都会先从单例池检索实例，如果实例存在，就可以直接调用 getClass；否则，就从 bean definition 入手
+	 */
 	@Override
 	@Nullable
 	public Class<?> getType(String name, boolean allowFactoryBeanInit) throws NoSuchBeanDefinitionException {
 		String beanName = transformedBeanName(name);
 
 		// Check manually registered singletons.
-		// 检查手工注册的 bean，第 2 个 参数感觉是 true 或者 false 都无所谓，因为直接被一个条件挡住了：是否循环创建中
+		// 1) 检查 singletonObjects 单例池 (仅仅检查单例池)
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null && beanInstance.getClass() != NullBean.class) {
-			// 如果发现了 bean 实例
 			if (beanInstance instanceof FactoryBean && !BeanFactoryUtils.isFactoryDereference(name)) {
 				return getTypeForFactoryBean((FactoryBean<?>) beanInstance);
 			} else {
@@ -761,15 +765,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 
-		// 从 parent 容器找
 		// No singleton instance found -> check bean definition.
+		// 2) 单例池没有找到，接下来是找 bean definition
+
+		// 回退父容器策略
 		BeanFactory parentBeanFactory = getParentBeanFactory();
 		if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 			// No bean definition found in this factory -> delegate to parent.
 			return parentBeanFactory.getType(originalBeanName(name));
 		}
 
-		// 拿到一个所谓的合并之后的 BeanDefinition
+		// 获取 bean definition (拿不到就报错 NoSuchBeanDefinitionException)
 		RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 
 		// Check decorated bean definition, if any: We assume it'll be easier
@@ -1011,7 +1017,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// Remove from old position, if any
 			this.beanPostProcessors.remove(beanPostProcessor);
 			// Add to end of list
-			this.beanPostProcessors.add(beanPostProcessor);
+			this.beanPostProcessors.add(beanPostProcessor); // 手动添加 BeanPostProcessor 实例
 		}
 	}
 
@@ -1027,7 +1033,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// Remove from old position, if any
 			this.beanPostProcessors.removeAll(beanPostProcessors);
 			// Add to end of list
-			this.beanPostProcessors.addAll(beanPostProcessors);
+			this.beanPostProcessors.addAll(beanPostProcessors); // 手动添加多个 BeanPostProcessor
 		}
 	}
 

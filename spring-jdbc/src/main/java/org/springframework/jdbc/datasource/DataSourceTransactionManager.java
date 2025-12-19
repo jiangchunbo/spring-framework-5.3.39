@@ -291,7 +291,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 			// so we don't want to do it unnecessarily (for example if we've explicitly
 			// configured the connection pool to set it already).
 			if (con.getAutoCommit()) {
-				// commit 之后必须恢复 auto commit = true
+				// 设置该标记能够在事务 commit 之后的 finally 收尾阶段将 autocommit 恢复为 true
 				txObject.setMustRestoreAutoCommit(true);
 				if (logger.isDebugEnabled()) {
 					logger.debug("Switching JDBC Connection [" + con + "] to manual commit");
