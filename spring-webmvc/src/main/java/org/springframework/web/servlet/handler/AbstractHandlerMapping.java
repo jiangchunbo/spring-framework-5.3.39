@@ -607,6 +607,12 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 * path is {@link UrlPathHelper#resolveAndCacheLookupPath resolved} by this
 	 * method.
 	 *
+	 * 这个方法用于初始化 lookupPath，用于后续请求匹配。其中，涉及到 servlet context path 的考量。
+	 *
+	 * 如果 servlet context path 是 /myapp，请求路径是 /myapp/user/list，那么通常提取出 /user/list
+	 *
+	 * 所以，这个方法并不可能简单的从 request 提取 uri
+	 *
 	 * @since 5.3
 	 */
 	protected String initLookupPath(HttpServletRequest request) {

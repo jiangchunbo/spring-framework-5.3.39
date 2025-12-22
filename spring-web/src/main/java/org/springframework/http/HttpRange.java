@@ -127,15 +127,24 @@ public abstract class HttpRange {
 		if (!StringUtils.hasLength(ranges)) {
 			return Collections.emptyList();
 		}
+		// 通常，服务器在响应中会设置 Accept-Ranges: bytes，bytes 是单位，但是目前支持这个值
+		// 与此对应的是，客户端后续请求会发送 Range: bytes=0-499 以 bytes 这个单位为前缀然后跟上等于号(=)以及范围
+
+		// 这里只支持 bytes= 前缀
 		if (!ranges.startsWith(BYTE_RANGE_PREFIX)) {
 			throw new IllegalArgumentException("Range '" + ranges + "' does not start with 'bytes='");
 		}
 		ranges = ranges.substring(BYTE_RANGE_PREFIX.length());
 
+		// 根据逗号分隔，能够得到客户端需要请求哪些字节段
 		String[] tokens = StringUtils.tokenizeToStringArray(ranges, ",");
+
+		// 客户端不可能无限制请求太多段
 		if (tokens.length > MAX_RANGES) {
 			throw new IllegalArgumentException("Too many ranges: " + tokens.length);
 		}
+
+		// 通过每个字节段，构造 HttpRange
 		List<HttpRange> result = new ArrayList<>(tokens.length);
 		for (String token : tokens) {
 			result.add(parseRange(token));
@@ -146,6 +155,8 @@ public abstract class HttpRange {
 	private static HttpRange parseRange(String range) {
 		Assert.hasLength(range, "Range String must not be empty");
 		int dashIdx = range.indexOf('-');
+
+		// 格式 0-499 或者 0-
 		if (dashIdx > 0) {
 			long firstPos = Long.parseLong(range.substring(0, dashIdx));
 			if (dashIdx < range.length() - 1) {
@@ -156,6 +167,7 @@ public abstract class HttpRange {
 				return new ByteRange(firstPos, null);
 			}
 		}
+		// 格式 -499，没有开始位置，只有结束位置
 		else if (dashIdx == 0) {
 			long suffixLength = Long.parseLong(range.substring(1));
 			return new SuffixByteRange(suffixLength);

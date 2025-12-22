@@ -51,17 +51,19 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 	@Nullable
 	private HttpHeaders readOnlyHeaders;
 
-
 	/**
 	 * Construct a new instance of the ServletServerHttpResponse based on the given {@link HttpServletResponse}.
+	 * <p>
+	 * 将 HTTP Servlet Response 包装为 Spring 的 ServletServerHttpResponse
+	 *
 	 * @param servletResponse the servlet response
 	 */
 	public ServletServerHttpResponse(HttpServletResponse servletResponse) {
 		Assert.notNull(servletResponse, "HttpServletResponse must not be null");
 		this.servletResponse = servletResponse;
+		// 初始化空的 HttpHeaders
 		this.headers = new ServletResponseHttpHeaders();
 	}
-
 
 	/**
 	 * Return the {@code HttpServletResponse} this object is based on.
@@ -80,12 +82,10 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 	public HttpHeaders getHeaders() {
 		if (this.readOnlyHeaders != null) {
 			return this.readOnlyHeaders;
-		}
-		else if (this.headersWritten) {
+		} else if (this.headersWritten) {
 			this.readOnlyHeaders = HttpHeaders.readOnlyHttpHeaders(this.headers);
 			return this.readOnlyHeaders;
-		}
-		else {
+		} else {
 			return this.headers;
 		}
 	}
@@ -93,6 +93,8 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 	@Override
 	public OutputStream getBody() throws IOException {
 		this.bodyUsed = true;
+
+		// 当获取 body 时，表示将要写入 body，此时需要刷掉 headers
 		writeHeaders();
 		return this.servletResponse.getOutputStream();
 	}
@@ -112,6 +114,7 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 
 	private void writeHeaders() {
 		if (!this.headersWritten) {
+			// 将缓存中的 headers 写入 servlet response
 			getHeaders().forEach((headerName, headerValues) -> {
 				for (String headerValue : headerValues) {
 					this.servletResponse.addHeader(headerName, headerValue);
@@ -133,7 +136,6 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 		}
 	}
 
-
 	/**
 	 * Extends HttpHeaders with the ability to look up headers already present in
 	 * the underlying HttpServletResponse.
@@ -142,6 +144,8 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 	 * i.e. the ability to look up specific header values by name. All other
 	 * map-related operations (e.g. iteration, removal, etc) apply only to values
 	 * added directly through HttpHeaders methods.
+	 * <p>
+	 * 这个类不是 static 的，所以依赖于它的封闭类
 	 *
 	 * @since 4.0.3
 	 */
@@ -161,8 +165,7 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 				// Content-Type is written as an override so check super first
 				String value = super.getFirst(headerName);
 				return (value != null ? value : servletResponse.getHeader(headerName));
-			}
-			else {
+			} else {
 				String value = servletResponse.getHeader(headerName);
 				return (value != null ? value : super.getFirst(headerName));
 			}
@@ -200,6 +203,7 @@ public class ServletServerHttpResponse implements ServerHttpResponse {
 			}
 			return values;
 		}
+
 	}
 
 }

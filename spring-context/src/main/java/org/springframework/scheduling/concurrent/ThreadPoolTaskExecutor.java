@@ -285,6 +285,8 @@ public class ThreadPoolTaskExecutor extends ExecutorConfigurationSupport
 		if (this.allowCoreThreadTimeOut) {
 			executor.allowCoreThreadTimeOut(true);
 		}
+
+		// 是否预启动所有核心线程
 		if (this.prestartAllCoreThreads) {
 			executor.prestartAllCoreThreads();
 		}

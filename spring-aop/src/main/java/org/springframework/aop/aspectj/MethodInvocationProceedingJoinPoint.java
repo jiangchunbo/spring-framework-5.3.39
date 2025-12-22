@@ -42,6 +42,11 @@ import org.springframework.util.Assert;
  * <b>If you want to call the object and have the advice take effect, use {@code getThis()}.</b>
  * A common example is casting the object to an introduced interface in the implementation of
  * an introduction. There is no such distinction between target and proxy in AspectJ itself.
+ * <p>
+ * 这个类实现了 aspectj 框架的 {@link ProceedingJoinPoint} 接口，所以需要实现其全部方法
+ * <p>
+ * 体现了适配的思想，将 AOP Alliance 的 {@link org.aopalliance.intercept.MethodInvocation} 接口
+ * 适配为 aspectj 的 {@link ProceedingJoinPoint} 接口
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
@@ -58,18 +63,22 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 	@Nullable
 	private Object[] args;
 
-	/** Lazily initialized signature object. */
+	/**
+	 * Lazily initialized signature object.
+	 */
 	@Nullable
 	private Signature signature;
 
-	/** Lazily initialized source location object. */
+	/**
+	 * Lazily initialized source location object.
+	 */
 	@Nullable
 	private SourceLocation sourceLocation;
-
 
 	/**
 	 * Create a new MethodInvocationProceedingJoinPoint, wrapping the given
 	 * Spring ProxyMethodInvocation object.
+	 *
 	 * @param methodInvocation the Spring ProxyMethodInvocation object
 	 */
 	public MethodInvocationProceedingJoinPoint(ProxyMethodInvocation methodInvocation) {
@@ -77,18 +86,34 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 		this.methodInvocation = methodInvocation;
 	}
 
-
 	@Override
 	public void set$AroundClosure(AroundClosure aroundClosure) {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * 适配调用 {@link ProceedingJoinPoint#proceed()}
+	 * <p>
+	 * 复制 {@link ProxyMethodInvocation} 进行调用
+	 *
+	 * @return 调用返回值
+	 * @throws Throwable 调用异常
+	 */
 	@Override
 	@Nullable
 	public Object proceed() throws Throwable {
 		return this.methodInvocation.invocableClone().proceed();
 	}
 
+	/**
+	 * 适配调用 {@link ProceedingJoinPoint#proceed()}，只是可以传参而已
+	 * <p>
+	 * 复制 {@link ProxyMethodInvocation} 进行调用
+	 *
+	 * @param arguments 参数
+	 * @return 调用返回值
+	 * @throws Throwable 调用异常
+	 */
 	@Override
 	@Nullable
 	public Object proceed(Object[] arguments) throws Throwable {
@@ -112,10 +137,15 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 
 	/**
 	 * Returns the Spring AOP target. May be {@code null} if there is no target.
+	 * <p>
+	 * 返回 Spring 的目标对象。如果没有目标对象，可能是 null。
+	 * <p>
+	 * 目标对象就是最终调用的对象。
 	 */
 	@Override
 	@Nullable
 	public Object getTarget() {
+		// 在 AOP Alliance 里，getThis 返回的是静态部分
 		return this.methodInvocation.getThis();
 	}
 
@@ -173,7 +203,6 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 	public String toString() {
 		return "execution(" + getSignature().toString() + ")";
 	}
-
 
 	/**
 	 * Lazily initialized MethodSignature.
@@ -250,7 +279,7 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 		}
 
 		private String toString(boolean includeModifier, boolean includeReturnTypeAndArgs,
-				boolean useLongReturnAndArgumentTypeName, boolean useLongTypeName) {
+								boolean useLongReturnAndArgumentTypeName, boolean useLongTypeName) {
 
 			StringBuilder sb = new StringBuilder();
 			if (includeModifier) {
@@ -272,7 +301,7 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 		}
 
 		private void appendTypes(StringBuilder sb, Class<?>[] types, boolean includeArgs,
-				boolean useLongReturnAndArgumentTypeName) {
+								 boolean useLongReturnAndArgumentTypeName) {
 
 			if (includeArgs) {
 				for (int size = types.length, i = 0; i < size; i++) {
@@ -281,8 +310,7 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 						sb.append(',');
 					}
 				}
-			}
-			else {
+			} else {
 				if (types.length != 0) {
 					sb.append("..");
 				}
@@ -293,13 +321,12 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 			if (type.isArray()) {
 				appendType(sb, type.getComponentType(), useLongTypeName);
 				sb.append("[]");
-			}
-			else {
+			} else {
 				sb.append(useLongTypeName ? type.getName() : type.getSimpleName());
 			}
 		}
-	}
 
+	}
 
 	/**
 	 * Lazily initialized SourceLocation.
@@ -329,6 +356,7 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 		public int getColumn() {
 			throw new UnsupportedOperationException();
 		}
+
 	}
 
 }

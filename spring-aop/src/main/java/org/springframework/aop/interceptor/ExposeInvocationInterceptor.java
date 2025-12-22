@@ -92,12 +92,12 @@ public final class ExposeInvocationInterceptor implements MethodInterceptor, Pri
 	@Nullable
 	public Object invoke(MethodInvocation mi) throws Throwable {
 		MethodInvocation oldInvocation = invocation.get();
-		invocation.set(mi);
+		invocation.set(mi); // 设置新的 MethodInvocation
 		try {
 			return mi.proceed();
 		}
 		finally {
-			invocation.set(oldInvocation);
+			invocation.set(oldInvocation); // 恢复旧的 MethodInvocation
 		}
 	}
 

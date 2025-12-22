@@ -67,6 +67,9 @@ public abstract class WebUtils {
 	 * Standard Servlet 2.3+ spec request attribute for include context path.
 	 * <p>If included via a {@code RequestDispatcher}, the current resource will see the
 	 * originating context path. Its own context path is exposed as a request attribute.
+	 *
+	 * 先理解 request.getContextPath 总是返回当前 servlet 上下文路径，
+	 * 当发生 include 的时候，为了追溯从哪个 context path 进行 include 的，就会把来源放到请求属性
 	 */
 	public static final String INCLUDE_CONTEXT_PATH_ATTRIBUTE = "javax.servlet.include.context_path";
 

@@ -231,6 +231,7 @@ public class AntPathMatcher implements PathMatcher {
 			return false;
 		}
 
+		// 按照 / 分割
 		String[] pattDirs = tokenizePattern(pattern);
 		if (fullMatch && this.caseSensitive && !isPotentialMatch(path, pattDirs)) {
 			return false;
@@ -417,6 +418,7 @@ public class AntPathMatcher implements PathMatcher {
 			tokenized = this.tokenizedPatternCache.get(pattern);
 		}
 		if (tokenized == null) {
+			// 按照斜杠 / 分割
 			tokenized = tokenizePath(pattern);
 			if (cachePatterns == null && this.tokenizedPatternCache.size() >= CACHE_TURNOFF_THRESHOLD) {
 				// Try to adapt to the runtime situation that we're encountering:

@@ -77,11 +77,9 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 		}
 	}
 
-
 	protected RequestMappingInfoHandlerMapping() {
 		setHandlerMethodMappingNamingStrategy(new RequestMappingInfoHandlerMethodMappingNamingStrategy());
 	}
-
 
 	/**
 	 * Get the URL path patterns associated with the supplied {@link RequestMappingInfo}.
@@ -139,9 +137,11 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 	 */
 	@Override
 	protected void handleMatch(RequestMappingInfo info, String lookupPath, HttpServletRequest request) {
-		super.handleMatch(info, lookupPath, request);
+		super.handleMatch(info, lookupPath, request); // request mapping info
 
 		RequestCondition<?> condition = info.getActivePatternsCondition();
+
+		// 请求条件是新版的匹配器，还是旧版的 Ant 匹配器
 		if (condition instanceof PathPatternsRequestCondition) {
 			extractMatchDetails((PathPatternsRequestCondition) condition, lookupPath, request);
 		} else {
@@ -157,6 +157,13 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 		}
 	}
 
+	/**
+	 * 传入新版的 PathPatternsRequestCondition
+	 *
+	 * @param condition  PathPatternsRequestCondition
+	 * @param lookupPath 寻找的路径
+	 * @param request    Http Servlet Request
+	 */
 	private void extractMatchDetails(
 			PathPatternsRequestCondition condition, String lookupPath, HttpServletRequest request) {
 
@@ -178,6 +185,13 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 		request.setAttribute(URI_TEMPLATE_VARIABLES_ATTRIBUTE, uriVariables);
 	}
 
+	/**
+	 * 传入旧版的 Ant 风格 PatternsRequestCondition
+	 *
+	 * @param condition  PatternsRequestCondition
+	 * @param lookupPath 寻找的路径
+	 * @param request    Http Servlet Request
+	 */
 	private void extractMatchDetails(
 			PatternsRequestCondition condition, String lookupPath, HttpServletRequest request) {
 
@@ -290,7 +304,6 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 
 		return null;
 	}
-
 
 	/**
 	 * Aggregate all partial matches and expose methods checking across them.
@@ -443,7 +456,6 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 			return result;
 		}
 
-
 		/**
 		 * Container for a RequestMappingInfo that matches the URL path at least.
 		 */
@@ -497,9 +509,10 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 			public String toString() {
 				return this.info.toString();
 			}
-		}
-	}
 
+		}
+
+	}
 
 	/**
 	 * Default handler for HTTP OPTIONS.
@@ -538,6 +551,7 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 		public HttpHeaders handle() {
 			return this.headers;
 		}
+
 	}
 
 }

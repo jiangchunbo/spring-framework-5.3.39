@@ -77,6 +77,8 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 
 	/**
 	 * Lazily initialized map of user-specific attributes for this invocation.
+	 * <p>
+	 * 方法调用句柄里面可以设置一些属性
 	 */
 	@Nullable
 	private Map<String, Object> userAttributes;
@@ -94,7 +96,6 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	 * -1 until we invoke: then the current interceptor.
 	 */
 	private int currentInterceptorIndex = -1;
-
 
 	/**
 	 * Construct a new ReflectiveMethodInvocation with the given arguments.
@@ -121,7 +122,6 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		this.arguments = AopProxyUtils.adaptArgumentsIfNecessary(method, arguments);
 		this.interceptorsAndDynamicMethodMatchers = interceptorsAndDynamicMethodMatchers;
 	}
-
 
 	@Override
 	public final Object getProxy() {
@@ -158,7 +158,6 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	public void setArguments(Object... arguments) {
 		this.arguments = arguments;
 	}
-
 
 	@Override
 	@Nullable
@@ -217,7 +216,6 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		return AopUtils.invokeJoinpointUsingReflection(this.target, this.method, this.arguments);
 	}
 
-
 	/**
 	 * This implementation returns a shallow copy of this invocation object,
 	 * including an independent copy of the original arguments array.
@@ -265,7 +263,6 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		}
 	}
 
-
 	@Override
 	public void setUserAttribute(String key, @Nullable Object value) {
 		if (value != null) {
@@ -301,7 +298,10 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		return this.userAttributes;
 	}
 
-
+	/**
+	 * 学习 toString 方法阅读 debug 的时候看到 mybatis mapper 有帮助
+	 * @return
+	 */
 	@Override
 	public String toString() {
 		// Don't do toString on target, it may be proxied.

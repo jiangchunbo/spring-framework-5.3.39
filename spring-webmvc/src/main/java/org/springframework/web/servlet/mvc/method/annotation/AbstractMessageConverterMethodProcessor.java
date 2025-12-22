@@ -183,12 +183,15 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 			targetType = GenericTypeResolver.resolveType(getGenericType(returnType), returnType.getContainingClass());
 		}
 
+		// 返回值是 InputStreamResource 或者 Resource 表示资源类型
 		if (isResourceType(value, returnType)) {
+			// 告诉客户端自己支持一部分数据的响应
 			outputMessage.getHeaders().set(HttpHeaders.ACCEPT_RANGES, "bytes");
 			if (value != null && inputMessage.getHeaders().getFirst(HttpHeaders.RANGE) != null &&
 					outputMessage.getServletResponse().getStatus() == 200) {
 				Resource resource = (Resource) value;
 				try {
+					// 解析出客户端要请求哪些字节段
 					List<HttpRange> httpRanges = inputMessage.getHeaders().getRange();
 					outputMessage.getServletResponse().setStatus(HttpStatus.PARTIAL_CONTENT.value());
 					body = HttpRange.toResourceRegions(httpRanges, resource);

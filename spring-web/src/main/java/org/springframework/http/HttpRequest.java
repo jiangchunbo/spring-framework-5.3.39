@@ -31,6 +31,9 @@ public interface HttpRequest extends HttpMessage {
 
 	/**
 	 * Return the HTTP method of the request.
+	 * <p>
+	 * 返回 HTTP 请求的方法。如果没有办法解析，那么返回 null。
+	 *
 	 * @return the HTTP method as an HttpMethod enum value, or {@code null}
 	 * if not resolvable (e.g. in case of a non-standard HTTP method)
 	 * @see #getMethodValue()
@@ -43,15 +46,19 @@ public interface HttpRequest extends HttpMessage {
 
 	/**
 	 * Return the HTTP method of the request as a String value.
+	 * <p>
+	 * 返回 HTTP 请求的方法值。
+	 *
 	 * @return the HTTP method as a plain String
-	 * @since 5.0
 	 * @see #getMethod()
+	 * @since 5.0
 	 */
 	String getMethodValue();
 
 	/**
 	 * Return the URI of the request (including a query string if any,
 	 * but only if it is well-formed for a URI representation).
+	 *
 	 * @return the URI of the request (never {@code null})
 	 */
 	URI getURI();

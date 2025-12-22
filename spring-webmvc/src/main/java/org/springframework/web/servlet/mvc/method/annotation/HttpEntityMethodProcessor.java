@@ -82,7 +82,7 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 	 * without {@code Request~} or {@code ResponseBodyAdvice}.
 	 */
 	public HttpEntityMethodProcessor(List<HttpMessageConverter<?>> converters,
-			ContentNegotiationManager manager) {
+									 ContentNegotiationManager manager) {
 
 		super(converters, manager);
 	}
@@ -91,10 +91,11 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 	 * Complete constructor for resolving {@code HttpEntity} method arguments.
 	 * For handling {@code ResponseEntity} consider also providing a
 	 * {@code ContentNegotiationManager}.
+	 *
 	 * @since 4.2
 	 */
 	public HttpEntityMethodProcessor(List<HttpMessageConverter<?>> converters,
-			List<Object> requestResponseBodyAdvice) {
+									 List<Object> requestResponseBodyAdvice) {
 
 		super(converters, null, requestResponseBodyAdvice);
 	}
@@ -104,11 +105,10 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 	 * {@code ResponseEntity}.
 	 */
 	public HttpEntityMethodProcessor(List<HttpMessageConverter<?>> converters,
-			@Nullable ContentNegotiationManager manager, List<Object> requestResponseBodyAdvice) {
+									 @Nullable ContentNegotiationManager manager, List<Object> requestResponseBodyAdvice) {
 
 		super(converters, manager, requestResponseBodyAdvice);
 	}
-
 
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
@@ -125,7 +125,7 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 	@Override
 	@Nullable
 	public Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
-			NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory)
+								  NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory)
 			throws IOException, HttpMediaTypeNotSupportedException {
 
 		ServletServerHttpRequest inputMessage = createInputMessage(webRequest);
@@ -139,8 +139,7 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 		if (RequestEntity.class == parameter.getParameterType()) {
 			return new RequestEntity<>(body, inputMessage.getHeaders(),
 					inputMessage.getMethod(), inputMessage.getURI());
-		}
-		else {
+		} else {
 			return new HttpEntity<>(body, inputMessage.getHeaders());
 		}
 	}
@@ -156,26 +155,24 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 						parameter.getParameterName() + "' in method " + parameter.getMethod());
 			}
 			return type.getActualTypeArguments()[0];
-		}
-		else if (parameterType instanceof Class) {
+		} else if (parameterType instanceof Class) {
 			return Object.class;
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
 
 	@Override
 	public void handleReturnValue(@Nullable Object returnValue, MethodParameter returnType,
-			ModelAndViewContainer mavContainer, NativeWebRequest webRequest) throws Exception {
+								  ModelAndViewContainer mavContainer, NativeWebRequest webRequest) throws Exception {
 
 		mavContainer.setRequestHandled(true);
 		if (returnValue == null) {
 			return;
 		}
 
-		ServletServerHttpRequest inputMessage = createInputMessage(webRequest);
-		ServletServerHttpResponse outputMessage = createOutputMessage(webRequest);
+		ServletServerHttpRequest inputMessage = createInputMessage(webRequest); // 包装成 ServletServerHttpRequest
+		ServletServerHttpResponse outputMessage = createOutputMessage(webRequest); // 包装成 ServletServerHttpResponse
 
 		Assert.isInstanceOf(HttpEntity.class, returnValue);
 		HttpEntity<?> responseEntity = (HttpEntity<?>) returnValue;
@@ -185,12 +182,12 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 		if (!entityHeaders.isEmpty()) {
 			entityHeaders.forEach((key, value) -> {
 				if (HttpHeaders.VARY.equals(key) && outputHeaders.containsKey(HttpHeaders.VARY)) {
+					// 过滤出哪些是需要添加的 vary 头 (排除 outputHeaders 重复出现的)
 					List<String> values = getVaryRequestHeadersToAdd(outputHeaders, entityHeaders);
 					if (!values.isEmpty()) {
 						outputHeaders.setVary(values);
 					}
-				}
-				else {
+				} else {
 					outputHeaders.put(key, value);
 				}
 			});
@@ -206,8 +203,7 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 					outputMessage.flush();
 					return;
 				}
-			}
-			else if (returnStatus / 100 == 3) {
+			} else if (returnStatus / 100 == 3) {
 				String location = outputHeaders.getFirst("location");
 				if (location != null) {
 					saveFlashAttributes(mavContainer, webRequest, location);
@@ -222,6 +218,15 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 		outputMessage.flush();
 	}
 
+	/**
+	 * 这个函数负责选择，哪些 entityHeaders 是需要添加的，避免重复添加 response 已经设置的。
+	 * <p>
+	 * entityHeaders 是开发者自己设置的头。
+	 *
+	 * @param responseHeaders response 已经设置的头
+	 * @param entityHeaders   entity 开发者配置的头
+	 * @return 需要添加的 vary 头
+	 */
 	private List<String> getVaryRequestHeadersToAdd(HttpHeaders responseHeaders, HttpHeaders entityHeaders) {
 		List<String> entityHeadersVary = entityHeaders.getVary();
 		List<String> vary = responseHeaders.get(HttpHeaders.VARY);
@@ -232,6 +237,8 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 					if ("*".equals(existing)) {
 						return Collections.emptyList();
 					}
+
+					// 如果开发者也在 entity 添加了这个 vary 那么就删除，不用再次添加
 					for (String value : entityHeadersVary) {
 						if (value.equalsIgnoreCase(existing)) {
 							result.remove(value);
@@ -280,8 +287,7 @@ public class HttpEntityMethodProcessor extends AbstractMessageConverterMethodPro
 	protected Class<?> getReturnValueType(@Nullable Object returnValue, MethodParameter returnType) {
 		if (returnValue != null) {
 			return returnValue.getClass();
-		}
-		else {
+		} else {
 			Type type = getHttpEntityType(returnType);
 			type = (type != null ? type : Object.class);
 			return ResolvableType.forMethodParameter(returnType, type).toClass();
