@@ -131,6 +131,8 @@ public abstract class AbstractFallbackTransactionAttributeSource
 				this.attributeCache.put(cacheKey, NULL_TRANSACTION_ATTRIBUTE);
 			} else {
 				String methodIdentification = ClassUtils.getQualifiedMethodName(method, targetClass);
+
+				// 如果是 DefaultTransactionAttribute 类型，则填入一些属性
 				if (txAttr instanceof DefaultTransactionAttribute) {
 					DefaultTransactionAttribute dta = (DefaultTransactionAttribute) txAttr;
 					dta.setDescriptor(methodIdentification);
