@@ -35,6 +35,8 @@ import org.springframework.util.Assert;
 /**
  * An implementation of the AspectJ {@link ProceedingJoinPoint} interface
  * wrapping an AOP Alliance {@link org.aopalliance.intercept.MethodInvocation}.
+ * <p>
+ * 实现了 AspectJ {@link ProceedingJoinPoint} 接口，包装了 AOP Alliance {@link org.aopalliance.intercept.MethodInvocation}
  *
  * <p><b>Note</b>: The {@code getThis()} method returns the current Spring AOP proxy.
  * The {@code getTarget()} method returns the current Spring AOP target (which may be
@@ -43,10 +45,8 @@ import org.springframework.util.Assert;
  * A common example is casting the object to an introduced interface in the implementation of
  * an introduction. There is no such distinction between target and proxy in AspectJ itself.
  * <p>
- * 这个类实现了 aspectj 框架的 {@link ProceedingJoinPoint} 接口，所以需要实现其全部方法
- * <p>
- * 体现了适配的思想，将 AOP Alliance 的 {@link org.aopalliance.intercept.MethodInvocation} 接口
- * 适配为 aspectj 的 {@link ProceedingJoinPoint} 接口
+ * 注意: getThis 返回 Spring AOP proxy 对象; getTarget 返回 Spring AOP 目标对象(可能 null)。
+ * 如果你想调用对象，并且让 advice 起作用，就必须用 getThis。
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
@@ -56,15 +56,26 @@ import org.springframework.util.Assert;
  */
 public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint, JoinPoint.StaticPart {
 
+	// 这个类实现了 aspectj 框架的 ProceedingJoinPoint 接口
+
+	// 适配: 将 AOP Alliance 的 MethodInvocation 接口适配为 aspectj 的 ProceedingJoinPoint 接口
+
 	private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
 	private final ProxyMethodInvocation methodInvocation;
 
+	/**
+	 * 方法参数，当调用 {@link MethodInvocationProceedingJoinPoint#getArgs()} 时填充
+	 */
 	@Nullable
 	private Object[] args;
 
 	/**
 	 * Lazily initialized signature object.
+	 * <p>
+	 * 方法签名，当调用 {@link MethodInvocationProceedingJoinPoint#getSignature()} 时初始化
+	 * <p>
+	 * 初始化实际上是创建一个 {@link MethodSignatureImpl} 对象
 	 */
 	@Nullable
 	private Signature signature;
@@ -129,16 +140,19 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 
 	/**
 	 * Returns the Spring AOP proxy. Cannot be {@code null}.
+	 *
+	 * 返回 Spring AOP proxy 对象。不可能是 null。
 	 */
 	@Override
 	public Object getThis() {
+		// 返回 proxy 代理对象
 		return this.methodInvocation.getProxy();
 	}
 
 	/**
 	 * Returns the Spring AOP target. May be {@code null} if there is no target.
 	 * <p>
-	 * 返回 Spring 的目标对象。如果没有目标对象，可能是 null。
+	 * 返回 Spring 的目标对象。如果没有 target，可能是 null。
 	 * <p>
 	 * 目标对象就是最终调用的对象。
 	 */

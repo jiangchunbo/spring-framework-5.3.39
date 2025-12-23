@@ -206,6 +206,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				// The target does not implement the equals(Object) method itself.
 				return equals(args[0]);
 			}
+
 			// 如果自己没有实现 hashCode，但是这是一个 hashCode，自己处理
 			else if (!this.hashCodeDefined && AopUtils.isHashCodeMethod(method)) {
 				// The target does not implement the hashCode() method itself.

@@ -63,8 +63,14 @@ import org.springframework.lang.Nullable;
  */
 public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Cloneable {
 
+	/**
+	 * Spring AOP 代理对象，通过这个对象调用方法，可以让 advice 生效
+	 */
 	protected final Object proxy;
 
+	/**
+	 * Spring AOP 目标对象，可能是 null
+	 */
 	@Nullable
 	protected final Object target;
 
@@ -118,7 +124,7 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		this.proxy = proxy;
 		this.target = target;
 		this.targetClass = targetClass;
-		this.method = BridgeMethodResolver.findBridgedMethod(method);
+		this.method = BridgeMethodResolver.findBridgedMethod(method); // 找到被桥接的方法
 		this.arguments = AopProxyUtils.adaptArgumentsIfNecessary(method, arguments);
 		this.interceptorsAndDynamicMethodMatchers = interceptorsAndDynamicMethodMatchers;
 	}
