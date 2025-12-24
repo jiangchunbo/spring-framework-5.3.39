@@ -100,6 +100,10 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	/**
 	 * Index from 0 of the current interceptor we're invoking.
 	 * -1 until we invoke: then the current interceptor.
+	 * <p>
+	 * 当前正在调用的拦截器的索引，从 0 开始。
+	 * <p>
+	 * 特殊地，在我们开始调用之前是 -1: 然后会变成当前正在执行的拦截器的索引。
 	 */
 	private int currentInterceptorIndex = -1;
 
@@ -140,6 +144,11 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		return this.target;
 	}
 
+	/**
+	 * 返回 joinpoint 的 static part。对于 spring 就是返回 Method。
+	 *
+	 * @return Method
+	 */
 	@Override
 	public final AccessibleObject getStaticPart() {
 		return this.method;
@@ -169,27 +178,19 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	@Nullable
 	public Object proceed() throws Throwable {
 		// We start with an index of -1 and increment early.
-		// Spring 说，我们从 index = -1 开始，递增
 
-		// size - 1 就是 List 最后一个元素，意思走到头了
+		// 没有更多拦截器需要执行，反射执行 Method.invoke
 		if (this.currentInterceptorIndex == this.interceptorsAndDynamicMethodMatchers.size() - 1) {
-			// 走到头就是调用最终的方法，实际上就是反射 method.invoke
 			return invokeJoinpoint();
 		}
 
-		// 还没有到头，那么我们从 List 中取出下一个“处理器”
-		// 细心的人可能会发现，返回值竟然是个 Object
-		//  Rod Johnson 可能特别喜欢用 Object 吧，实际上，分析下来就两种返回类型：
-		//  ---- InterceptorAndDynamicMethodMatcher
-		//  ---- MethodInterceptor
-		Object interceptorOrInterceptionAdvice =
-				this.interceptorsAndDynamicMethodMatchers.get(++this.currentInterceptorIndex);
+		// 下一个拦截器
+		Object interceptorOrInterceptionAdvice = this.interceptorsAndDynamicMethodMatchers.get(++this.currentInterceptorIndex);
 
 		if (interceptorOrInterceptionAdvice instanceof InterceptorAndDynamicMethodMatcher) {
 			// Evaluate dynamic method matcher here: static part will already have
 			// been evaluated and found to match.
-			InterceptorAndDynamicMethodMatcher dm =
-					(InterceptorAndDynamicMethodMatcher) interceptorOrInterceptionAdvice;
+			InterceptorAndDynamicMethodMatcher dm = (InterceptorAndDynamicMethodMatcher) interceptorOrInterceptionAdvice;
 			Class<?> targetClass = (this.targetClass != null ? this.targetClass : this.method.getDeclaringClass());
 
 			// 方法匹配器
@@ -306,6 +307,7 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 
 	/**
 	 * 学习 toString 方法阅读 debug 的时候看到 mybatis mapper 有帮助
+	 *
 	 * @return
 	 */
 	@Override

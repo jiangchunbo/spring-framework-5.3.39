@@ -23,9 +23,14 @@ import javax.annotation.Nonnull;
 /**
  * Description of an invocation to a method, given to an interceptor
  * upon method-call.
+ * <p>
+ * 这个类代表了对方法的调用描述，在方法调用发生时会被提供给拦截器。
  *
  * <p>A method invocation is a joinpoint and can be intercepted by a
  * method interceptor.
+ * <p>
+ * 通常 MethodInvocation 这种名字的 AOP 编程范式，也会收集该方法包含的所有拦截器。
+ * 具体见 {@link org.springframework.aop.framework.ReflectiveMethodInvocation}
  *
  * @author Rod Johnson
  * @see MethodInterceptor
@@ -34,8 +39,14 @@ public interface MethodInvocation extends Invocation {
 
 	/**
 	 * Get the method being called.
+	 * <p>
+	 * 获取被调用的方法。
+	 *
 	 * <p>This method is a friendly implementation of the
 	 * {@link Joinpoint#getStaticPart()} method (same result).
+	 * <p>
+	 * 这个方法是 {@link Joinpoint#getStaticPart()} 方法的 [友好实现]，结果是相等的，语义上更清晰。
+	 *
 	 * @return the method being called
 	 */
 	@Nonnull

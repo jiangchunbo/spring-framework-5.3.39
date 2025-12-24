@@ -64,7 +64,7 @@ public interface Joinpoint {
 	 * Return the object that holds the current joinpoint's static part.
 	 * <p>For instance, the target object for an invocation.
 	 * <p>
-	 * 返回持有当前连接点静态部分的那个对象。
+	 * 返回持有当前连接点 static part 的那个对象。
 	 * <p>
 	 * AOP Alliance 中，静态不变就是程序编译后确定的，不可能运行时改变的部分，
 	 * 例如，用于调用的目标对象
@@ -76,10 +76,15 @@ public interface Joinpoint {
 
 	/**
 	 * Return the static part of this joinpoint.
+	 * <p>
+	 * 返回连接点的 static part。
+	 * <p>
+	 * ps: 对于 spring 来说就是 Method 对象。
+	 *
 	 * <p>The static part is an accessible object on which a chain of
 	 * interceptors is installed.
 	 *
-	 * @return 连接点的静态部分。永远不可能是 null。
+	 * @return 连接点的 static part 。永远不可能是 null。
 	 */
 	@Nonnull
 	AccessibleObject getStaticPart();
