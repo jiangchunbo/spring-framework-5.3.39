@@ -33,6 +33,8 @@ import org.springframework.util.Assert;
 /**
  * Helper for retrieving standard Spring Advisors from a BeanFactory,
  * for use with auto-proxying.
+ * <p>
+ * 用于从 BeanFactory 抓取标准的 Spring Advisor 的助手类，与 auto proxying 一起使用。
  *
  * @author Juergen Hoeller
  * @see AbstractAdvisorAutoProxyCreator
@@ -47,7 +49,6 @@ public class BeanFactoryAdvisorRetrievalHelper {
 	@Nullable
 	private volatile String[] cachedAdvisorBeanNames;
 
-
 	/**
 	 * Create a new BeanFactoryAdvisorRetrievalHelper for the given BeanFactory.
 	 *
@@ -58,7 +59,6 @@ public class BeanFactoryAdvisorRetrievalHelper {
 		this.beanFactory = beanFactory;
 	}
 
-
 	/**
 	 * Find all eligible Advisor beans in the current bean factory,
 	 * ignoring FactoryBeans and excluding beans that are currently in creation.
@@ -68,6 +68,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 	 */
 	public List<Advisor> findAdvisorBeans() {
 		// Determine list of advisor bean names, if not cached already.
+		// 从缓存中获取，或者初始化找一次 Advisor 的 beanNames
 		String[] advisorNames = this.cachedAdvisorBeanNames;
 		if (advisorNames == null) {
 			// Do not initialize FactoryBeans here: We need to leave all regular beans

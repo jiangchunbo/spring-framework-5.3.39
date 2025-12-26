@@ -113,7 +113,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	protected static final Object[] PROXY_WITHOUT_ADDITIONAL_INTERCEPTORS = new Object[0];
 
-
 	/**
 	 * Logger available to subclasses.
 	 */
@@ -150,7 +149,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	private final Map<Object, Class<?>> proxyTypes = new ConcurrentHashMap<>(16);
 
 	private final Map<Object, Boolean> advisedBeans = new ConcurrentHashMap<>(256);
-
 
 	/**
 	 * Set whether the proxy should be frozen, preventing advice
@@ -230,7 +228,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		return this.beanFactory;
 	}
 
-
 	@Override
 	@Nullable
 	public Class<?> predictBeanType(Class<?> beanClass, String beanName) {
@@ -254,6 +251,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		return wrapIfNecessary(bean, beanName, cacheKey);
 	}
 
+	/**
+	 * 用于创建 Spring AOP proxy 代理对象的后置处理器
+	 */
 	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
 		Object cacheKey = getCacheKey(beanClass, beanName);
@@ -309,7 +309,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		return bean;
 	}
 
-
 	/**
 	 * Build a cache key for the given bean class and bean name.
 	 * <p>Note: As of 4.2.3, this implementation does not return a concatenated
@@ -347,7 +346,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			return bean;
 		}
 
-		// 如果一个类是基础类，或者应该跳过，就赶紧标记为 false
+		// InfrastructureClass: 类型是 Advice 等支撑 AOP 的类
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
@@ -617,7 +616,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	protected void customizeProxyFactory(ProxyFactory proxyFactory) {
 	}
-
 
 	/**
 	 * Return whether the given bean is to be proxied, what additional
