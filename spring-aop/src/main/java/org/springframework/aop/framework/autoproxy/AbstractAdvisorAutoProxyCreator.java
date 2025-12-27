@@ -95,6 +95,8 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
 		// 找到候选的 Advisor
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();
+
+		// 从候选 advisor 找到符合指定 bean 的
 		List<Advisor> eligibleAdvisors = findAdvisorsThatCanApply(candidateAdvisors, beanClass, beanName);
 
 		// 子类扩展
@@ -113,7 +115,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 */
 	protected List<Advisor> findCandidateAdvisors() {
 		Assert.state(this.advisorRetrievalHelper != null, "No BeanFactoryAdvisorRetrievalHelper available");
-		// 通过这个 helper 找到 advisor 的 bean
+		// 找到 Advisor 类型的 bean
 		return this.advisorRetrievalHelper.findAdvisorBeans();
 	}
 

@@ -106,12 +106,15 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 						if (beanType == null) {
 							continue;
 						}
-						if (this.advisorFactory.isAspect(beanType)) {
+
+						if (this.advisorFactory.isAspect(beanType)) { // beanClass 上面有 @Aspect 注解
 							try {
 								AspectMetadata amd = new AspectMetadata(beanType, beanName);
 								if (amd.getAjType().getPerClause().getKind() == PerClauseKind.SINGLETON) {
+									// 将 aspectj bean 封装为 factory
 									MetadataAwareAspectInstanceFactory factory =
 											new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
+									// 从 aspectj bean 产生出 advisor
 									List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
 									if (this.beanFactory.isSingleton(beanName)) {
 										this.advisorsCache.put(beanName, classAdvisors);
@@ -135,6 +138,7 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 								aspectNames.add(beanName);
 							}
 							catch (IllegalArgumentException | IllegalStateException | AopConfigException ex) {
+								// 抛出异常都会静默处理，比如父子类都声明 @Aspect 注解是不会生效的
 								if (logger.isDebugEnabled()) {
 									logger.debug("Ignoring incompatible aspect [" + beanType.getName() + "]: " + ex);
 								}

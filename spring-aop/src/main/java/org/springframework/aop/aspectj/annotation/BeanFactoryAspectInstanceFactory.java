@@ -75,7 +75,7 @@ public class BeanFactoryAspectInstanceFactory implements MetadataAwareAspectInst
 		Assert.notNull(beanFactory, "BeanFactory must not be null");
 		Assert.notNull(name, "Bean name must not be null");
 		this.beanFactory = beanFactory;
-		this.name = name;
+		this.name = name; // beanName
 		Class<?> resolvedType = type;
 		if (type == null) {
 			resolvedType = beanFactory.getType(name);

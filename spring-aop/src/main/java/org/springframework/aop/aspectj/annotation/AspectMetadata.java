@@ -83,8 +83,11 @@ public class AspectMetadata implements Serializable {
 
 		Class<?> currClass = aspectClass;
 		AjType<?> ajType = null;
+
+		// 遍历类层次
 		while (currClass != Object.class) {
 			AjType<?> ajTypeToCheck = AjTypeSystem.getAjType(currClass);
+			// 检查这个类上面有没有 @Aspect 注解
 			if (ajTypeToCheck.isAspect()) {
 				ajType = ajTypeToCheck;
 				break;
@@ -100,8 +103,9 @@ public class AspectMetadata implements Serializable {
 		this.aspectClass = ajType.getJavaClass();
 		this.ajType = ajType;
 
+		// @Aspect 注解的 value 可以写一些表达式，例如 perthis pertarget
 		switch (this.ajType.getPerClause().getKind()) {
-			case SINGLETON:
+			case SINGLETON: // 默认
 				this.perClausePointcut = Pointcut.TRUE;
 				return;
 			case PERTARGET:

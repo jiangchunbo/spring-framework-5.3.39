@@ -74,6 +74,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 	@Override
 	public void validate(Class<?> aspectClass) throws AopConfigException {
 		// If the parent has the annotation and isn't abstract it's an error
+		// 不能子类和父类同时都是 @Aspect
 		Class<?> superclass = aspectClass.getSuperclass();
 		if (superclass.getAnnotation(Aspect.class) != null &&
 				!Modifier.isAbstract(superclass.getModifiers())) {
@@ -82,13 +83,19 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 		}
 
 		AjType<?> ajType = AjTypeSystem.getAjType(aspectClass);
+
+		// 类上面没有 @Aspect
 		if (!ajType.isAspect()) {
 			throw new NotAnAtAspectException(aspectClass);
 		}
+
+		// 不支持的类型
 		if (ajType.getPerClause().getKind() == PerClauseKind.PERCFLOW) {
 			throw new AopConfigException(aspectClass.getName() + " uses percflow instantiation model: " +
 					"This is not supported in Spring AOP.");
 		}
+
+		// 不支持的类型
 		if (ajType.getPerClause().getKind() == PerClauseKind.PERCFLOWBELOW) {
 			throw new AopConfigException(aspectClass.getName() + " uses percflowbelow instantiation model: " +
 					"This is not supported in Spring AOP.");
@@ -116,6 +123,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 	private static <A extends Annotation> AspectJAnnotation<A> findAnnotation(Method method, Class<A> toLookFor) {
 		A result = AnnotationUtils.findAnnotation(method, toLookFor);
 		if (result != null) {
+			// 实例化 AspectJAnnotation 如果表达式是空串会抛出异常
 			return new AspectJAnnotation<>(result);
 		}
 		else {
@@ -166,6 +174,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 			this.annotation = annotation;
 			this.annotationType = determineAnnotationType(annotation);
 			try {
+				// 表达式不能是空字符串 ("") 否则抛出 IllegalStateException
 				this.pointcutExpression = resolveExpression(annotation);
 				Object argNames = AnnotationUtils.getValue(annotation, "argNames");
 				this.argumentNames = (argNames instanceof String ? (String) argNames : "");

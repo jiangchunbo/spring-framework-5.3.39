@@ -85,14 +85,14 @@ public class BeanFactoryAdvisorRetrievalHelper {
 		for (String name : advisorNames) {
 			// 有没有资格
 			if (isEligibleBean(name)) {
-				// 我正在创建 bean，然后我需要找到一些 advisor，
-				// 但是我发现这个 bean 也是 advisor
+				// 循环依赖
 				if (this.beanFactory.isCurrentlyInCreation(name)) {
 					if (logger.isTraceEnabled()) {
 						logger.trace("Skipping currently created advisor '" + name + "'");
 					}
 				} else {
 					try {
+						// getBean 创建 Advisor
 						advisors.add(this.beanFactory.getBean(name, Advisor.class));
 					} catch (BeanCreationException ex) {
 						Throwable rootCause = ex.getMostSpecificCause();

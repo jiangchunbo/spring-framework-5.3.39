@@ -30,6 +30,8 @@ import org.springframework.util.comparator.Comparators;
  * <p>The specified {@link Converter} will be used to convert each value
  * before it is passed to the underlying {@code Comparator}.
  *
+ * 这个排序器的作用就是将 source 对象转换成 target 对象，使用 target 对象进行排序
+ *
  * @author Phillip Webb
  * @since 3.2
  * @param <S> the source type

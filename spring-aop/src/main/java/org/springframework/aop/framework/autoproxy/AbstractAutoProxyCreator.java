@@ -353,10 +353,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		// Create proxy if we have advice.
-		// 获取对于这个 bean 来说，需要的 advice 和 advisor
-		// 返回值也就两种，而且都是常量，一个是 null，另一个是一个 new Object[0]
-		// 所以，根本没有返回什么具体的对象，只是一个标记
-		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null); // 给 bean 寻找 advisor
 
 		// 如果获取到的非 DO_NOT_PROXY ，那么就是存在代理
 		if (specificInterceptors != DO_NOT_PROXY) {
