@@ -56,15 +56,15 @@ import org.springframework.lang.Nullable;
  */
 public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFactory {
 
-	private static final Class<?>[] ASPECTJ_ANNOTATION_CLASSES = new Class<?>[] {
+	private static final Class<?>[] ASPECTJ_ANNOTATION_CLASSES = new Class<?>[]{
 			Pointcut.class, Around.class, Before.class, After.class, AfterReturning.class, AfterThrowing.class};
 
-
-	/** Logger available to subclasses. */
+	/**
+	 * Logger available to subclasses.
+	 */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	protected final ParameterNameDiscoverer parameterNameDiscoverer = new AspectJAnnotationParameterNameDiscoverer();
-
 
 	@Override
 	public boolean isAspect(Class<?> clazz) {
@@ -102,7 +102,6 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 		}
 	}
 
-
 	/**
 	 * Find and return the first AspectJ annotation on the given method
 	 * (there <i>should</i> only be one anyway...).
@@ -125,15 +124,14 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 		if (result != null) {
 			// 实例化 AspectJAnnotation 如果表达式是空串会抛出异常
 			return new AspectJAnnotation<>(result);
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
 
-
 	/**
 	 * Enum for AspectJ annotation types.
+	 *
 	 * @see AspectJAnnotation#getAnnotationType()
 	 */
 	protected enum AspectJAnnotationType {
@@ -141,16 +139,19 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 		AtPointcut, AtAround, AtBefore, AtAfter, AtAfterReturning, AtAfterThrowing
 	}
 
-
 	/**
 	 * Class modeling an AspectJ annotation, exposing its type enumeration and
 	 * pointcut String.
+	 *
 	 * @param <A> the annotation type
 	 */
 	protected static class AspectJAnnotation<A extends Annotation> {
 
-		private static final String[] EXPRESSION_ATTRIBUTES = new String[] {"pointcut", "value"};
+		private static final String[] EXPRESSION_ATTRIBUTES = new String[]{"pointcut", "value"};
 
+		/**
+		 * 将 AspectJ 注解映射成 AspectJAnnotationType 枚举
+		 */
 		private static Map<Class<?>, AspectJAnnotationType> annotationTypeMap = new HashMap<>(8);
 
 		static {
@@ -172,18 +173,20 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 
 		public AspectJAnnotation(A annotation) {
 			this.annotation = annotation;
-			this.annotationType = determineAnnotationType(annotation);
+			this.annotationType = determineAnnotationType(annotation); // 映射成枚举
 			try {
 				// 表达式不能是空字符串 ("") 否则抛出 IllegalStateException
 				this.pointcutExpression = resolveExpression(annotation);
 				Object argNames = AnnotationUtils.getValue(annotation, "argNames");
 				this.argumentNames = (argNames instanceof String ? (String) argNames : "");
-			}
-			catch (Exception ex) {
+			} catch (Exception ex) {
 				throw new IllegalArgumentException(annotation + " is not a valid AspectJ annotation", ex);
 			}
 		}
 
+		/**
+		 * 将注解映射映射成 AspectJAnnotationType 枚举，如果映射失败，抛异常
+		 */
 		private AspectJAnnotationType determineAnnotationType(A annotation) {
 			AspectJAnnotationType type = annotationTypeMap.get(annotation.annotationType());
 			if (type != null) {
@@ -225,8 +228,8 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 		public String toString() {
 			return this.annotation.toString();
 		}
-	}
 
+	}
 
 	/**
 	 * ParameterNameDiscoverer implementation that analyzes the arg names
@@ -251,8 +254,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 					names[i] = nameTokens.nextToken();
 				}
 				return names;
-			}
-			else {
+			} else {
 				return null;
 			}
 		}
@@ -262,6 +264,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 		public String[] getParameterNames(Constructor<?> ctor) {
 			throw new UnsupportedOperationException("Spring AOP cannot handle constructor advice");
 		}
+
 	}
 
 }

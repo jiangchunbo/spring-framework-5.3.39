@@ -41,15 +41,16 @@ public class AspectJAfterAdvice extends AbstractAspectJAdvice
 		super(aspectJBeforeAdviceMethod, pointcut, aif);
 	}
 
-
+	/**
+	 * AspectJ {@link org.aspectj.lang.annotation.After} 注解调用原理
+	 */
 	@Override
 	@Nullable
 	public Object invoke(MethodInvocation mi) throws Throwable {
 		// 先执行方法，再调用 advice
 		try {
 			return mi.proceed();
-		}
-		finally {
+		} finally {
 			invokeAdviceMethod(getJoinPointMatch(), null, null);
 		}
 	}

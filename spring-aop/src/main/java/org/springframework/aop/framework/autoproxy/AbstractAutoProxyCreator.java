@@ -361,7 +361,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
 
 			// 创建一个代理对象
-			Object proxy = createProxy(bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
+			Object proxy = createProxy(bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean)); // wrap bean 包装成代理对象
 			this.proxyTypes.put(cacheKey, proxy.getClass());
 			return proxy;
 		}

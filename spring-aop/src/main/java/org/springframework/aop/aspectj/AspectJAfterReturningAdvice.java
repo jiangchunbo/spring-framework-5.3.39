@@ -60,6 +60,9 @@ public class AspectJAfterReturningAdvice extends AbstractAspectJAdvice
 		setReturningNameNoCheck(name);
 	}
 
+	/**
+	 * 实现了高级接口 {@link AfterReturningAdvice}，在获取到返回值之后调用
+	 */
 	@Override
 	public void afterReturning(@Nullable Object returnValue, Method method, Object[] args, @Nullable Object target) throws Throwable {
 		// 这是一个有条件的 afterReturning 调用
