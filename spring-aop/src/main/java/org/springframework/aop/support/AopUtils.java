@@ -235,6 +235,8 @@ public abstract class AopUtils {
 	 * Can the given pointcut apply at all on the given class?
 	 * <p>This is an important test as it can be used to optimize
 	 * out a pointcut for a class.
+	 * <p>
+	 * 给定的 pointcut 是否可以代理目标类
 	 *
 	 * @param pc               the static or dynamic pointcut to check
 	 * @param targetClass      the class to test
@@ -244,15 +246,15 @@ public abstract class AopUtils {
 	 */
 	public static boolean canApply(Pointcut pc, Class<?> targetClass, boolean hasIntroductions) {
 		Assert.notNull(pc, "Pointcut must not be null");
-		// 使用 ClassFilter 快速判断是否匹配
+		// 1. ClassFilter 匹配
 		if (!pc.getClassFilter().matches(targetClass)) {
 			return false;
 		}
 
-		// 获得方法匹配器
+		// 2. MethodMatcher 匹配 (看到这里要思考一下，入参并没有 method，但是接下来匹配方法，大概率是匹配所有方法)
+		//    只要有一个 method 匹配就表示匹配成功
 		MethodMatcher methodMatcher = pc.getMethodMatcher();
-		// 如果是 MethodMatcher.TRUE，则表示匹配所有方法
-		if (methodMatcher == MethodMatcher.TRUE) {
+		if (methodMatcher == MethodMatcher.TRUE) { // 匹配所有方法
 			// No need to iterate the methods if we're matching any method anyway...
 			return true;
 		}
@@ -266,16 +268,13 @@ public abstract class AopUtils {
 		// 获得所有类、方法（JDK 动态代理不需要获取类，因为类型是 Proxy）
 		Set<Class<?>> classes = new LinkedHashSet<>();
 		if (!Proxy.isProxyClass(targetClass)) {
-			// 如果不是 JDK 动态代理，那么应该就是 CGLIB，进而获取父类
-			classes.add(ClassUtils.getUserClass(targetClass));
+			classes.add(ClassUtils.getUserClass(targetClass)); // 不是 JDK 动态代理，那么有可能是 CGLIB，获取用户定义的类
 		}
-		classes.addAll(ClassUtils.getAllInterfacesForClassAsSet(targetClass));
+		classes.addAll(ClassUtils.getAllInterfacesForClassAsSet(targetClass)); // 获取所有实现的接口 (遍历类层次)
 
-		// 遍历类、接口所有方法
+		// 遍历所有类、接口方法吗，一旦有一个 method 被 methodMatcher 匹配上，就认为可以代理
 		for (Class<?> clazz : classes) {
-			// 所有声明的方法
 			Method[] methods = ReflectionUtils.getAllDeclaredMethods(clazz);
-			// 一旦有一个方法命中，则认为可以代理
 			for (Method method : methods) {
 				if (introductionAwareMethodMatcher != null ?
 						introductionAwareMethodMatcher.matches(method, targetClass, hasIntroductions) :
@@ -317,6 +316,7 @@ public abstract class AopUtils {
 			return ((IntroductionAdvisor) advisor).getClassFilter().matches(targetClass);
 		} else if (advisor instanceof PointcutAdvisor) {
 			PointcutAdvisor pca = (PointcutAdvisor) advisor;
+			// 检查是否可以用在 targetClass 上
 			return canApply(pca.getPointcut(), targetClass, hasIntroductions);
 		} else {
 			// It doesn't have a pointcut so we assume it applies.
@@ -327,6 +327,8 @@ public abstract class AopUtils {
 	/**
 	 * Determine the sublist of the {@code candidateAdvisors} list
 	 * that is applicable to the given class.
+	 * <p>
+	 * 过滤一下，找出可以用在 class 上面的 advisor
 	 *
 	 * @param candidateAdvisors the Advisors to evaluate
 	 * @param clazz             the target class
@@ -338,11 +340,15 @@ public abstract class AopUtils {
 			return candidateAdvisors;
 		}
 		List<Advisor> eligibleAdvisors = new ArrayList<>();
+
+		// 处理 IntroductionAdvisor 类型
 		for (Advisor candidate : candidateAdvisors) {
 			if (candidate instanceof IntroductionAdvisor && canApply(candidate, clazz)) {
 				eligibleAdvisors.add(candidate);
 			}
 		}
+
+		// 处理非 IntroductionAdvisor
 		boolean hasIntroductions = !eligibleAdvisors.isEmpty();
 		for (Advisor candidate : candidateAdvisors) {
 			if (candidate instanceof IntroductionAdvisor) {

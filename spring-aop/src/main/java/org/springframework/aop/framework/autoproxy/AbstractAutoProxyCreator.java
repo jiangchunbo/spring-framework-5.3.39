@@ -543,9 +543,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	protected Advisor[] buildAdvisors(@Nullable String beanName, @Nullable Object[] specificInterceptors) {
 		// Handle prototypes correctly...
-		Advisor[] commonInterceptors = resolveInterceptorNames();
+		Advisor[] commonInterceptors = resolveInterceptorNames(); // 通用的拦截器?
 
 		List<Object> allInterceptors = new ArrayList<>();
+
+		// 用户指定的拦截器
 		if (specificInterceptors != null) {
 			if (specificInterceptors.length > 0) {
 				// specificInterceptors may equal PROXY_WITHOUT_ADDITIONAL_INTERCEPTORS

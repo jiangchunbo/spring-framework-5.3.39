@@ -114,8 +114,8 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 									// 将 aspectj bean 封装为 factory
 									MetadataAwareAspectInstanceFactory factory =
 											new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
-									// 从 aspectj bean 产生出 advisor
-									List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
+
+									List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory); // 从 aspectj bean 产生出 advisor
 									if (this.beanFactory.isSingleton(beanName)) {
 										this.advisorsCache.put(beanName, classAdvisors);
 									}

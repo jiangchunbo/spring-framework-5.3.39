@@ -791,6 +791,8 @@ public abstract class ClassUtils {
 	 * including ones implemented by superclasses.
 	 * <p>If the class itself is an interface, it gets returned as sole interface.
 	 *
+	 * 如果 class 本身是接口，那么，直接返回该接口
+	 *
 	 * @param clazz the class to analyze for interfaces
 	 * @return all interfaces that the given object implements as a Set
 	 */
@@ -810,9 +812,12 @@ public abstract class ClassUtils {
 	 */
 	public static Set<Class<?>> getAllInterfacesForClassAsSet(Class<?> clazz, @Nullable ClassLoader classLoader) {
 		Assert.notNull(clazz, "Class must not be null");
+		// 如果 class 本身是接口，那么返回它本身
 		if (clazz.isInterface() && isVisible(clazz, classLoader)) {
 			return Collections.singleton(clazz);
 		}
+
+		// 遍历类层次接口，获取所有层次实现的接口
 		Set<Class<?>> interfaces = new LinkedHashSet<>();
 		Class<?> current = clazz;
 		while (current != null) {
