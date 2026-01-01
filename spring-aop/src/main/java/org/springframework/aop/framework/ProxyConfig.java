@@ -70,6 +70,8 @@ public class ProxyConfig implements Serializable {
 
 	/**
 	 * Return whether to proxy the target class directly as well as any interfaces.
+	 *
+	 * 返回是否要直接代理目标类和所有接口
 	 */
 	public boolean isProxyTargetClass() {
 		return this.proxyTargetClass;
@@ -90,6 +92,8 @@ public class ProxyConfig implements Serializable {
 
 	/**
 	 * Return whether proxies should perform aggressive optimizations.
+	 *
+	 * 返回是否代理应该执行激进的优化
 	 */
 	public boolean isOptimize() {
 		return this.optimize;

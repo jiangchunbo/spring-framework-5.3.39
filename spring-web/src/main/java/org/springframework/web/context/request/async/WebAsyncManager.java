@@ -472,11 +472,11 @@ public final class WebAsyncManager {
 
 		// 创建一个拦截器 List
 		List<DeferredResultProcessingInterceptor> interceptors = new ArrayList<>();
-		interceptors.add(deferredResult.getInterceptor());
+		interceptors.add(deferredResult.getInterceptor()); //
 		interceptors.addAll(this.deferredResultInterceptors.values());
 		interceptors.add(timeoutDeferredResultInterceptor);
 
-		// 包装为拦截器链对象
+		// 构造 interceptor chain
 		final DeferredResultInterceptorChain interceptorChain = new DeferredResultInterceptorChain(interceptors);
 
 		// 注册超时处理器。当发生超时，通过 chain 的 triggerAfterTimeout 方法触发

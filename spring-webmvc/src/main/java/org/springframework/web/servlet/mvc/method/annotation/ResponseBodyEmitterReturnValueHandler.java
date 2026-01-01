@@ -51,9 +51,17 @@ import org.springframework.web.method.support.ModelAndViewContainer;
  * Handler for return values of type {@link ResponseBodyEmitter} and subclasses
  * such as {@link SseEmitter} including the same types wrapped with
  * {@link ResponseEntity}.
+ * <p>
+ * 针对 {@link ResponseBodyEmitter} 类型及其子类（例如 {@link SseEmitter}）返回值的处理器，
+ * 同时也包括被 {@link ResponseEntity} 包装的上述类型。
+ * <p>
+ * 响应体发射器?
  *
  * <p>As of 5.0 also supports reactive return value types for any reactive
  * library with registered adapters in {@link ReactiveAdapterRegistry}.
+ *
+ * <p>从 5.0 版本开始，还支持任何在 {@link ReactiveAdapterRegistry} 中注册了适配器的
+ * 响应式库的响应式返回值类型。
  *
  * @author Rossen Stoyanchev
  * @since 4.2
@@ -63,7 +71,6 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 	private final List<HttpMessageConverter<?>> sseMessageConverters;
 
 	private final ReactiveTypeHandler reactiveHandler;
-
 
 	/**
 	 * Simple constructor with reactive type support based on a default instance of
@@ -106,7 +113,6 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 		return result;
 	}
 
-
 	@Override
 	public boolean supportsReturnType(MethodParameter returnType) {
 		// 1. ResponseEntity<T> 返回类型使用 ResponseEntity 包装
@@ -134,6 +140,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 		Assert.state(response != null, "No HttpServletResponse");
 		ServerHttpResponse outputMessage = new ServletServerHttpResponse(response);
 
+		// 特殊处理返回值类型是 ResponseEntity
 		if (returnValue instanceof ResponseEntity) {
 			ResponseEntity<?> responseEntity = (ResponseEntity<?>) returnValue;
 			response.setStatus(responseEntity.getStatusCodeValue());
@@ -169,7 +176,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 			}
 		}
 
-		// 扩展响应头
+		// 子类扩展定制化 response，例如 SseEmitter 会设置响应头 text/event-stream
 		emitter.extendResponse(outputMessage);
 
 		// At this point we know we're streaming..
@@ -182,8 +189,10 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 		HttpMessageConvertingHandler handler;
 		try {
-			// 构造一个 DeferredResult
+			// 构造一个 DeferredResult (估计里面可以存放一些异步处理的结果吧)
 			DeferredResult<?> deferredResult = new DeferredResult<>(emitter.getTimeout());
+
+			// 获取或者创建一个 WebAsyncManager
 			WebAsyncUtils.getAsyncManager(webRequest).startDeferredResultProcessing(deferredResult, mavContainer);
 
 			// handle 包装了 response 和 deferredResult
@@ -195,7 +204,6 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 		emitter.initialize(handler);
 	}
-
 
 	/**
 	 * ResponseBodyEmitter.Handler that writes with HttpMessageConverter's.
@@ -263,8 +271,8 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 		public void onCompletion(Runnable callback) {
 			this.deferredResult.onCompletion(callback);
 		}
-	}
 
+	}
 
 	/**
 	 * Wrap to silently ignore header changes HttpMessageConverter's that would

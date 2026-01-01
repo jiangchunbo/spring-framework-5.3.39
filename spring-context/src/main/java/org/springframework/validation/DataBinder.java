@@ -138,7 +138,9 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	private boolean directFieldAccess = false;
 
 	/**
-	 * 类型转换器。懒加载，需要的时候会创建，而且类型一定是 SimpleTypeConverter，这个类没有子类。
+	 * 类型转换器。支持动态注册 PropertyEditor 以及类型转换能力。
+	 * <p>
+	 * 懒加载，需要的时候会创建，而且类型一定是 SimpleTypeConverter，这个类没有子类。
 	 */
 	@Nullable
 	private SimpleTypeConverter typeConverter;
@@ -357,6 +359,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * Return the underlying TypeConverter of this binder's BindingResult.
 	 */
 	protected PropertyEditorRegistry getPropertyEditorRegistry() {
+		// target 表示绑定目标对象
 		if (getTarget() != null) {
 			return getInternalBindingResult().getPropertyAccessor();
 		} else {
@@ -368,6 +371,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * Return the underlying TypeConverter of this binder's BindingResult.
 	 */
 	protected TypeConverter getTypeConverter() {
+		// target 表示绑定目标对象
 		if (getTarget() != null) {
 			return getInternalBindingResult().getPropertyAccessor();
 		} else {
@@ -755,7 +759,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	public <T> T convertIfNecessary(@Nullable Object value, @Nullable Class<T> requiredType,
 									@Nullable MethodParameter methodParam) throws TypeMismatchException {
 
-		// getTypeConverter() 将会创建一个全新的 TypeConverter
+		// 委托给 TypeConverter
 		return getTypeConverter().convertIfNecessary(value, requiredType, methodParam);
 	}
 

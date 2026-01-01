@@ -63,7 +63,6 @@ public abstract class AopConfigUtils {
 		APC_PRIORITY_LIST.add(AnnotationAwareAspectJAutoProxyCreator.class);
 	}
 
-
 	@Nullable
 	public static BeanDefinition registerAutoProxyCreatorIfNecessary(BeanDefinitionRegistry registry) {
 		return registerAutoProxyCreatorIfNecessary(registry, null);
@@ -116,6 +115,8 @@ public abstract class AopConfigUtils {
 
 	/**
 	 * 注册或者升级 AutoProxyCreator
+	 * <p>
+	 * 该方法会被 3 种 AutoProxyCreator 注册调用
 	 *
 	 * @param cls      AutoProxyCreator 类型
 	 * @param registry Spring 容器
@@ -155,10 +156,18 @@ public abstract class AopConfigUtils {
 		return beanDefinition;
 	}
 
+	/**
+	 * 重载方法 1: 给定 class 对象快速索引 {@code List<Class>} 的 index，得到优先级 (越大越优先)
+	 */
 	private static int findPriorityForClass(Class<?> clazz) {
 		return APC_PRIORITY_LIST.indexOf(clazz);
 	}
 
+	/**
+	 * 重载方法 2: 给定 className 比较 {@code List<Class>} 全类名比较
+	 * @param className
+	 * @return
+	 */
 	private static int findPriorityForClass(@Nullable String className) {
 		for (int i = 0; i < APC_PRIORITY_LIST.size(); i++) {
 			Class<?> clazz = APC_PRIORITY_LIST.get(i);

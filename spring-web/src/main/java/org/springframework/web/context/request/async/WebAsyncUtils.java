@@ -62,6 +62,8 @@ public abstract class WebAsyncUtils {
 	 */
 	public static WebAsyncManager getAsyncManager(WebRequest webRequest) {
 		int scope = RequestAttributes.SCOPE_REQUEST;
+
+		// WebAsyncManager 惰性创建，存储在 Request Attribute 属性中
 		WebAsyncManager asyncManager = null;
 		Object asyncManagerAttr = webRequest.getAttribute(WEB_ASYNC_MANAGER_ATTRIBUTE, scope);
 		if (asyncManagerAttr instanceof WebAsyncManager) {

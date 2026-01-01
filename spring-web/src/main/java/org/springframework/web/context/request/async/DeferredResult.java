@@ -57,7 +57,6 @@ public class DeferredResult<T> {
 
 	private static final Log logger = LogFactory.getLog(DeferredResult.class);
 
-
 	@Nullable
 	private final Long timeoutValue;
 
@@ -74,7 +73,6 @@ public class DeferredResult<T> {
 	private volatile Object result = RESULT_NONE;
 
 	private volatile boolean expired;
-
 
 	/**
 	 * Create a DeferredResult.
@@ -119,7 +117,6 @@ public class DeferredResult<T> {
 		this.timeoutValue = timeoutValue;
 		this.timeoutResult = timeoutResult;
 	}
-
 
 	/**
 	 * Return {@code true} if this DeferredResult is no longer usable either
@@ -292,7 +289,9 @@ public class DeferredResult<T> {
 		return setResultInternal(result);
 	}
 
-
+	/**
+	 * DeferredResultProcessingInterceptor 其实就是一个接口，专门用于处理 DeferredResult
+	 */
 	final DeferredResultProcessingInterceptor getInterceptor() {
 		return new DeferredResultProcessingInterceptor() {
 			@Override
@@ -342,7 +341,6 @@ public class DeferredResult<T> {
 		};
 	}
 
-
 	/**
 	 * Handles a DeferredResult value when set.
 	 */
@@ -350,6 +348,7 @@ public class DeferredResult<T> {
 	public interface DeferredResultHandler {
 
 		void handleResult(Object result);
+
 	}
 
 }

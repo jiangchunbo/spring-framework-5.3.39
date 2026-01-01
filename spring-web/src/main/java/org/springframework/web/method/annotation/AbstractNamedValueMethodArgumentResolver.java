@@ -131,7 +131,8 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 		}
 
 		if (binderFactory != null) {
-			// 使用 factory 创建 Binder 实例，所以每个请求 Binder 是不共享的
+			// 每个请求 Binder 是不共享的 DataBinder
+			// target 是 null
 			WebDataBinder binder = binderFactory.createBinder(webRequest, null, namedValueInfo.name);
 			try {
 				// 尽可能地转换去兼容类型

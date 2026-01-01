@@ -44,6 +44,8 @@ import org.springframework.util.CollectionUtils;
 
 /**
  * Base class for AOP proxy configuration managers.
+ * <p>
+ * 用于 AOP 代理配置管理的基础类，为 {@link ProxyFactory} 等提供了支持
  *
  * <p>These are not themselves AOP proxies, but subclasses of this class are
  * normally factories from which AOP proxy instances are obtained directly.
