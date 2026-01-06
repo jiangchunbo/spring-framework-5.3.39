@@ -113,7 +113,6 @@ public abstract class ClassUtils {
 	 */
 	private static final int OVERRIDABLE_MODIFIER = Modifier.PUBLIC | Modifier.PROTECTED;
 
-
 	/**
 	 * Map with primitive wrapper type as key and corresponding primitive
 	 * type as value, for example: Integer.class -> int.class.
@@ -148,7 +147,6 @@ public abstract class ClassUtils {
 	 * Cache for equivalent methods on an interface implemented by the declaring class.
 	 */
 	private static final Map<Method, Method> interfaceMethodCache = new ConcurrentReferenceHashMap<>(256);
-
 
 	static {
 		primitiveWrapperTypeMap.put(Boolean.class, boolean.class);
@@ -189,7 +187,6 @@ public abstract class ClassUtils {
 		registerCommonClasses(javaLanguageInterfaceArray);
 		javaLanguageInterfaces = new HashSet<>(Arrays.asList(javaLanguageInterfaceArray));
 	}
-
 
 	/**
 	 * Register the given common classes with the ClassUtils cache.
@@ -790,7 +787,7 @@ public abstract class ClassUtils {
 	 * Return all interfaces that the given class implements as a Set,
 	 * including ones implemented by superclasses.
 	 * <p>If the class itself is an interface, it gets returned as sole interface.
-	 *
+	 * <p>
 	 * 如果 class 本身是接口，那么，直接返回该接口
 	 *
 	 * @param clazz the class to analyze for interfaces
@@ -1365,14 +1362,20 @@ public abstract class ClassUtils {
 	 * for example, calls to {@code Class#getDeclaredMethods}, etc. &mdash; this
 	 * implementation will fall back to returning the originally provided method.
 	 * <p>
-	 * 给定一个方法，它可能来自于 interface，一个用于当前反射调用的 target 类型。
-	 * 找到相关的目标方法，如果有 1 个
+	 * 给定一个方法(可能来自于接口)，和一个在当前反射调用中使用的目标类 targetClass，如果存在对应的目标方法，则寻找它。
 	 * <p>
-	 * 注意：相比于 AopUtils 的 getMostSpecificMethod 方法，这个方法不会自动解析桥接方法
+	 * 例如：传入的方法可能是 IFoo.bar()，而目标类是 DefaultFoo。在这种情况下，返回的方法可能是 DefaultFoo.bar()。
+	 * 这样做是为了能够获取到（目标类）该方法上标注的各种属性（如注解等）
+	 * <p>
+	 * 注意：相比于 AopUtils 的 getMostSpecificMethod 方法，这个方法不会自动解析桥接方法。
+	 * 如果需要解析桥接方法（例如为了从原始方法定义中获取元数据），请调用 BridgeMethodResolver#findBridgedMethod
 	 *
 	 * @param method      the method to be invoked, which may come from an interface
 	 * @param targetClass the target class for the current invocation
 	 *                    (can be {@code null} or may not even implement the method)
+	 *                    <p>
+	 *                    注意这个 targetClass 的使用方式：可以是 null；
+	 *                    甚至可以不需要实现 Method (也就是 method 是一个模板，targetClass 拥有相同 name、参数列表的方法)
 	 * @return the specific target method, or the original method if the
 	 * {@code targetClass} does not implement it
 	 * @see #getInterfaceMethodIfPossible(Method, Class)
@@ -1385,6 +1388,7 @@ public abstract class ClassUtils {
 		if (targetClass != null && targetClass != method.getDeclaringClass() &&
 				(isOverridable(method, targetClass) || !method.getDeclaringClass().isAssignableFrom(targetClass))) {
 			try {
+				// public 使用标准反射 API 简单获取
 				if (Modifier.isPublic(method.getModifiers())) {
 					try {
 						return targetClass.getMethod(method.getName(), method.getParameterTypes());
@@ -1392,6 +1396,7 @@ public abstract class ClassUtils {
 						return method;
 					}
 				} else {
+					// 使用类层次遍历法，找到相同名称，相同参数类型的
 					Method specificMethod =
 							ReflectionUtils.findMethod(targetClass, method.getName(), method.getParameterTypes());
 					return (specificMethod != null ? specificMethod : method);
@@ -1485,9 +1490,7 @@ public abstract class ClassUtils {
 	/**
 	 * Determine whether the given method is overridable in the given target class.
 	 * <p>
-	 * 只是确定给定的 method 是否能够被 targetClass 覆盖。
-	 * <p>
-	 * 注意：不是真的覆盖了啊，只是有这个能力。
+	 * 确定 targetClass 有没有 [资格] 覆写 Method。并不是真的检查 targetClass 是否覆写了。
 	 *
 	 * @param method      the method to check
 	 * @param targetClass the target class to check against
@@ -1528,7 +1531,6 @@ public abstract class ClassUtils {
 			return null;
 		}
 	}
-
 
 	@Nullable
 	private static Method getMethodOrNull(Class<?> clazz, String methodName, Class<?>[] paramTypes) {
