@@ -657,6 +657,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				// 其中有 lifecycle 的逻辑
 				finishRefresh();
 			} catch (BeansException ex) {
 				if (logger.isWarnEnabled()) {
@@ -910,14 +911,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Initialize the {@link LifecycleProcessor}.
 	 * <p>Uses {@link DefaultLifecycleProcessor} if none defined in the context.
+	 * <p>
+	 * 确保 bean factory 存在 LifecycleProcessor，默认使用 DefaultLifecycleProcessor
 	 *
 	 * @see #LIFECYCLE_PROCESSOR_BEAN_NAME
 	 * @see org.springframework.context.support.DefaultLifecycleProcessor
 	 * @since 3.0
 	 */
 	protected void initLifecycleProcessor() {
-		// @@@@@@@@@
-		// 这个方法就是找到或者创建一个 ListableBeanFactory 并赋值给 ApplicationContext
 
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 		if (beanFactory.containsLocalBean(LIFECYCLE_PROCESSOR_BEAN_NAME)) {
@@ -1030,7 +1031,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		clearResourceCaches();
 
 		// Initialize lifecycle processor for this context.
-		// 从 BeanFactory 获取并赋值给自己的属性 lifecycleProcessor
+		// 确保存在 LifecycleProcessor
 		initLifecycleProcessor();
 
 		// Propagate refresh to lifecycle processor first.
