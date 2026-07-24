@@ -6,7 +6,6 @@ buildscript {
 
 plugins {
     id 'io.spring.dependency-management' version '1.0.11.RELEASE' apply false
-    id 'io.spring.nohttp' version '0.0.10'
     id 'io.freefair.aspectj' version '6.2.0' apply false
     id 'org.jetbrains.dokka' version '1.6.10' apply false
     id 'org.jetbrains.kotlin.jvm' version '1.5.32' apply false
@@ -312,7 +311,6 @@ configure([rootProject] + javaProjects) { project ->
 
     apply plugin: "java"
     apply plugin: "java-test-fixtures"
-    apply plugin: "checkstyle"
     apply plugin: 'org.springframework.build.compile'
     apply from: "${rootDir}/gradle/toolchains.gradle"
     apply from: "${rootDir}/gradle/ide.gradle"
@@ -345,11 +343,6 @@ configure([rootProject] + javaProjects) { project ->
         systemProperty("io.netty.leakDetection.level", "paranoid")
     }
 
-    checkstyle {
-        toolVersion = "10.12.7"
-        configDirectory.set(rootProject.file("src/checkstyle"))
-    }
-
     dependencies {
         testImplementation("org.junit.jupiter:junit-jupiter-api")
         testImplementation("org.junit.jupiter:junit-jupiter-params")
@@ -368,7 +361,6 @@ configure([rootProject] + javaProjects) { project ->
         // JSR-305 only used for non-required meta-annotations
         compileOnly("com.google.code.findbugs:jsr305")
         testCompileOnly("com.google.code.findbugs:jsr305")
-        checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:0.0.42")
     }
 
     ext.javadocLinks = [
@@ -414,29 +406,9 @@ configure(rootProject) {
     description = "Spring Framework"
 
     apply plugin: "kotlin"
-    apply plugin: "io.spring.nohttp"
     apply plugin: 'org.springframework.build.api-diff'
     apply from: "${rootDir}/gradle/publications.gradle"
     apply from: "${rootDir}/gradle/docs.gradle"
-
-    nohttp {
-        source.exclude "**/test-output/**"
-        allowlistFile = project.file("src/nohttp/allowlist.lines")
-        def rootPath = file(rootDir).toPath()
-        def projectDirs = allprojects.collect { it.projectDir } + "${rootDir}/spring-core-test" + "${rootDir}/buildSrc" + "${rootDir}/framework-docs"
-        projectDirs.forEach { dir ->
-            ['bin', 'build', 'out', '.settings']
-                    .collect { rootPath.relativize(new File(dir, it).toPath()) }
-                    .forEach { source.exclude "$it/**" }
-            ['.classpath', '.project']
-                    .collect { rootPath.relativize(new File(dir, it).toPath()) }
-                    .forEach { source.exclude "$it" }
-        }
-    }
-
-    tasks.named("checkstyleNohttp").configure {
-        maxHeapSize = "1g"
-    }
 
     publishing {
         publications {
