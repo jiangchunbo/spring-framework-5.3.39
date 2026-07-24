@@ -143,14 +143,9 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 
 	@Override
 	public boolean isCandidateClass(Class<?> targetClass) {
-		// 支持解析三种注解
-		// Spring 的 @Transactional
-		// JTA
-		// EJB3
+		// 支持解析三种注解: Spring JTA EJB
 
-		// 这里我们只关注 Spring 的即可
-		// 判断一个类是否有资格，或者叫是否有可能存在 @Transactional ，
-		// 并不是说看这个类上面有没有 @Transactional，而是一个初步地，根据包名、类名的判断
+		// 是否有资格
 		for (TransactionAnnotationParser parser : this.annotationParsers) {
 			if (parser.isCandidateClass(targetClass)) {
 				return true;

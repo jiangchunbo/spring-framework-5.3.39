@@ -31,16 +31,18 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
  *
  * @author Chris Beams
  * @author Sebastien Deleuze
- * @since 3.1
  * @see EnableTransactionManagement
  * @see TransactionManagementConfigurationSelector
+ * @since 3.1
  */
 @Configuration(proxyBeanMethods = false)
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ProxyTransactionManagementConfiguration extends AbstractTransactionManagementConfiguration {
 
 	/**
-	 * 用于判断方法是否可以增强，且能够执行方法增强逻辑。
+	 * 事务 Advisor
+	 * <p>
+	 * Pointcut + Advice
 	 */
 	@Bean(name = TransactionManagementConfigUtils.TRANSACTION_ADVISOR_BEAN_NAME)
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
@@ -48,7 +50,9 @@ public class ProxyTransactionManagementConfiguration extends AbstractTransaction
 			TransactionAttributeSource transactionAttributeSource, TransactionInterceptor transactionInterceptor) {
 
 		BeanFactoryTransactionAttributeSourceAdvisor advisor = new BeanFactoryTransactionAttributeSourceAdvisor();
+		// 用于支撑 Pointcut
 		advisor.setTransactionAttributeSource(transactionAttributeSource);
+		// Spring AOP Advice
 		advisor.setAdvice(transactionInterceptor);
 		if (this.enableTx != null) {
 			advisor.setOrder(this.enableTx.<Integer>getNumber("order"));

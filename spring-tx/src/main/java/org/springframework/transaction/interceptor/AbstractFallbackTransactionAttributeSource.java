@@ -35,6 +35,8 @@ import org.springframework.util.StringValueResolver;
  * Abstract implementation of {@link TransactionAttributeSource} that caches
  * attributes for methods and implements a fallback policy: 1. specific target
  * method; 2. target class; 3. declaring method; 4. declaring class/interface.
+ * <p>
+ * 这个方法之所以叫 fallback，是因为它寻找事务属性时采用了一系列回退策略
  *
  * <p>Defaults to using the target class's transaction attribute if none is
  * associated with the target method. Any transaction attribute associated with
@@ -53,6 +55,7 @@ import org.springframework.util.StringValueResolver;
  */
 public abstract class AbstractFallbackTransactionAttributeSource
 		implements TransactionAttributeSource, EmbeddedValueResolverAware {
+
 
 	/**
 	 * Canonical value held in cache to indicate no transaction attribute was
@@ -171,8 +174,7 @@ public abstract class AbstractFallbackTransactionAttributeSource
 	@Nullable
 	protected TransactionAttribute computeTransactionAttribute(Method method, @Nullable Class<?> targetClass) {
 		// Don't allow non-public methods, as configured.
-		// 如果配置了只允许 public，那么不允许非 public 方法
-		// 而且，这个变量不容易自定义，spring 没有提供扩展，而且事务属性源 bean 也无法自定义
+		// 检查方法访问权限是否是 public
 		if (allowPublicMethodsOnly() && !Modifier.isPublic(method.getModifiers())) {
 			return null;
 		}

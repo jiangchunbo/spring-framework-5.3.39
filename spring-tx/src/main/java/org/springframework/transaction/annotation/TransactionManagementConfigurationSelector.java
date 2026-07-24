@@ -50,8 +50,8 @@ public class TransactionManagementConfigurationSelector extends AdviceModeImport
 				// 导入两个一个是用于 bean 后置处理，增加代理的
 				// 另一个是事务相关的各种
 				return new String[]{
-						AutoProxyRegistrar.class.getName(), // 注册基础设置
-						ProxyTransactionManagementConfiguration.class.getName()
+						AutoProxyRegistrar.class.getName(), // 注册 AOP 支持
+						ProxyTransactionManagementConfiguration.class.getName() // 注册事务支持
 				};
 			case ASPECTJ:
 				// 使用 aspectj 编译
